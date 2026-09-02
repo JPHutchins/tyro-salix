@@ -38,7 +38,7 @@ from typing_extensions import (
     get_type_hints,
 )
 
-from . import _unsafe_cache, conf
+from . import _struct_compat, _unsafe_cache, conf
 from ._singleton import is_missing, is_sentinel
 from ._typing_compat import (
     is_typing_annotated,
@@ -88,7 +88,8 @@ def unwrap_origin_strip_extras(typ: TypeOrCallable) -> TypeOrCallable:
 
 def is_dataclass(cls: Union[Type, Callable]) -> bool:
     """Same as `dataclasses.is_dataclass`, but also handles generic aliases."""
-    return dataclasses.is_dataclass(unwrap_origin_strip_extras(cls))  # type: ignore
+    unwrapped = unwrap_origin_strip_extras(cls)
+    return dataclasses.is_dataclass(unwrapped) or _struct_compat.is_struct(unwrapped)  # type: ignore
 
 
 # @_unsafe_cache.unsafe_cache(maxsize=1024)
@@ -96,12 +97,16 @@ def resolved_fields(cls: Type) -> List[dataclasses.Field]:
     """Similar to dataclasses.fields(), but includes dataclasses.InitVar types and
     resolves forward references."""
 
-    assert dataclasses.is_dataclass(cls)
+    assert is_dataclass(cls)
     fields = []
     annotations = get_type_hints_resolve_type_params(
         cast(Callable, cls), include_extras=True
     )
-    for field in getattr(cls, "__dataclass_fields__").values():
+    if _struct_compat.is_struct(cls):
+        raw_fields = _struct_compat.struct_fields(cls)
+    else:
+        raw_fields = list(getattr(cls, "__dataclass_fields__").values())
+    for field in raw_fields:
         # Avoid mutating original field.
         field = copy.copy(field)
 
@@ -138,7 +143,7 @@ def resolve_newtype_and_aliases(
     typ: TypeOrCallableOrNone,
 ) -> TypeOrCallableOrNone:
     # Fast path for plain types.
-    if type(typ) is type:
+    if isinstance(typ, type):
         return typ
 
     # Handle type aliases, eg via the `type` statement in Python 3.12.
@@ -1035,7 +1040,7 @@ def is_instance(typ: Any, value: Any) -> bool:
     """Typeguard-based alternative for `isinstance()`."""
 
     # Fast path: plain types.
-    if type(typ) is type:
+    if isinstance(typ, type):
         return isinstance_with_fuzzy_numeric_tower(value, typ) is not False
 
     # Fast path: Handle Union types without importing typeguard.

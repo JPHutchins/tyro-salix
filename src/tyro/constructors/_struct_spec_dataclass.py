@@ -5,7 +5,7 @@ import functools
 import warnings
 from typing import Any, cast
 
-from .. import _docstrings, _resolver
+from .. import _docstrings, _resolver, _struct_compat
 from .._singleton import (
     MISSING,
     MISSING_NONPROP,
@@ -20,6 +20,8 @@ def _ensure_dataclass_instance_used_as_default_is_frozen(
 ) -> None:
     """Ensure that a dataclass type used directly as a default value is marked as
     frozen."""
+    if _struct_compat.is_struct(default_instance):
+        return
     assert dataclasses.is_dataclass(default_instance)
     cls = type(default_instance)
     if not cls.__dataclass_params__.frozen:  # type: ignore
@@ -74,7 +76,7 @@ def _get_dataclass_field_default(
 
 def dataclass_rule(info: StructTypeInfo) -> StructConstructorSpec | None:
     """Rule for handling dataclass types."""
-    if not dataclasses.is_dataclass(info.type):
+    if not dataclasses.is_dataclass(info.type) and not _struct_compat.is_struct(info.type):
         return None
 
     # Check if this is a flax module and get fields to skip

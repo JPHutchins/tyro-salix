@@ -345,11 +345,11 @@ def handle_field(
     # There's some similar Union-specific logic for this in narrow_union_type(). We
     # may be able to consolidate this.
     if (
-        not _resolver.is_instance(field.type_stripped, field.default)
+        not _singleton.is_sentinel(field.default)
+        and not _resolver.is_instance(field.type_stripped, field.default)
         # If a custom constructor is set, static_type may not be
         # matched to the annotated type.
         and field.argconf.constructor_factory is None
-        and not _singleton.is_sentinel(field.default)
         # The numeric tower in Python is wacky. This logic is non-critical, so
         # we'll just skip it (+the complexity) for numbers.
         and not isinstance(field.default, numbers.Number)
