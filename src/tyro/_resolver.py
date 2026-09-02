@@ -142,8 +142,8 @@ TypeOrCallableOrNone = TypeVar("TypeOrCallableOrNone", Callable, Type[Any], None
 def resolve_newtype_and_aliases(
     typ: TypeOrCallableOrNone,
 ) -> TypeOrCallableOrNone:
-    # Fast path for plain types.
-    if isinstance(typ, type):
+    # Fast path for plain types (type() identity is safe for typing.Any).
+    if type(typ) is type or _struct_compat.is_struct(typ):
         return typ
 
     # Handle type aliases, eg via the `type` statement in Python 3.12.
@@ -1039,8 +1039,8 @@ def _get_type_hints_backported_syntax(
 def is_instance(typ: Any, value: Any) -> bool:
     """Typeguard-based alternative for `isinstance()`."""
 
-    # Fast path: plain types.
-    if isinstance(typ, type):
+    # Fast path: plain types (type() identity is safe for typing.Any).
+    if type(typ) is type or _struct_compat.is_struct(typ):
         return isinstance_with_fuzzy_numeric_tower(value, typ) is not False
 
     # Fast path: Handle Union types without importing typeguard.

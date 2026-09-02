@@ -12,7 +12,7 @@ except ImportError:
 def is_struct(cls: Any) -> bool:
     return (
         SalixStruct is not None
-        and isinstance(cls, type)
+        and (type(cls) is type or type(cls) is type(SalixStruct))
         and issubclass(cls, SalixStruct)
     )
 
