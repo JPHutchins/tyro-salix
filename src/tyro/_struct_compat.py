@@ -54,3 +54,33 @@ def resolved_fields(cls: Type) -> List[dataclasses.Field]:
     if is_struct(cls):
         return struct_fields(cls)
     return dataclasses.fields(cls)
+
+
+def fields_of(cls_or_instance: Any) -> List[dataclasses.Field]:
+    if is_struct(cls_or_instance):
+        return struct_fields(cls_or_instance)
+    cls = cls_or_instance if isinstance(cls_or_instance, type) else type(cls_or_instance)
+    if is_struct(cls):
+        return struct_fields(cls)
+    return dataclasses.fields(cls_or_instance)
+
+
+class struct_cached_property:
+    def __init__(self, func: Any) -> None:
+        self.func = func
+        self.__doc__ = getattr(func, "__doc__")
+        self.name = getattr(func, "__name__")
+
+    def __get__(self, obj: Any, owner: Any = None) -> Any:
+        if obj is None:
+            return self
+        return self.func(obj)
+
+
+def replace_instance(instance: Any, **changes: Any) -> Any:
+    cls = type(instance)
+    if is_struct(cls):
+        values = {name: getattr(instance, name) for name in cls.__struct_fields__}
+        values.update(changes)
+        return cls(**values)
+    return dataclasses.replace(instance, **changes)

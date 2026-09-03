@@ -1,6 +1,7 @@
 """Backtracking parser for handling variable-length argument sequences."""
 
 from __future__ import annotations
+from salix import Struct
 
 import dataclasses
 from typing import TYPE_CHECKING, Any
@@ -9,8 +10,7 @@ if TYPE_CHECKING:
     from ._primitive_spec import PrimitiveConstructorSpec
 
 
-@dataclasses.dataclass
-class BacktrackState:
+class BacktrackState(Struct):
     """State for backtracking parser."""
 
     spec_idx: int

@@ -1,6 +1,7 @@
 """Help formatting utils used for argparse backend."""
 
 from __future__ import annotations
+from salix import Struct
 
 import dataclasses
 import difflib
@@ -18,8 +19,7 @@ from ..constructors._primitive_spec import UnsupportedTypeAnnotationError
 from ._argparse_help_formatting import _get_source_location
 
 
-@dataclasses.dataclass(frozen=True)
-class _CascadedDefaultSubcommandGroupConfig:
+class _CascadedDefaultSubcommandGroupConfig(Struct, frozen=True):
     """Group key for args from a cascaded default subcommand."""
 
     label: str
@@ -854,8 +854,7 @@ def error_and_exit(
     sys.exit(2)
 
 
-@dataclasses.dataclass(frozen=True)
-class _ArgumentInfo:
+class _ArgumentInfo(Struct, frozen=True):
     arg: ArgumentDefinition
     option_strings: tuple[str, ...]
     metavar: str | None

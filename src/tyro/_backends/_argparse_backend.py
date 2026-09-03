@@ -1,6 +1,9 @@
 """Legacy, argparse-based backend for parsing command-line arguments."""
 
 from __future__ import annotations
+from salix import Struct
+
+from .. import _struct_compat
 
 import dataclasses
 from typing import Any, Container, Dict, List, Sequence, Tuple, cast
@@ -516,8 +519,7 @@ def apply_parser_args(
         )
 
 
-@dataclasses.dataclass(frozen=True)
-class MaterializedParserTree:
+class MaterializedParserTree(Struct, frozen=True):
     """Argparse-specific materialized tree structure.
 
     This wraps a ParserSpecification and adds the materialized subparser tree
@@ -528,8 +530,7 @@ class MaterializedParserTree:
     subparsers: MaterializedSubparsersTree | None
 
 
-@dataclasses.dataclass(frozen=True)
-class MaterializedSubparsersTree:
+class MaterializedSubparsersTree(Struct, frozen=True):
     """Argparse-specific materialized subparser tree structure.
 
     This wraps a SubparsersSpecification and contains the fully materialized
@@ -587,7 +588,7 @@ def add_subparsers_to_leaves(
             subparsers=add_subparsers_to_leaves(parser_tree.subparsers, leaf),
         )
     return MaterializedSubparsersTree(
-        subparser_spec=dataclasses.replace(
+        subparser_spec=_struct_compat.replace_instance(
             root.subparser_spec,
             required=root.subparser_spec.required or leaf.required,
         ),
@@ -672,7 +673,7 @@ def apply_materialized_subparsers(
         if force_consolidate_args or (
             _markers.CascadeSubcommandArgs in parser_spec.markers
         ):
-            subparser_def = dataclasses.replace(
+            subparser_def = _struct_compat.replace_instance(
                 subparser_def, subparser_parent=parser_spec
             )
 

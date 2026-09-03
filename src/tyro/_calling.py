@@ -2,6 +2,7 @@
 namespaces."""
 
 from __future__ import annotations
+from salix import Struct
 
 import dataclasses
 import inspect
@@ -18,8 +19,7 @@ from .constructors._primitive_spec import UnsupportedTypeAnnotationError
 T = TypeVar("T")
 
 
-@dataclasses.dataclass(frozen=True)
-class DummyWrapper(Generic[T]):
+class DummyWrapper(Generic[T], Struct, frozen=True):
     __tyro_dummy_inner__: Annotated[T, _confstruct.arg(name="")]
 
 

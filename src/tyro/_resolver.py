@@ -1,6 +1,7 @@
 """Utilities for resolving types and forward references."""
 
 from __future__ import annotations
+from salix import Struct
 
 import collections.abc
 import copy
@@ -65,8 +66,7 @@ Y` syntax is used for unions."""
 TypeOrCallable = TypeVar("TypeOrCallable", Type[Any], Callable)
 
 
-@dataclasses.dataclass(frozen=True)
-class TyroTypeAliasBreadCrumb:
+class TyroTypeAliasBreadCrumb(Struct, frozen=True):
     """A breadcrumb we can leave behind to track names of type aliases and
     `NewType` types. We can use type alias names to auto-populate
     subcommands."""

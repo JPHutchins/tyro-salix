@@ -1,6 +1,7 @@
 """Core public API."""
 
 from __future__ import annotations
+from salix import Struct
 
 import inspect
 import pathlib
@@ -216,8 +217,7 @@ def cli(  # pyright: ignore[reportInconsistentOverload]
 
           import tyro
 
-          @dataclass
-          class Config:
+          class Config(Struct):
               a: str
               b: str
 

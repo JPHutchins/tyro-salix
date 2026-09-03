@@ -1,4 +1,5 @@
 from __future__ import annotations
+from salix import Struct
 
 from dataclasses import dataclass
 
@@ -23,8 +24,7 @@ def create_mutex_group(*, required: bool, title: str | None = None) -> object:
 
         For example, the annotation on ``Config`` will have no effect::
 
-            @dataclass
-            class Config:
+            class Config(Struct):
                 foo: int
                 bar: str
 

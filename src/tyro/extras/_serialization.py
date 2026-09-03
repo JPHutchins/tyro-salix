@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import dataclasses
+
+from .. import _struct_compat
 import enum
 import functools
 from typing import IO, TYPE_CHECKING, Any, Optional, Set, Type, TypeVar, Union
@@ -143,12 +145,12 @@ def _make_dumper(instance: Any) -> Type[yaml.Dumper]:
 
     def make_representer(name: str):
         def representer(dumper: DataclassDumper, data: Any) -> yaml.Node:
-            if dataclasses.is_dataclass(data):
+            if dataclasses.is_dataclass(data) or _struct_compat.is_struct(data):
                 return dumper.represent_mapping(
                     tag=DATACLASS_YAML_TAG_PREFIX + name,
                     mapping={
                         field.name: getattr(data, field.name)
-                        for field in dataclasses.fields(data)
+                        for field in _struct_compat.fields_of(data)
                         if field.init
                     },
                 )

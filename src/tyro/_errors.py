@@ -82,6 +82,7 @@ structured payload is available.
 """
 
 from __future__ import annotations
+from salix import Struct
 
 import contextlib
 import dataclasses
@@ -121,8 +122,7 @@ if TYPE_CHECKING:
 # ---------------------------------------------------------------------------
 
 
-@dataclasses.dataclass(frozen=True)
-class ParseErrorEvent:
+class ParseErrorEvent(Struct, frozen=True):
     """Base class for every parse-failure event.
 
     Hooks should annotate their parameter as ``ParseErrorEvent`` and narrow with
@@ -149,8 +149,7 @@ class ParseErrorEvent:
 #    sweep, so a partial parse state has accumulated and is worth exposing. --
 
 
-@dataclasses.dataclass(frozen=True)
-class MissingArgs(ParseErrorEvent):
+class MissingArgs(ParseErrorEvent, Struct, frozen=True):
     """One or more required arguments were not provided."""
 
     missing_arguments: List["ArgWithContext"]
@@ -188,8 +187,7 @@ class MissingArgs(ParseErrorEvent):
         return list(self._args_from_prog().keys())
 
 
-@dataclasses.dataclass(frozen=True)
-class MissingMutexGroup(ParseErrorEvent):
+class MissingMutexGroup(ParseErrorEvent, Struct, frozen=True):
     """One or more required mutually-exclusive groups had no member selected."""
 
     groups: List[List["ArgWithContext"]]
@@ -200,8 +198,7 @@ class MissingMutexGroup(ParseErrorEvent):
     """Raw, pre-conversion parse state; see :attr:`MissingArgs.partial_output`."""
 
 
-@dataclasses.dataclass(frozen=True)
-class MissingSubcommand(ParseErrorEvent):
+class MissingSubcommand(ParseErrorEvent, Struct, frozen=True):
     """A required subcommand group had no subcommand selected."""
 
     subcommand_spec: "SubparsersSpecification"
@@ -221,8 +218,7 @@ class MissingSubcommand(ParseErrorEvent):
 #    so they carry only the specific arguments / names in conflict. --
 
 
-@dataclasses.dataclass(frozen=True)
-class MutexConflict(ParseErrorEvent):
+class MutexConflict(ParseErrorEvent, Struct, frozen=True):
     """Two arguments from the same mutually-exclusive group were both given."""
 
     first: "ArgumentDefinition"
@@ -238,8 +234,7 @@ class MutexConflict(ParseErrorEvent):
     """The command-line spelling that selected :attr:`second`."""
 
 
-@dataclasses.dataclass(frozen=True)
-class SubcommandConflict(ParseErrorEvent):
+class SubcommandConflict(ParseErrorEvent, Struct, frozen=True):
     """An explicit subcommand selection conflicts with one already chosen
     implicitly by a flag belonging to a default subcommand."""
 
@@ -260,8 +255,7 @@ class SubcommandConflict(ParseErrorEvent):
 # -- "Bad value" events. These fire mid-parse for a single argument. --
 
 
-@dataclasses.dataclass(frozen=True)
-class BadValue(ParseErrorEvent):
+class BadValue(ParseErrorEvent, Struct, frozen=True):
     """An argument was given a value it cannot accept, or too few values."""
 
     argument: "ArgumentDefinition"
@@ -277,8 +271,7 @@ class BadValue(ParseErrorEvent):
     when the problem is absence of a value (``reason == "too_few_values"``)."""
 
 
-@dataclasses.dataclass(frozen=True)
-class InvalidChoice(ParseErrorEvent):
+class InvalidChoice(ParseErrorEvent, Struct, frozen=True):
     """A value was not among an argument's allowed choices."""
 
     argument: "ArgumentDefinition"
@@ -294,8 +287,7 @@ class InvalidChoice(ParseErrorEvent):
 # -- "Unrecognized input" event. --
 
 
-@dataclasses.dataclass(frozen=True)
-class UnrecognizedArgs(ParseErrorEvent):
+class UnrecognizedArgs(ParseErrorEvent, Struct, frozen=True):
     """One or more command-line tokens were not recognized."""
 
     tokens: List[str]
@@ -306,8 +298,7 @@ class UnrecognizedArgs(ParseErrorEvent):
 #    their input was rejected, even though it happens after token parsing. --
 
 
-@dataclasses.dataclass(frozen=True)
-class InstantiationFailure(ParseErrorEvent):
+class InstantiationFailure(ParseErrorEvent, Struct, frozen=True):
     """Parsing succeeded, but constructing the output object from the parsed
     values failed (e.g. a field constructor raised :class:`ValueError`)."""
 

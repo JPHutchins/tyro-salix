@@ -1,3 +1,4 @@
+from salix import Struct
 """Helpers for parsing docstrings. Used for helptext generation."""
 
 import builtins
@@ -21,24 +22,21 @@ from .conf import _markers
 T = TypeVar("T", bound=Callable)
 
 
-@dataclasses.dataclass(frozen=True)
-class _Token:
+class _Token(Struct, frozen=True):
     token_type: int
     content: str
     logical_line: int
     actual_line: int
 
 
-@dataclasses.dataclass(frozen=True)
-class _FieldData:
+class _FieldData(Struct, frozen=True):
     index: int
     logical_line: int
     actual_line: int
     prev_field_logical_line: int
 
 
-@dataclasses.dataclass(frozen=True)
-class _ClassTokenization:
+class _ClassTokenization(Struct, frozen=True):
     tokens: List[_Token]
     tokens_from_logical_line: Dict[int, List[_Token]]
     tokens_from_actual_line: Dict[int, List[_Token]]
