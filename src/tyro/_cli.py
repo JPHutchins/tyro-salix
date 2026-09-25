@@ -217,7 +217,7 @@ def cli(  # pyright: ignore[reportInconsistentOverload]
 
           import tyro
 
-          class Config(Struct):
+          class Config(Struct, weakref=True):
               a: str
               b: str
 

@@ -66,7 +66,7 @@ Y` syntax is used for unions."""
 TypeOrCallable = TypeVar("TypeOrCallable", Type[Any], Callable)
 
 
-class TyroTypeAliasBreadCrumb(Struct, frozen=True):
+class TyroTypeAliasBreadCrumb(Struct, frozen=True, weakref=True):
     """A breadcrumb we can leave behind to track names of type aliases and
     `NewType` types. We can use type alias names to auto-populate
     subcommands."""

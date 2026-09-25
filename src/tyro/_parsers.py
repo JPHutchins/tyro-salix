@@ -36,7 +36,7 @@ from .constructors._primitive_spec import (
 T = TypeVar("T")
 
 
-class LazyParserSpecification(Struct, frozen=False):
+class LazyParserSpecification(Struct, frozen=False, weakref=True):
     """Lazy wrapper that defers full ParserSpecification creation until needed.
 
     Stores lightweight metadata (description) for fast help text generation,
@@ -57,7 +57,7 @@ class LazyParserSpecification(Struct, frozen=False):
         return self._cached
 
 
-class ArgWithContext(Struct, frozen=True):
+class ArgWithContext(Struct, frozen=True, weakref=True):
     arg: _arguments.ArgumentDefinition
     source_parser: ParserSpecification
     """ParserSpecification that directly contains this argument."""
@@ -65,7 +65,7 @@ class ArgWithContext(Struct, frozen=True):
     """Furthest ancestor of `source_parser` within the same (sub)command."""
 
 
-class ParserSpecification(Struct, frozen=True):
+class ParserSpecification(Struct, frozen=True, weakref=True):
     """Each parser contains a list of arguments and optionally some subparsers."""
 
     f: Callable
@@ -475,7 +475,10 @@ def _validated_aliases(
     return out
 
 
-class SubparsersSpecification(Struct, frozen=True):
+_canonical_from_alias_cache: dict[int, tuple[Any, dict[str, str]]] = {}
+
+
+class SubparsersSpecification(Struct, frozen=True, weakref=True):
     """Structure for defining subparsers. Each subparser is a parser with a name."""
 
     description: str | Callable[[], str | None] | None
@@ -503,10 +506,14 @@ class SubparsersSpecification(Struct, frozen=True):
         for each canonical name, so a single dict lookup resolves any
         user-typed subcommand name (canonical or alias) to its canonical
         form. Cached on the spec instance."""
+        entry = _canonical_from_alias_cache.get(id(self))
+        if entry is not None and entry[0] is self:
+            return entry[1]
         out = {name: name for name in self.parser_from_name}
         for canonical, aliases in self.aliases_from_name.items():
             for alias in aliases:
                 out[alias] = canonical
+        _canonical_from_alias_cache[id(self)] = (self, out)
         return out
 
     @staticmethod

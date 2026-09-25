@@ -29,19 +29,19 @@ if TYPE_CHECKING:
     from ._registry import ConstructorRegistry
 
 
-class UnsupportedStructTypeMessage(Struct, frozen=True):
+class UnsupportedStructTypeMessage(Struct, frozen=True, weakref=True):
     """Reason why a callable cannot be treated as a struct type."""
 
     message: str
 
 
-class InvalidDefaultInstanceError(Struct, frozen=True):
+class InvalidDefaultInstanceError(Struct, frozen=True, weakref=True):
     """Return value when a default instance is not applicable to an annotated struct type."""
 
     message: tuple[fmt._Text, ...]
 
 
-class StructFieldSpec(Struct, frozen=True):
+class StructFieldSpec(Struct, frozen=True, weakref=True):
     """Behavior specification for a single field in our callable."""
 
     name: str
@@ -61,7 +61,7 @@ class StructFieldSpec(Struct, frozen=True):
     """Deprecated. No longer used."""
 
 
-class StructConstructorSpec(Struct, frozen=True):
+class StructConstructorSpec(Struct, frozen=True, weakref=True):
     """Specification for a struct type, which is broken down into multiple
     fields.
 
@@ -79,7 +79,7 @@ class StructConstructorSpec(Struct, frozen=True):
     argument for the ``instantiate(**kwargs)`` function."""
 
 
-class StructTypeInfo(Struct, frozen=True):
+class StructTypeInfo(Struct, frozen=True, weakref=True):
     """Information used to generate constructors for struct types."""
 
     type: Type

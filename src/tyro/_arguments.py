@@ -116,7 +116,7 @@ def _strip_dummy_prefix(name: str) -> str:
     return stripped or name
 
 
-class ArgumentDefinition(Struct, frozen=True):
+class ArgumentDefinition(Struct, frozen=True, weakref=True):
     """Structure containing everything needed to define an argument."""
 
     intern_prefix: str  # True prefix. (eg for the argument's dest field)
@@ -319,7 +319,7 @@ class ArgumentDefinition(Struct, frozen=True):
         return invocation_short, fmt.text(*invocation_long_parts)
 
 
-class LoweredArgumentDefinition(Struct, frozen=False):
+class LoweredArgumentDefinition(Struct, frozen=False, weakref=True):
     """Contains fields meant to be passed directly into argparse."""
 
     # Action that is called on parsed arguments. This handles conversions from strings

@@ -10,7 +10,7 @@ if TYPE_CHECKING:
     from ._primitive_spec import PrimitiveConstructorSpec
 
 
-class BacktrackState(Struct):
+class BacktrackState(Struct, weakref=True):
     """State for backtracking parser."""
 
     spec_idx: int

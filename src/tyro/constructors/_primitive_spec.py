@@ -125,7 +125,7 @@ def _format_timedelta(td: datetime.timedelta) -> str:
 T = TypeVar("T")
 
 
-class PrimitiveTypeInfo(Struct, frozen=True):
+class PrimitiveTypeInfo(Struct, frozen=True, weakref=True):
     """Information used to generate constructors for primitive types."""
 
     type: Type
@@ -164,7 +164,7 @@ class PrimitiveTypeInfo(Struct, frozen=True):
         )
 
 
-class PrimitiveConstructorSpec(Generic[T], Struct, frozen=True):
+class PrimitiveConstructorSpec(Generic[T], Struct, frozen=True, weakref=True):
     """Specification for constructing a primitive type from a string.
 
     There are two ways to use this class:

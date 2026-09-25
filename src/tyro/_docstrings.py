@@ -22,21 +22,21 @@ from .conf import _markers
 T = TypeVar("T", bound=Callable)
 
 
-class _Token(Struct, frozen=True):
+class _Token(Struct, frozen=True, weakref=True):
     token_type: int
     content: str
     logical_line: int
     actual_line: int
 
 
-class _FieldData(Struct, frozen=True):
+class _FieldData(Struct, frozen=True, weakref=True):
     index: int
     logical_line: int
     actual_line: int
     prev_field_logical_line: int
 
 
-class _ClassTokenization(Struct, frozen=True):
+class _ClassTokenization(Struct, frozen=True, weakref=True):
     tokens: List[_Token]
     tokens_from_logical_line: Dict[int, List[_Token]]
     tokens_from_actual_line: Dict[int, List[_Token]]

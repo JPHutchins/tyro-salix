@@ -9,7 +9,7 @@ from .._singleton import MISSING_NONPROP
 T = TypeVar("T")
 
 
-class _SubcommandConfig(Struct, frozen=True):
+class _SubcommandConfig(Struct, frozen=True, weakref=True):
     name: str | None
     default: Any
     description: str | None
@@ -73,13 +73,13 @@ def subcommand(
         from typing import Annotated, Union
         import tyro
 
-        class TrainConfig(Struct):
+        class TrainConfig(Struct, weakref=True):
             learning_rate: float = 0.01
 
-        class EvalConfig(Struct):
+        class EvalConfig(Struct, weakref=True):
             checkpoint_path: str
 
-        class MainConfig(Struct):
+        class MainConfig(Struct, weakref=True):
             # Customized subcommands:
             mode: Union[
                 Annotated[TrainConfig, tyro.conf.subcommand("train")],
@@ -134,7 +134,7 @@ def subcommand(
     )
 
 
-class _ArgConfig(Struct, frozen=True):
+class _ArgConfig(Struct, frozen=True, weakref=True):
     name: str | None
     metavar: str | None
     help: str | None
@@ -199,7 +199,7 @@ def arg(
         from typing import Annotated
         import tyro
 
-        class Config(Struct):
+        class Config(Struct, weakref=True):
             # Default argument appearance
             regular_option: int = 1
 

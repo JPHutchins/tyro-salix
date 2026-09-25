@@ -70,11 +70,18 @@ class struct_cached_property:
         self.func = func
         self.__doc__ = getattr(func, "__doc__")
         self.name = getattr(func, "__name__")
+        self._cache: dict[int, tuple[Any, Any]] = {}
 
     def __get__(self, obj: Any, owner: Any = None) -> Any:
         if obj is None:
             return self
-        return self.func(obj)
+        key = id(obj)
+        entry = self._cache.get(key)
+        if entry is not None and entry[0] is obj:
+            return entry[1]
+        value = self.func(obj)
+        self._cache[key] = (obj, value)
+        return value
 
 
 def replace_instance(instance: Any, **changes: Any) -> Any:

@@ -19,7 +19,7 @@ from ..constructors._primitive_spec import UnsupportedTypeAnnotationError
 from ._argparse_help_formatting import _get_source_location
 
 
-class _CascadedDefaultSubcommandGroupConfig(Struct, frozen=True):
+class _CascadedDefaultSubcommandGroupConfig(Struct, frozen=True, weakref=True):
     """Group key for args from a cascaded default subcommand."""
 
     label: str
@@ -854,7 +854,7 @@ def error_and_exit(
     sys.exit(2)
 
 
-class _ArgumentInfo(Struct, frozen=True):
+class _ArgumentInfo(Struct, frozen=True, weakref=True):
     arg: ArgumentDefinition
     option_strings: tuple[str, ...]
     metavar: str | None

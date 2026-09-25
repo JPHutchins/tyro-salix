@@ -220,7 +220,7 @@ class KwargMap:
         return arg
 
 
-class TyroBackend(ParserBackend, Struct, metaclass=_TyroBackendMeta):
+class TyroBackend(ParserBackend, Struct, metaclass=_TyroBackendMeta, weakref=True):
     """Backend that parses arguments directly from ParserSpecification.
 
     This implementation avoids the overhead of constructing an argparse parser,

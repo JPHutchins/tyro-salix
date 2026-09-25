@@ -792,7 +792,7 @@ def error_and_exit(
     sys.exit(2)
 
 
-class _ArgumentInfo(Struct, frozen=True):
+class _ArgumentInfo(Struct, frozen=True, weakref=True):
     arg: ArgumentDefinition
     option_strings: tuple[str, ...]
     metavar: str | None

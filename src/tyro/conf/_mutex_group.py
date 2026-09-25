@@ -24,7 +24,7 @@ def create_mutex_group(*, required: bool, title: str | None = None) -> object:
 
         For example, the annotation on ``Config`` will have no effect::
 
-            class Config(Struct):
+            class Config(Struct, weakref=True):
                 foo: int
                 bar: str
 

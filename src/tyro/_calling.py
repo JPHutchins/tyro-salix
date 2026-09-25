@@ -19,7 +19,7 @@ from .constructors._primitive_spec import UnsupportedTypeAnnotationError
 T = TypeVar("T")
 
 
-class DummyWrapper(Generic[T], Struct, frozen=True):
+class DummyWrapper(Generic[T], Struct, frozen=True, weakref=True):
     __tyro_dummy_inner__: Annotated[T, _confstruct.arg(name="")]
 
 

@@ -15,7 +15,7 @@ from tyro.constructors import ConstructorRegistry
 CallableT = TypeVar("CallableT", bound=Callable)
 
 
-class _CommandSpec(Struct, frozen=True):
+class _CommandSpec(Struct, frozen=True, weakref=True):
     """Internal record for a registered subcommand."""
 
     target: Union[Callable, "SubcommandApp"]
