@@ -1062,6 +1062,15 @@ def is_instance(typ: Any, value: Any) -> bool:
         args = get_args(typ)
         return value in args
 
+    # Fast path: Handle Tuple types with real tuple values.
+    if origin is tuple and isinstance(value, tuple):
+        args = get_args(typ)
+        if len(args) == 2 and args[1] is Ellipsis:
+            return all(is_sentinel(v) or is_instance(args[0], v) for v in value)
+        return len(args) == len(value) and all(
+            is_sentinel(v) or is_instance(arg, v) for arg, v in zip(args, value)
+        )
+
     # Slow path: For complex types, fall back to typeguard.
     # Import is lazy to avoid overhead when not needed.
     import typeguard
