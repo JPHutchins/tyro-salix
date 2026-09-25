@@ -6,6 +6,12 @@ with many subcommands.
 """
 
 from __future__ import annotations
+import abc
+
+import salix
+from salix import Struct
+
+_TyroBackendMeta = type("TyroBackendMeta", (type(Struct), abc.ABCMeta), {})
 
 import itertools
 import sys
@@ -214,8 +220,7 @@ class KwargMap:
         return arg
 
 
-@dataclass
-class TyroBackend(ParserBackend):
+class TyroBackend(ParserBackend, Struct, metaclass=_TyroBackendMeta, weakref=True):
     """Backend that parses arguments directly from ParserSpecification.
 
     This implementation avoids the overhead of constructing an argparse parser,

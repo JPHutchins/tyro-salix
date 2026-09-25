@@ -1,4 +1,5 @@
 from __future__ import annotations
+from salix import Struct
 
 import dataclasses
 from typing import Any, Callable, Dict, Sequence, TypeVar, Union, overload
@@ -14,8 +15,7 @@ from tyro.constructors import ConstructorRegistry
 CallableT = TypeVar("CallableT", bound=Callable)
 
 
-@dataclasses.dataclass
-class _CommandSpec:
+class _CommandSpec(Struct, frozen=True, weakref=True):
     """Internal record for a registered subcommand."""
 
     target: Union[Callable, "SubcommandApp"]

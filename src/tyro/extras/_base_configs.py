@@ -1,4 +1,5 @@
 from __future__ import annotations
+from salix import Struct
 
 from typing import Any, Mapping, Sequence, Tuple, Type, TypeVar, Union
 
@@ -42,8 +43,7 @@ def overridable_config_cli(
         import tyro
 
 
-        @dataclasses.dataclass
-        class Config:
+        class Config(Struct, weakref=True):
             a: int
             b: str
 

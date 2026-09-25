@@ -1,3 +1,4 @@
+from salix import Struct
 from typing import TYPE_CHECKING, Any, Callable, TypeVar
 
 from typing_extensions import Annotated
@@ -20,8 +21,7 @@ Positional = Annotated[T, None]
 
 Example::
 
-    @dataclass
-    class Args:
+    class Args(Struct, weakref=True):
         input_file: Positional[str]  # Will be a positional arg
         output_file: str  # Will be a keyword arg (--output-file)
 
@@ -35,8 +35,7 @@ This marker applies to an entire interface when passed to the `config` parameter
 
 Example::
 
-    @dataclass
-    class Args:
+    class Args(Struct, weakref=True):
         input_file: str  # No default, will be positional
         output_file: str = "output.txt"  # Has default, will be a keyword arg
 
@@ -54,8 +53,7 @@ the usage string and in the helptext. Metavars specified explicitly via
 
 Example::
 
-    @dataclass
-    class Args:
+    class Args(Struct, weakref=True):
         input_file: tyro.conf.Positional[pathlib.Path]
 
     args = tyro.cli(Args, config=(tyro.conf.PositionalMetavarFromFieldName,))
@@ -78,8 +76,7 @@ via command line arguments.
 
 Example::
 
-    @dataclass
-    class Config:
+    class Config(Struct, weakref=True):
         input_path: str
         debug_mode: Fixed[bool] = False  # Cannot be changed via CLI
         version: Fixed[str] = "1.0.0"    # Cannot be changed via CLI
@@ -95,11 +92,10 @@ Unlike :data:`Fixed`, which shows the field in the helptext but prevents modific
 
 Example::
 
-    @dataclass
-    class Config:
+    class Config(Struct, weakref=True):
         input_path: str
         # Internal fields that users don't need to see
-        _cached_data: Suppress[dict] = dataclasses.field(default_factory=dict)
+        _cached_data: Suppress[dict] = {}
         _debug_level: Suppress[int] = 0
 """
 
@@ -212,14 +208,12 @@ simplifying the CLI interface (but making it less expressive).
 Example::
 
     # Without AvoidSubcommands
-    @dataclass
-    class Config:
+    class Config(Struct, weakref=True):
         mode: Union[ClassA, ClassB] = ClassA()
         # CLI would have subcommands: python script.py mode:class-a ... or mode:class-b ...
 
     # With AvoidSubcommands
-    @dataclass
-    class Config:
+    class Config(Struct, weakref=True):
         mode: AvoidSubcommands[Union[ClassA, ClassB]] = ClassA()
         # CLI would not have subcommands, would use ClassA() as default
 
@@ -282,8 +276,7 @@ With :data:`OmitSubcommandPrefixes`, subcommand prefixes are omitted, making CLI
 
 Example::
 
-    @dataclass
-    class Config:
+    class Config(Struct, weakref=True):
         mode: Union[ProcessorA, ProcessorB]
 
     # Default CLI (with prefixes):
@@ -305,12 +298,10 @@ while any prefix accumulated from ancestors is preserved.
 
 Example::
 
-    @dataclass
-    class NestedConfig:
+    class NestedConfig(Struct, weakref=True):
         option: str = "value"
 
-    @dataclass
-    class Config:
+    class Config(Struct, weakref=True):
         nested: OmitArgPrefixes[NestedConfig]
 
     # Default CLI (with prefixes):
@@ -331,8 +322,7 @@ With :data:`UseAppendAction`, each element is provided by repeating the flag mul
 
 Example::
 
-    @dataclass
-    class Config:
+    class Config(Struct, weakref=True):
         # Default list behavior
         numbers: list[int]
         # With UseAppendAction
@@ -357,8 +347,7 @@ increases the value by 1, similar to common CLI tools like ``-v``, ``-vv``, ``-v
 
 Example::
 
-    @dataclass
-    class Config:
+    class Config(Struct, weakref=True):
         verbose: UseCounterAction[int] = 0
 
     # Usage:
@@ -389,8 +378,7 @@ Example::
         RICH = enum.auto()      # value is "rich"
         TOML = enum.auto()      # value is "toml"
 
-    @dataclass
-    class Config:
+    class Config(Struct, weakref=True):
         # Default behavior: choices would be JSON, PRETTY, RICH, TOML
         format: OutputFormat = OutputFormat.PRETTY
 
@@ -434,8 +422,7 @@ By default, tyro extracts helptext from comments in the source code:
 
 Example::
 
-    @dataclass
-    class Config:
+    class Config(Struct, weakref=True):
         # This comment becomes helptext for input_file
         input_file: str
 
@@ -459,8 +446,7 @@ containing ``None``.
 
 Example::
 
-    @dataclass
-    class Config:
+    class Config(Struct, weakref=True):
         field: DisallowNone[int | None] = None
 
 In this case, `None` can still be used as a default value. However, ``--field
@@ -477,8 +463,7 @@ value.
 
 Example::
 
-    @dataclass
-    class Config:
+    class Config(Struct, weakref=True):
         x: NewSubcommandForDefaults[StructA | StructB] = StructA(...)
 
 This example would create three subcommands: ``x:struct-a``, ``x:struct-b``,

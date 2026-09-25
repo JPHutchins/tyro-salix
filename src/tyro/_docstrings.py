@@ -1,3 +1,4 @@
+from salix import Struct
 """Helpers for parsing docstrings. Used for helptext generation."""
 
 import builtins
@@ -15,30 +16,27 @@ from typing_extensions import get_origin, is_typeddict
 
 from tyro._typing_compat import is_typing_generic
 
-from . import _resolver, _strings, _unsafe_cache
+from . import _resolver, _strings, _struct_compat, _unsafe_cache
 from .conf import _markers
 
 T = TypeVar("T", bound=Callable)
 
 
-@dataclasses.dataclass(frozen=True)
-class _Token:
+class _Token(Struct, frozen=True, weakref=True):
     token_type: int
     content: str
     logical_line: int
     actual_line: int
 
 
-@dataclasses.dataclass(frozen=True)
-class _FieldData:
+class _FieldData(Struct, frozen=True, weakref=True):
     index: int
     logical_line: int
     actual_line: int
     prev_field_logical_line: int
 
 
-@dataclasses.dataclass(frozen=True)
-class _ClassTokenization:
+class _ClassTokenization(Struct, frozen=True, weakref=True):
     tokens: List[_Token]
     tokens_from_logical_line: Dict[int, List[_Token]]
     tokens_from_actual_line: Dict[int, List[_Token]]
@@ -257,7 +255,7 @@ def get_class_tokenization_with_field(
             found_field = True
             break
 
-    if dataclasses.is_dataclass(cls):
+    if dataclasses.is_dataclass(cls) or _struct_compat.is_struct(cls):
         assert found_field, (
             "Docstring parsing error -- this usually means that there are multiple"
             " dataclasses in the same file with the same name but different scopes."
@@ -364,7 +362,7 @@ def get_callable_description(f: Callable) -> str:
     if docstring is None:
         return ""
 
-    if dataclasses.is_dataclass(f):
+    if dataclasses.is_dataclass(f) or _struct_compat.is_struct(f):
         default_doc = f.__name__ + str(inspect.signature(f)).replace(" -> None", "")  # type: ignore
         if docstring == default_doc:
             return ""

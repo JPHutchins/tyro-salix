@@ -1,6 +1,7 @@
 """Utilities for resolving types and forward references."""
 
 from __future__ import annotations
+from salix import Struct
 
 import collections.abc
 import copy
@@ -38,7 +39,7 @@ from typing_extensions import (
     get_type_hints,
 )
 
-from . import _unsafe_cache, conf
+from . import _struct_compat, _unsafe_cache, conf
 from ._singleton import is_missing, is_sentinel
 from ._typing_compat import (
     is_typing_annotated,
@@ -65,8 +66,7 @@ Y` syntax is used for unions."""
 TypeOrCallable = TypeVar("TypeOrCallable", Type[Any], Callable)
 
 
-@dataclasses.dataclass(frozen=True)
-class TyroTypeAliasBreadCrumb:
+class TyroTypeAliasBreadCrumb(Struct, frozen=True, weakref=True):
     """A breadcrumb we can leave behind to track names of type aliases and
     `NewType` types. We can use type alias names to auto-populate
     subcommands."""
@@ -88,7 +88,8 @@ def unwrap_origin_strip_extras(typ: TypeOrCallable) -> TypeOrCallable:
 
 def is_dataclass(cls: Union[Type, Callable]) -> bool:
     """Same as `dataclasses.is_dataclass`, but also handles generic aliases."""
-    return dataclasses.is_dataclass(unwrap_origin_strip_extras(cls))  # type: ignore
+    unwrapped = unwrap_origin_strip_extras(cls)
+    return dataclasses.is_dataclass(unwrapped) or _struct_compat.is_struct(unwrapped)  # type: ignore
 
 
 # @_unsafe_cache.unsafe_cache(maxsize=1024)
@@ -96,12 +97,16 @@ def resolved_fields(cls: Type) -> List[dataclasses.Field]:
     """Similar to dataclasses.fields(), but includes dataclasses.InitVar types and
     resolves forward references."""
 
-    assert dataclasses.is_dataclass(cls)
+    assert is_dataclass(cls)
     fields = []
     annotations = get_type_hints_resolve_type_params(
         cast(Callable, cls), include_extras=True
     )
-    for field in getattr(cls, "__dataclass_fields__").values():
+    if _struct_compat.is_struct(cls):
+        raw_fields = _struct_compat.struct_fields(cls)
+    else:
+        raw_fields = list(getattr(cls, "__dataclass_fields__").values())
+    for field in raw_fields:
         # Avoid mutating original field.
         field = copy.copy(field)
 
@@ -137,8 +142,8 @@ TypeOrCallableOrNone = TypeVar("TypeOrCallableOrNone", Callable, Type[Any], None
 def resolve_newtype_and_aliases(
     typ: TypeOrCallableOrNone,
 ) -> TypeOrCallableOrNone:
-    # Fast path for plain types.
-    if type(typ) is type:
+    # Fast path for plain types (type() identity is safe for typing.Any).
+    if type(typ) is type or _struct_compat.is_struct(typ):
         return typ
 
     # Handle type aliases, eg via the `type` statement in Python 3.12.
@@ -1034,8 +1039,8 @@ def _get_type_hints_backported_syntax(
 def is_instance(typ: Any, value: Any) -> bool:
     """Typeguard-based alternative for `isinstance()`."""
 
-    # Fast path: plain types.
-    if type(typ) is type:
+    # Fast path: plain types (type() identity is safe for typing.Any).
+    if type(typ) is type or _struct_compat.is_struct(typ):
         return isinstance_with_fuzzy_numeric_tower(value, typ) is not False
 
     # Fast path: Handle Union types without importing typeguard.
@@ -1056,6 +1061,15 @@ def is_instance(typ: Any, value: Any) -> bool:
     if origin is Literal:
         args = get_args(typ)
         return value in args
+
+    # Fast path: Handle Tuple types with real tuple values.
+    if origin is tuple and isinstance(value, tuple):
+        args = get_args(typ)
+        if len(args) == 2 and args[1] is Ellipsis:
+            return all(is_sentinel(v) or is_instance(args[0], v) for v in value)
+        return len(args) == len(value) and all(
+            is_sentinel(v) or is_instance(arg, v) for arg, v in zip(args, value)
+        )
 
     # Slow path: For complex types, fall back to typeguard.
     # Import is lazy to avoid overhead when not needed.
