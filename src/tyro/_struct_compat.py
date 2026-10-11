@@ -1,7 +1,8 @@
 """Salix Struct support: read Structs wherever dataclasses are read."""
 
 import dataclasses
-from typing import Any, Dict, List, Type
+import weakref
+from typing import Any, Dict, List, Tuple, Type
 
 try:
     import salix
@@ -42,8 +43,17 @@ def _as_dataclass_field(field: Any) -> dataclasses.Field:
     return synthesized
 
 
+_struct_fields_by_class: "weakref.WeakKeyDictionary[Type, Tuple[dataclasses.Field, ...]]" = (
+    weakref.WeakKeyDictionary()
+)
+
+
 def struct_fields(cls: Type) -> List[dataclasses.Field]:
-    return [_as_dataclass_field(field) for field in salix.fields(cls)]
+    if cls not in _struct_fields_by_class:
+        _struct_fields_by_class[cls] = tuple(
+            _as_dataclass_field(field) for field in salix.fields(cls)
+        )
+    return list(_struct_fields_by_class[cls])
 
 
 def resolved_fields(cls: Type) -> List[dataclasses.Field]:
