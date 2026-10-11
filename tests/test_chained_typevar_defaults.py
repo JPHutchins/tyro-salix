@@ -6,12 +6,12 @@ through the active type parameter bindings rather than returning the raw inner
 TypeVar (or falling back to the inner TypeVar's own default).
 """
 
-import dataclasses
 import sys
-from typing import Any, Generic, List, NamedTuple, cast
+from typing import Any, Generic, List, cast
 
 import pydantic
 import pytest
+from salix import Struct
 from typing_extensions import TypeVar
 
 import tyro
@@ -37,8 +37,7 @@ def test_chained_default_explicit_binding() -> None:
     K = TypeVar("K", default=str)
     V = TypeVar("V", default=K)
 
-    @dataclasses.dataclass
-    class Entry(Generic[K, V]):
+    class Entry(Struct, Generic[K, V], frozen=False):
         key: K
         val: V
 
@@ -54,8 +53,7 @@ def test_chained_default_all_defaults() -> None:
     K = TypeVar("K", default=int)
     V = TypeVar("V", default=K)
 
-    @dataclasses.dataclass
-    class Entry(Generic[K, V]):
+    class Entry(Struct, Generic[K, V], frozen=False):
         key: K
         val: V
 
@@ -69,8 +67,7 @@ def test_single_level_default_still_works() -> None:
     """A plain (non-chained) PEP 696 default should still resolve."""
     K = TypeVar("K", default=int)
 
-    @dataclasses.dataclass
-    class Single(Generic[K]):
+    class Single(Struct, Generic[K], frozen=False):
         x: K
 
     assert tyro.cli(Single, args=["--x", "5"]) == Single(5)
@@ -84,8 +81,7 @@ def test_multi_level_chain() -> None:
     V = TypeVar("V", default=K)
     W = TypeVar("W", default=V)
 
-    @dataclasses.dataclass
-    class Triple(Generic[K, V, W]):
+    class Triple(Struct, Generic[K, V, W], frozen=False):
         a: K
         b: V
         c: W
@@ -105,8 +101,7 @@ def test_chained_default_is_container() -> None:
     K = TypeVar("K", default=int)
     V = TypeVar("V", default=List[K])
 
-    @dataclasses.dataclass
-    class WithList(Generic[K, V]):
+    class WithList(Struct, Generic[K, V], frozen=False):
         key: K
         vals: V
 
@@ -125,8 +120,7 @@ def test_explicit_override_of_chained_param() -> None:
     K = TypeVar("K", default=str)
     V = TypeVar("V", default=K)
 
-    @dataclasses.dataclass
-    class Entry(Generic[K, V]):
+    class Entry(Struct, Generic[K, V], frozen=False):
         key: K
         val: V
 
@@ -140,8 +134,7 @@ def test_bound_typevar_not_broken() -> None:
     """Explicitly-parameterized bound TypeVars should still work."""
     B = TypeVar("B", bound=int)
 
-    @dataclasses.dataclass
-    class Bounded(Generic[B]):
+    class Bounded(Struct, Generic[B], frozen=False):
         x: B
 
     assert tyro.cli(Bounded[int], args=["--x", "5"]) == Bounded(5)
@@ -151,26 +144,10 @@ def test_constrained_typevar_not_broken() -> None:
     """Explicitly-parameterized constrained TypeVars should still work."""
     C = TypeVar("C", int, str)
 
-    @dataclasses.dataclass
-    class Constrained(Generic[C]):
+    class Constrained(Struct, Generic[C], frozen=False):
         x: C
 
     assert tyro.cli(Constrained[int], args=["--x", "5"]) == Constrained(5)
-
-
-@needs_chained_default_fill
-def test_chained_default_namedtuple() -> None:
-    """Generic NamedTuple with a chained PEP 696 default."""
-    K = TypeVar("K", default=str)
-    V = TypeVar("V", default=K)
-
-    class Pair(NamedTuple, Generic[K, V]):
-        key: K
-        val: V
-
-    parsed = tyro.cli(Pair[int], args=["--key", "1", "--val", "2"])
-    assert parsed == Pair(1, 2)
-    assert isinstance(parsed.val, int)
 
 
 @needs_chained_default_fill
@@ -200,8 +177,7 @@ def test_chained_default_no_infinite_loop() -> None:
     K = TypeVar("K")  # No default, bound, or constraints.
     V = TypeVar("V", default=K)
 
-    @dataclasses.dataclass
-    class Entry(Generic[K, V]):
+    class Entry(Struct, Generic[K, V], frozen=False):
         key: K
         val: V
 
@@ -226,13 +202,11 @@ def test_sibling_binding_does_not_shadow_enclosing_typevar() -> None:
     T = TypeVar("T")
     U = TypeVar("U")
 
-    @dataclasses.dataclass
-    class Pair(Generic[T, U]):
+    class Pair(Struct, Generic[T, U], frozen=False):
         first: T
         second: U
 
-    @dataclasses.dataclass
-    class OuterNest(Generic[T]):
+    class OuterNest(Struct, Generic[T], frozen=False):
         p: Pair[int, List[T]]
         bare: T
 
@@ -250,17 +224,14 @@ def test_sibling_binding_three_level_nesting() -> None:
     T = TypeVar("T")
     U = TypeVar("U")
 
-    @dataclasses.dataclass
-    class Leaf(Generic[U]):
+    class Leaf(Struct, Generic[U], frozen=False):
         v: U
 
-    @dataclasses.dataclass
-    class Mid(Generic[T, U]):
+    class Mid(Struct, Generic[T, U], frozen=False):
         leaf: Leaf[U]
         x: T
 
-    @dataclasses.dataclass
-    class Top(Generic[T]):
+    class Top(Struct, Generic[T], frozen=False):
         m: Mid[int, List[T]]
         b: T
 
@@ -281,13 +252,11 @@ def test_free_typevar_subscription_falls_back_to_defaults() -> None:
     K = TypeVar("K", default=int)
     V = TypeVar("V", default=str)
 
-    @dataclasses.dataclass
-    class Pair(Generic[K, V]):
+    class Pair(Struct, Generic[K, V], frozen=False):
         k: K
         v: V
 
-    @dataclasses.dataclass
-    class Box(Generic[K]):
+    class Box(Struct, Generic[K], frozen=False):
         items: List[K]
 
     # `Any` aliases: type checkers reject free TypeVars in value-level

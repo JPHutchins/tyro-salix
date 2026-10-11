@@ -4,44 +4,38 @@ Tests that Annotated[T, tyro.conf.arg(constructor=subcommand_type_from_defaults(
 in a union correctly flattens inner subcommands into the outer union.
 """
 
-import dataclasses
 from typing import Optional, Union
 
 from helptext_utils import get_helptext_with_checks
+from salix import Struct
 from typing_extensions import Annotated
 
 import tyro
 
 
-@dataclasses.dataclass(frozen=True)
-class Config:
+class Config(Struct):
     name: str
     value: int
 
 
-@dataclasses.dataclass(frozen=True)
-class OptimizerA:
+class OptimizerA(Struct):
     lr: float = 0.01
 
 
-@dataclasses.dataclass(frozen=True)
-class OptimizerB:
+class OptimizerB(Struct):
     momentum: float = 0.9
 
 
-@dataclasses.dataclass(frozen=True)
-class PlainConfig:
+class PlainConfig(Struct):
     x: int = 0
 
 
-@dataclasses.dataclass(frozen=True)
-class Inner:
+class Inner(Struct):
     name: str
     value: int
 
 
-@dataclasses.dataclass(frozen=True)
-class Outer:
+class Outer(Struct):
     label: str
     inner: Union[
         Annotated[
@@ -71,8 +65,7 @@ class Outer:
 def test_basic_annotated_union() -> None:
     """Basic case: union of two annotated configs + None."""
 
-    @dataclasses.dataclass(frozen=True)
-    class Args:
+    class Args(Struct):
         config: Union[
             Annotated[
                 Config,
@@ -118,8 +111,7 @@ def test_basic_annotated_union() -> None:
 def test_annotated_union_no_none() -> None:
     """Union of two annotated configs without None."""
 
-    @dataclasses.dataclass(frozen=True)
-    class Args:
+    class Args(Struct):
         config: Union[
             Annotated[
                 Config,
@@ -146,8 +138,7 @@ def test_annotated_union_no_none() -> None:
 def test_annotated_union_single() -> None:
     """Single annotated config in a union with None."""
 
-    @dataclasses.dataclass(frozen=True)
-    class Args:
+    class Args(Struct):
         config: Union[
             Annotated[
                 Config,
@@ -176,8 +167,7 @@ def test_annotated_union_single() -> None:
 def test_annotated_union_with_override() -> None:
     """Test that subcommand defaults can be overridden via CLI args."""
 
-    @dataclasses.dataclass(frozen=True)
-    class Args:
+    class Args(Struct):
         config: Union[
             Annotated[
                 Config,
@@ -213,8 +203,7 @@ def test_annotated_union_with_override() -> None:
 def test_annotated_union_different_types() -> None:
     """Union of annotated configs with different underlying types."""
 
-    @dataclasses.dataclass(frozen=True)
-    class TrainArgs:
+    class TrainArgs(Struct):
         opt: Union[
             Annotated[
                 OptimizerA,
@@ -249,8 +238,7 @@ def test_annotated_union_different_types() -> None:
 def test_annotated_union_three_groups() -> None:
     """Three groups of annotated configs in a union."""
 
-    @dataclasses.dataclass(frozen=True)
-    class Args:
+    class Args(Struct):
         config: Union[
             Annotated[
                 Config,
@@ -303,8 +291,7 @@ def test_annotated_union_three_groups() -> None:
 def test_annotated_union_mixed_with_plain_struct() -> None:
     """Mix of annotated config (with subcommand_type_from_defaults) and a plain struct type."""
 
-    @dataclasses.dataclass(frozen=True)
-    class Args:
+    class Args(Struct):
         config: Union[
             Annotated[
                 Config,
@@ -336,8 +323,7 @@ def test_annotated_union_mixed_with_plain_struct() -> None:
 def test_annotated_union_nested_struct() -> None:
     """Annotated union inside a nested struct."""
 
-    @dataclasses.dataclass(frozen=True)
-    class Args:
+    class Args(Struct):
         outer: Outer
 
     result = tyro.cli(Args, args=["--outer.label", "test", "outer.inner:small"])
@@ -353,8 +339,7 @@ def test_prefix_name_false_on_subcommands() -> None:
     """prefix_name=False means 'don't prefix me with my parent'. At root level
     there is no parent, so subcommand names still include the field name."""
 
-    @dataclasses.dataclass(frozen=True)
-    class Args:
+    class Args(Struct):
         main: Annotated[
             Config,
             tyro.conf.arg(
@@ -379,8 +364,7 @@ def test_prefix_name_false_on_subcommands() -> None:
 def test_empty_name_removes_prefix_on_subcommands() -> None:
     """arg(name='') suppresses a field's name from child subcommand prefixes."""
 
-    @dataclasses.dataclass(frozen=True)
-    class Args:
+    class Args(Struct):
         main: Annotated[
             Config,
             tyro.conf.arg(
@@ -405,8 +389,7 @@ def test_empty_name_removes_prefix_on_subcommands() -> None:
 def test_prefix_name_false_with_annotated_union() -> None:
     """prefix_name=False at root level has no effect on annotated union subcommand names."""
 
-    @dataclasses.dataclass(frozen=True)
-    class Args:
+    class Args(Struct):
         config: Annotated[
             Union[
                 Annotated[
@@ -443,8 +426,7 @@ def test_prefix_name_false_with_annotated_union() -> None:
 def test_empty_name_with_annotated_union() -> None:
     """arg(name='') suppresses a field's name from annotated union subcommand prefixes."""
 
-    @dataclasses.dataclass(frozen=True)
-    class Args:
+    class Args(Struct):
         config: Annotated[
             Union[
                 Annotated[
@@ -495,16 +477,17 @@ def test_prefix_name_false_alongside_prefixed() -> None:
         ),
     ]
 
-    Args = dataclasses.make_dataclass(
+    Args = type(Struct)(
         "Args",
-        [
-            (
-                "main",
-                Annotated[AnnotatedInferenceConfig, tyro.conf.arg(prefix_name=False)],
-            ),
-            ("secondary", Optional[AnnotatedInferenceConfig]),
-        ],
-        frozen=True,
+        (Struct,),
+        {
+            "__annotations__": {
+                "main": Annotated[
+                    AnnotatedInferenceConfig, tyro.conf.arg(prefix_name=False)
+                ],
+                "secondary": Optional[AnnotatedInferenceConfig],
+            }
+        },
     )
 
     helptext = get_helptext_with_checks(Args)
@@ -535,16 +518,15 @@ def test_empty_name_alongside_prefixed() -> None:
         ),
     ]
 
-    Args = dataclasses.make_dataclass(
+    Args = type(Struct)(
         "Args",
-        [
-            (
-                "main",
-                Annotated[AnnotatedInferenceConfig, tyro.conf.arg(name="")],
-            ),
-            ("secondary", Optional[AnnotatedInferenceConfig]),
-        ],
-        frozen=True,
+        (Struct,),
+        {
+            "__annotations__": {
+                "main": Annotated[AnnotatedInferenceConfig, tyro.conf.arg(name="")],
+                "secondary": Optional[AnnotatedInferenceConfig],
+            }
+        },
     )
 
     helptext = get_helptext_with_checks(Args)
@@ -563,16 +545,13 @@ def test_empty_name_alongside_prefixed() -> None:
 def test_prefix_name_false_plain_union() -> None:
     """prefix_name=False at root level has no effect on plain union subcommand names."""
 
-    @dataclasses.dataclass(frozen=True)
-    class Foo:
+    class Foo(Struct):
         x: int = 1
 
-    @dataclasses.dataclass(frozen=True)
-    class Bar:
+    class Bar(Struct):
         y: str = "hi"
 
-    @dataclasses.dataclass(frozen=True)
-    class Args:
+    class Args(Struct):
         thing: Annotated[Union[Foo, Bar], tyro.conf.arg(prefix_name=False)]
 
     helptext = get_helptext_with_checks(Args)
@@ -586,16 +565,13 @@ def test_prefix_name_false_plain_union() -> None:
 def test_empty_name_plain_union() -> None:
     """arg(name='') suppresses a field's name from plain union subcommand prefixes."""
 
-    @dataclasses.dataclass(frozen=True)
-    class Foo:
+    class Foo(Struct):
         x: int = 1
 
-    @dataclasses.dataclass(frozen=True)
-    class Bar:
+    class Bar(Struct):
         y: str = "hi"
 
-    @dataclasses.dataclass(frozen=True)
-    class Args:
+    class Args(Struct):
         thing: Annotated[Union[Foo, Bar], tyro.conf.arg(name="")]
 
     helptext = get_helptext_with_checks(Args)

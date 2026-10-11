@@ -8,10 +8,10 @@ from __future__ import annotations
 
 import typing
 import warnings
-from dataclasses import dataclass
 from typing import Generic
 
 import pytest
+from salix import Struct
 from typing_extensions import TypeVar as ExtTypeVar
 
 import tyro
@@ -26,22 +26,19 @@ T_no_default = typing.TypeVar("T_no_default")
 T_with_bound = typing.TypeVar("T_with_bound", bound=int)
 
 
-@dataclass
-class GenericWithDefault(Generic[T_with_default]):
+class GenericWithDefault(Struct, Generic[T_with_default], frozen=False):
     """Generic class with typing.TypeVar that has a default."""
 
     value: T_with_default
 
 
-@dataclass
-class GenericNoDefault(Generic[T_no_default]):
+class GenericNoDefault(Struct, Generic[T_no_default], frozen=False):
     """Generic class with typing.TypeVar that has no default."""
 
     value: T_no_default
 
 
-@dataclass
-class GenericWithBound(Generic[T_with_bound]):
+class GenericWithBound(Struct, Generic[T_with_bound], frozen=False):
     """Generic class with typing.TypeVar that has a bound."""
 
     value: T_with_bound
@@ -52,8 +49,7 @@ def test_typing_typevar_with_default_no_warning():
     with warnings.catch_warnings(record=True) as w:
         warnings.simplefilter("always")
 
-        @dataclass
-        class Config(Generic[T_with_default]):
+        class Config(Struct, Generic[T_with_default], frozen=False):
             value: T_with_default = "default"  # type: ignore
 
         # This should not produce a warning in Python 3.13+.
@@ -75,8 +71,7 @@ def test_typing_typevar_no_default_produces_warning():
     with warnings.catch_warnings(record=True) as w:
         warnings.simplefilter("always")
 
-        @dataclass
-        class Config(Generic[T_no_default]):
+        class Config(Struct, Generic[T_no_default], frozen=False):
             value: T_no_default = "default"  # type: ignore
 
         # This should produce a warning.
@@ -98,8 +93,7 @@ def test_typing_typevar_with_bound_produces_warning():
     with warnings.catch_warnings(record=True) as w:
         warnings.simplefilter("always")
 
-        @dataclass
-        class Config(Generic[T_with_bound]):
+        class Config(Struct, Generic[T_with_bound], frozen=False):
             value: T_with_bound = 42  # type: ignore
 
         # This should produce a warning but use the bound type.
@@ -119,12 +113,10 @@ def test_typing_typevar_with_bound_produces_warning():
 def test_both_typing_and_typing_extensions_work():
     """Verify that both typing.TypeVar and typing_extensions.TypeVar work with defaults."""
 
-    @dataclass
-    class ConfigExt(Generic[T_ext]):
+    class ConfigExt(Struct, Generic[T_ext], frozen=False):
         value: T_ext = 42  # type: ignore
 
-    @dataclass
-    class ConfigTyping(Generic[T_typing]):
+    class ConfigTyping(Struct, Generic[T_typing], frozen=False):
         value: T_typing = 42  # type: ignore
 
     with warnings.catch_warnings(record=True) as w:

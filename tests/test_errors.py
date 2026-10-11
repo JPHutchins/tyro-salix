@@ -1,10 +1,10 @@
 import contextlib
-import dataclasses
 import io
 import sys
 from typing import Any, Dict, List, Optional, Tuple, TypeVar, Union
 
 import pytest
+from salix import Struct
 from typing_extensions import Annotated, Literal
 
 import tyro
@@ -12,8 +12,7 @@ from tyro._strings import strip_ansi_sequences
 
 
 # Must be global.
-@dataclasses.dataclass
-class _CycleDataclass:
+class _CycleDataclass(Struct, frozen=False):
     x: "_CycleDataclass"
 
 
@@ -115,8 +114,7 @@ def test_dict_with_any_value_error() -> None:
 
 
 def test_nested_annotation() -> None:
-    @dataclasses.dataclass
-    class OneIntArg:
+    class OneIntArg(Struct, frozen=False):
         x: int
 
     def main(arg: List[OneIntArg]) -> List[OneIntArg]:  # type: ignore
@@ -125,8 +123,7 @@ def test_nested_annotation() -> None:
     with pytest.raises(SystemExit):
         tyro.cli(main, args=[])
 
-    @dataclasses.dataclass
-    class OneStringArg:
+    class OneStringArg(Struct, frozen=False):
         x: str
 
     def main2(arg: List[OneStringArg]) -> List[OneStringArg]:  # type: ignore
@@ -135,8 +132,7 @@ def test_nested_annotation() -> None:
     with pytest.raises(SystemExit):
         tyro.cli(main2, args=["--arg", "0", "1", "2"])
 
-    @dataclasses.dataclass
-    class TwoStringArg:
+    class TwoStringArg(Struct, frozen=False):
         x: str
         y: str
 
@@ -210,12 +206,10 @@ def test_ambiguous_sequence() -> None:
 
 
 def test_similar_arguments_basic() -> None:
-    @dataclasses.dataclass
-    class RewardConfig:
+    class RewardConfig(Struct, frozen=False):
         track: bool
 
-    @dataclasses.dataclass
-    class Class:
+    class Class(Struct, frozen=False):
         reward: RewardConfig
 
     target = io.StringIO()
@@ -231,12 +225,10 @@ def test_similar_arguments_basic() -> None:
 
 
 def test_suppress_console_outputs() -> None:
-    @dataclasses.dataclass
-    class RewardConfig:
+    class RewardConfig(Struct, frozen=False):
         track: bool
 
-    @dataclasses.dataclass
-    class Class:
+    class Class(Struct, frozen=False):
         reward: RewardConfig
 
     target = io.StringIO()
@@ -267,16 +259,13 @@ def test_suppress_console_outputs_fromdict() -> None:
 
 
 def test_similar_arguments_subcommands() -> None:
-    @dataclasses.dataclass
-    class RewardConfig:
+    class RewardConfig(Struct, frozen=False):
         track: bool
 
-    @dataclasses.dataclass
-    class ClassA:
+    class ClassA(Struct, frozen=False):
         reward: RewardConfig
 
-    @dataclasses.dataclass
-    class ClassB:
+    class ClassB(Struct, frozen=False):
         reward: RewardConfig
 
     target = io.StringIO()
@@ -291,12 +280,10 @@ def test_similar_arguments_subcommands() -> None:
 
 
 def test_different_metavar_subcommands() -> None:
-    @dataclasses.dataclass
-    class ClassA:
+    class ClassA(Struct, frozen=False):
         arg: Literal["a"]
 
-    @dataclasses.dataclass
-    class ClassB:
+    class ClassB(Struct, frozen=False):
         arg: Literal["b"]
 
     target = io.StringIO()
@@ -313,17 +300,14 @@ def test_different_metavar_subcommands() -> None:
 
 
 def test_similar_arguments_subcommands_multiple() -> None:
-    @dataclasses.dataclass
-    class RewardConfig:
+    class RewardConfig(Struct, frozen=False):
         track: bool
         trace: int
 
-    @dataclasses.dataclass
-    class ClassA:
+    class ClassA(Struct, frozen=False):
         reward: RewardConfig
 
-    @dataclasses.dataclass
-    class ClassB:
+    class ClassB(Struct, frozen=False):
         reward: RewardConfig
 
     target = io.StringIO()
@@ -339,20 +323,16 @@ def test_similar_arguments_subcommands_multiple() -> None:
 
 
 def test_similar_arguments_subcommands_multiple_contains_match() -> None:
-    @dataclasses.dataclass
-    class RewardConfigA:
+    class RewardConfigA(Struct, frozen=False):
         track: bool
         trace: int
 
-    @dataclasses.dataclass
-    class RewardConfigB: ...
+    class RewardConfigB(Struct, frozen=False): ...
 
-    @dataclasses.dataclass
-    class ClassA:
+    class ClassA(Struct, frozen=False):
         reward: RewardConfigA
 
-    @dataclasses.dataclass
-    class ClassB:
+    class ClassB(Struct, frozen=False):
         reward: RewardConfigB
 
     target = io.StringIO()
@@ -375,20 +355,16 @@ def test_similar_arguments_subcommands_multiple_contains_match() -> None:
 
 
 def test_similar_arguments_subcommands_multiple_contains_match_cascading() -> None:
-    @dataclasses.dataclass
-    class RewardConfigA:
+    class RewardConfigA(Struct, frozen=False):
         track: bool
         trace: int
 
-    @dataclasses.dataclass
-    class RewardConfigB: ...
+    class RewardConfigB(Struct, frozen=False): ...
 
-    @dataclasses.dataclass
-    class ClassA:
+    class ClassA(Struct, frozen=False):
         reward: RewardConfigA
 
-    @dataclasses.dataclass
-    class ClassB:
+    class ClassB(Struct, frozen=False):
         reward: RewardConfigB
 
     target = io.StringIO()
@@ -414,17 +390,14 @@ def test_similar_arguments_subcommands_multiple_contains_match_cascading() -> No
 
 
 def test_similar_arguments_subcommands_multiple_contains_match_alt() -> None:
-    @dataclasses.dataclass
-    class RewardConfig:
+    class RewardConfig(Struct, frozen=False):
         track: bool
         trace: int
 
-    @dataclasses.dataclass
-    class ClassA:
+    class ClassA(Struct, frozen=False):
         reward: RewardConfig
 
-    @dataclasses.dataclass
-    class ClassB:
+    class ClassB(Struct, frozen=False):
         reward: RewardConfig
 
     target = io.StringIO()
@@ -441,8 +414,7 @@ def test_similar_arguments_subcommands_multiple_contains_match_alt() -> None:
 
 
 def test_similar_arguments_subcommands_overflow_different() -> None:
-    @dataclasses.dataclass
-    class RewardConfig:
+    class RewardConfig(Struct, frozen=False):
         track0: bool
         track1: bool
         track2: bool
@@ -461,12 +433,10 @@ def test_similar_arguments_subcommands_overflow_different() -> None:
         track15: bool
         track16: bool
 
-    @dataclasses.dataclass
-    class ClassA:
+    class ClassA(Struct, frozen=False):
         reward: RewardConfig
 
-    @dataclasses.dataclass
-    class ClassB:
+    class ClassB(Struct, frozen=False):
         reward: RewardConfig
 
     target = io.StringIO()
@@ -492,44 +462,34 @@ def test_similar_arguments_subcommands_overflow_different() -> None:
 
 
 def test_similar_arguments_subcommands_overflow_same() -> None:
-    @dataclasses.dataclass
-    class RewardConfig:
+    class RewardConfig(Struct, frozen=False):
         track: bool
 
-    @dataclasses.dataclass
-    class ClassA:
+    class ClassA(Struct, frozen=False):
         reward: RewardConfig
 
-    @dataclasses.dataclass
-    class ClassB:
+    class ClassB(Struct, frozen=False):
         reward: RewardConfig
 
-    @dataclasses.dataclass
-    class ClassC:
+    class ClassC(Struct, frozen=False):
         reward: RewardConfig
 
-    @dataclasses.dataclass
-    class ClassD:
+    class ClassD(Struct, frozen=False):
         reward: RewardConfig
 
-    @dataclasses.dataclass
-    class ClassE:
+    class ClassE(Struct, frozen=False):
         reward: RewardConfig
 
-    @dataclasses.dataclass
-    class ClassF:
+    class ClassF(Struct, frozen=False):
         reward: RewardConfig
 
-    @dataclasses.dataclass
-    class ClassG:
+    class ClassG(Struct, frozen=False):
         reward: RewardConfig
 
-    @dataclasses.dataclass
-    class ClassH:
+    class ClassH(Struct, frozen=False):
         reward: RewardConfig
 
-    @dataclasses.dataclass
-    class ClassI:
+    class ClassI(Struct, frozen=False):
         reward: RewardConfig
 
     target = io.StringIO()
@@ -550,45 +510,35 @@ def test_similar_arguments_subcommands_overflow_same() -> None:
 
 
 def test_similar_arguments_subcommands_overflow_same_startswith_multiple() -> None:
-    @dataclasses.dataclass
-    class RewardConfig:
+    class RewardConfig(Struct, frozen=False):
         track: bool
 
-    @dataclasses.dataclass
-    class ClassA:
+    class ClassA(Struct, frozen=False):
         reward: RewardConfig
 
-    @dataclasses.dataclass
-    class ClassB:
+    class ClassB(Struct, frozen=False):
         reward: RewardConfig
 
-    @dataclasses.dataclass
-    class ClassC:
+    class ClassC(Struct, frozen=False):
         reward: RewardConfig
 
-    @dataclasses.dataclass
-    class ClassD:
+    class ClassD(Struct, frozen=False):
         reward: RewardConfig
 
-    @dataclasses.dataclass
-    class ClassE:
+    class ClassE(Struct, frozen=False):
         reward: RewardConfig
         rewarde: tyro.conf.Suppress[int] = 10
 
-    @dataclasses.dataclass
-    class ClassF:
+    class ClassF(Struct, frozen=False):
         reward: RewardConfig
 
-    @dataclasses.dataclass
-    class ClassG:
+    class ClassG(Struct, frozen=False):
         reward: RewardConfig
 
-    @dataclasses.dataclass
-    class ClassH:
+    class ClassH(Struct, frozen=False):
         reward: RewardConfig
 
-    @dataclasses.dataclass
-    class ClassI:
+    class ClassI(Struct, frozen=False):
         reward: RewardConfig
 
     target = io.StringIO()
@@ -610,8 +560,7 @@ def test_similar_arguments_subcommands_overflow_same_startswith_multiple() -> No
 
 
 def test_similar_flag() -> None:
-    @dataclasses.dataclass
-    class Args:
+    class Args(Struct):
         flag: bool = False
 
     target = io.StringIO()
@@ -656,8 +605,7 @@ def test_value_error_subcommand() -> None:
 
 
 def test_wrong_annotation() -> None:
-    @dataclasses.dataclass
-    class Args:
+    class Args(Struct):
         x: Union[dict, int] = None  # type: ignore
 
     with pytest.warns(UserWarning):
@@ -689,16 +637,13 @@ def test_bad_dict_val() -> None:
 
 
 def test_invalid_subcommand_default() -> None:
-    @dataclasses.dataclass
-    class A:
+    class A(Struct, frozen=False):
         a: int
 
-    @dataclasses.dataclass
-    class B:
+    class B(Struct, frozen=False):
         b: int
 
-    @dataclasses.dataclass
-    class C:
+    class C(Struct, frozen=False):
         c: int
 
     assert tyro.cli(Union[A, B], args="a --a 5".split(" ")) == A(5)  # type: ignore
@@ -714,8 +659,7 @@ def test_invalid_subcommand_default() -> None:
 def test_metavar_error() -> None:
     """https://github.com/brentyi/tyro/issues/218"""
 
-    @dataclasses.dataclass
-    class Train:
+    class Train(Struct, frozen=False):
         # residual block
         residual: Annotated[
             Literal["residual", "ResidualBlock", "double", "DoubleConv"],
@@ -732,8 +676,7 @@ def test_metavar_error() -> None:
 
 
 def test_alias_error() -> None:
-    @dataclasses.dataclass
-    class Train:
+    class Train(Struct, frozen=False):
         # residual block
         residual: Annotated[
             Literal["residual", "ResidualBlock", "double", "DoubleConv"],
@@ -757,14 +700,12 @@ def test_required_arg_error_subcommand_context() -> None:
     consistently indicate that the argument belongs to that subcommand, not the root.
     """
 
-    @dataclasses.dataclass
-    class Checkout:
+    class Checkout(Struct, frozen=False):
         """Checkout a branch."""
 
         branch: str
 
-    @dataclasses.dataclass
-    class Commit:
+    class Commit(Struct, frozen=False):
         """Commit changes."""
 
         message: str
@@ -793,8 +734,7 @@ def test_error_dummy() -> None:
 
 
 def test_unsupported_generic_collection() -> None:
-    @dataclasses.dataclass
-    class MiscStruct:
+    class MiscStruct(Struct, frozen=False):
         max_steps: Union[int, None] = 5
         headless: bool = False
 
@@ -812,16 +752,13 @@ def test_invalid_default_nested_field_error_message() -> None:
     3. What type was expected vs. what was provided
     """
 
-    @dataclasses.dataclass(frozen=True)
-    class ActuatorCfg:
+    class ActuatorCfg(Struct):
         stiffness: int
 
-    @dataclasses.dataclass(frozen=True)
-    class EntityArticulationInfoCfg:
+    class EntityArticulationInfoCfg(Struct):
         actuators: Tuple[ActuatorCfg, ...] = ()
 
-    @dataclasses.dataclass(frozen=True)
-    class Args:
+    class Args(Struct):
         """Base class for argument containers."""
 
         articulation: Union[EntityArticulationInfoCfg, None] = (
@@ -915,12 +852,10 @@ def test_dummy_inner_name_not_leaked_invalid_choice(backend) -> None:
     appearing in error output instead of the clean `bot-id`.
     """
 
-    @dataclasses.dataclass
-    class Run:
+    class Run(Struct, frozen=False):
         bot_id: Annotated[Literal["id-one", "id-two"], tyro.conf.Positional]
 
-    @dataclasses.dataclass
-    class List_:
+    class List_(Struct, frozen=False):
         kind: Annotated[Literal["bots"], tyro.conf.Positional]
 
     target = io.StringIO()
@@ -956,15 +891,13 @@ def test_dummy_inner_name_not_leaked_mutex_group(backend, use_underscores) -> No
     """
     mutex = tyro.conf.create_mutex_group(required=True)
 
-    @dataclasses.dataclass
-    class Run:
+    class Run(Struct, frozen=False):
         bot_id: Annotated[
             Optional[Literal["id-one", "id-two"]], tyro.conf.Positional, mutex
         ] = None
         other: Annotated[Optional[int], mutex] = None
 
-    @dataclasses.dataclass
-    class List_:
+    class List_(Struct, frozen=False):
         kind: Annotated[Literal["bots"], tyro.conf.Positional]
 
     target = io.StringIO()
@@ -987,8 +920,7 @@ def test_root_post_init_value_error() -> None:
     rendered as a CLI usage error, not a raw traceback.
     https://github.com/brentyi/tyro/issues/482"""
 
-    @dataclasses.dataclass
-    class A:
+    class A(Struct, frozen=False):
         b: int
 
         def __post_init__(self):
@@ -1012,16 +944,14 @@ def test_nested_post_init_value_error() -> None:
     rendered as a CLI usage error, not a raw traceback.
     https://github.com/brentyi/tyro/issues/482"""
 
-    @dataclasses.dataclass
-    class A:
+    class A(Struct, frozen=False):
         b: int
 
         def __post_init__(self):
             if self.b < 0:
                 raise ValueError("b must be positive")
 
-    @dataclasses.dataclass
-    class Parent:
+    class Parent(Struct, frozen=False):
         a: A
 
     target = io.StringIO()
@@ -1037,16 +967,14 @@ def test_subcommand_post_init_value_error() -> None:
     rendered as a CLI usage error without leaking internal field names.
     https://github.com/brentyi/tyro/issues/482"""
 
-    @dataclasses.dataclass
-    class CmdA:
+    class CmdA(Struct, frozen=False):
         b: int
 
         def __post_init__(self):
             if self.b < 0:
                 raise ValueError("b must be positive")
 
-    @dataclasses.dataclass
-    class CmdB:
+    class CmdB(Struct, frozen=False):
         c: int = 0
 
     target = io.StringIO()
@@ -1093,8 +1021,7 @@ def test_root_post_init_value_error_return_unknown_args() -> None:
     """Root instantiation errors should also be rendered when
     `return_unknown_args=True`. https://github.com/brentyi/tyro/issues/482"""
 
-    @dataclasses.dataclass
-    class A:
+    class A(Struct, frozen=False):
         b: int
 
         def __post_init__(self):

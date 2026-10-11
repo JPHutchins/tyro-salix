@@ -5,31 +5,26 @@ will produce a pair of subcommands); when we write things like `int | SomeDatacl
 handling gets more complicated but should still be supported!
 """
 
-import dataclasses
 from typing import Any, Dict, List, Tuple, Union
 
 import pytest
 from helptext_utils import get_helptext_with_checks
+from salix import Struct
 
 import tyro
 
 
 def test_subparser_strip_non_nested() -> None:
-    @dataclasses.dataclass
-    class DefaultHTTPServer:
+    class DefaultHTTPServer(Struct, frozen=False):
         y: int
 
-    @dataclasses.dataclass
-    class DefaultSMTPServer:
+    class DefaultSMTPServer(Struct, frozen=False):
         z: int
 
-    @dataclasses.dataclass
-    class DefaultSubparser:
+    class DefaultSubparser(Struct, frozen=False):
         x: int
         # We add [int, str] to the annotation here... this should be ignored.
-        bc: Union[int, str, DefaultHTTPServer, DefaultSMTPServer] = dataclasses.field(
-            default_factory=lambda: DefaultHTTPServer(5)
-        )
+        bc: Union[int, str, DefaultHTTPServer, DefaultSMTPServer] = DefaultHTTPServer(5)
 
     assert (
         tyro.cli(
@@ -60,16 +55,13 @@ def test_subparser_strip_non_nested() -> None:
 
 
 def test_subparser_strip_nested() -> None:
-    @dataclasses.dataclass
-    class DefaultHTTPServer:
+    class DefaultHTTPServer(Struct, frozen=False):
         y: int
 
-    @dataclasses.dataclass
-    class DefaultSMTPServer:
+    class DefaultSMTPServer(Struct, frozen=False):
         z: int
 
-    @dataclasses.dataclass
-    class DefaultSubparser:
+    class DefaultSubparser(Struct, frozen=False):
         x: int
         # We add [int, str] to the annotation here... this should be ignored.
         bc: Union[int, str, DefaultHTTPServer, DefaultSMTPServer] = 5
@@ -85,8 +77,7 @@ def test_subparser_strip_nested() -> None:
 
 
 def test_with_fancy_types() -> None:
-    @dataclasses.dataclass
-    class Args:
+    class Args(Struct, frozen=False):
         y: int
 
     def main(x: Union[Tuple[int, ...], List[str], Args, Dict[str, int]]) -> Any:
@@ -99,12 +90,10 @@ def test_with_fancy_types() -> None:
 
 
 def test_disallow_none_subcommand() -> None:
-    @dataclasses.dataclass
-    class SubcommandA:
+    class SubcommandA(Struct, frozen=False):
         value: int
 
-    @dataclasses.dataclass
-    class Config:
+    class Config(Struct, frozen=False):
         subcommand: tyro.conf.DisallowNone[Union[SubcommandA, None]] = None
 
     with pytest.raises(SystemExit):
@@ -117,12 +106,10 @@ def test_disallow_none_subcommand() -> None:
 
 
 def test_disallow_none_subcommand_backwards_compatibility() -> None:
-    @dataclasses.dataclass
-    class SubcommandA:
+    class SubcommandA(Struct, frozen=False):
         value: int
 
-    @dataclasses.dataclass
-    class Config:
+    class Config(Struct, frozen=False):
         subcommand: tyro.conf.DisallowNone[Union[SubcommandA, None]] = None
 
     with pytest.raises(SystemExit):
@@ -130,16 +117,13 @@ def test_disallow_none_subcommand_backwards_compatibility() -> None:
 
 
 def test_disallow_none_multiple_options() -> None:
-    @dataclasses.dataclass
-    class SubcommandA:
+    class SubcommandA(Struct, frozen=False):
         a: int
 
-    @dataclasses.dataclass
-    class SubcommandB:
+    class SubcommandB(Struct, frozen=False):
         b: str
 
-    @dataclasses.dataclass
-    class Config:
+    class Config(Struct, frozen=False):
         subcommand: tyro.conf.DisallowNone[Union[SubcommandA, SubcommandB, None]] = None
 
     # Should work with valid subcommands
@@ -171,16 +155,13 @@ def test_disallow_none_multiple_options() -> None:
 
 
 def test_disallow_none_multiple_fields() -> None:
-    @dataclasses.dataclass
-    class SubcommandA:
+    class SubcommandA(Struct, frozen=False):
         value: int
 
-    @dataclasses.dataclass
-    class SubcommandB:
+    class SubcommandB(Struct, frozen=False):
         value: str
 
-    @dataclasses.dataclass
-    class Config:
+    class Config(Struct, frozen=False):
         first: tyro.conf.DisallowNone[Union[SubcommandA, None]] = None
         second: tyro.conf.DisallowNone[Union[SubcommandB, None]] = None
 
@@ -210,16 +191,13 @@ def test_disallow_none_multiple_fields() -> None:
 
 
 def test_disallow_none_nested_subcommands() -> None:
-    @dataclasses.dataclass
-    class InnerA:
+    class InnerA(Struct, frozen=False):
         value: int
 
-    @dataclasses.dataclass
-    class InnerB:
+    class InnerB(Struct, frozen=False):
         inner: tyro.conf.DisallowNone[Union[InnerA, None]] = None
 
-    @dataclasses.dataclass
-    class Config:
+    class Config(Struct, frozen=False):
         outer: tyro.conf.DisallowNone[Union[InnerB, None]] = None
 
     # Should work with valid nested subcommands
@@ -241,16 +219,13 @@ def test_disallow_none_nested_subcommands() -> None:
 
 
 def test_normal_subcommand_helptext_comparison() -> None:
-    @dataclasses.dataclass
-    class SubcommandA:
+    class SubcommandA(Struct, frozen=False):
         value: int
 
-    @dataclasses.dataclass
-    class ConfigWithoutDisallowNone:
+    class ConfigWithoutDisallowNone(Struct, frozen=False):
         subcommand: Union[SubcommandA, None] = None
 
-    @dataclasses.dataclass
-    class ConfigWithDisallowNone:
+    class ConfigWithDisallowNone(Struct, frozen=False):
         subcommand: tyro.conf.DisallowNone[Union[SubcommandA, None]] = None
 
     normal_helptext = get_helptext_with_checks(ConfigWithoutDisallowNone)
@@ -266,12 +241,10 @@ def test_normal_subcommand_helptext_comparison() -> None:
 
 
 def test_disallow_none_mixed_primitive_union() -> None:
-    @dataclasses.dataclass
-    class SubcommandA:
+    class SubcommandA(Struct, frozen=False):
         value: int
 
-    @dataclasses.dataclass
-    class Config:
+    class Config(Struct, frozen=False):
         # This creates a mixed union where some types create subcommands (SubcommandA)
         # and others don't (str), but None is disallowed
         field: tyro.conf.DisallowNone[Union[SubcommandA, str, None]] = None

@@ -1,6 +1,5 @@
-import dataclasses
-
 from helptext_utils import get_helptext_with_checks
+from salix import Struct
 from typing_extensions import Annotated, Doc
 
 
@@ -9,8 +8,7 @@ class SomeOtherMarker:
 
 
 def test_basic() -> None:
-    @dataclasses.dataclass
-    class SimpleDoc:
+    class SimpleDoc(Struct, frozen=False):
         x: Annotated[int, Doc("Simple documentation")]
 
     assert "Simple documentation" in get_helptext_with_checks(SimpleDoc)
@@ -24,16 +22,14 @@ def test_basic_function() -> None:
 
 
 def test_multiple_annotations() -> None:
-    @dataclasses.dataclass
-    class MultipleAnnotations:
+    class MultipleAnnotations(Struct, frozen=False):
         x: Annotated[int, SomeOtherMarker(), Doc("Doc with other markers")]
 
     assert "Doc with other markers" in get_helptext_with_checks(MultipleAnnotations)
 
 
 def test_multiline_to_dedent() -> None:
-    @dataclasses.dataclass
-    class MultilineDoc:
+    class MultilineDoc(Struct, frozen=False):
         x: Annotated[
             int,
             Doc(

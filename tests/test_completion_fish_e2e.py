@@ -21,7 +21,6 @@ Findings covered (see review):
 """
 
 import contextlib
-import dataclasses
 import io
 import shutil
 import subprocess
@@ -29,6 +28,7 @@ import sys
 from typing import List
 
 import pytest
+from salix import Struct
 
 import tyro
 
@@ -118,8 +118,7 @@ def test_special_chars_in_default_do_not_break_script(
     if backend != "tyro":
         pytest.skip("Testing tyro-specific completion behavior")
 
-    @dataclasses.dataclass
-    class Config:
+    class Config(Struct, frozen=False):
         value: str = default
 
     script = _generate_fish_script(Config)
@@ -141,8 +140,7 @@ def test_description_with_quotes_does_not_break_script(backend: str) -> None:
 
     from typing_extensions import Annotated
 
-    @dataclasses.dataclass
-    class Config:
+    class Config(Struct, frozen=False):
         value: Annotated[
             int, tyro.conf.arg(help="use \"double\" and 'single' $quotes")
         ] = 1
@@ -168,8 +166,7 @@ def test_no_duplicate_completions_for_bare_prog(backend: str) -> None:
     if backend != "tyro":
         pytest.skip("Testing tyro-specific completion behavior")
 
-    @dataclasses.dataclass
-    class Config:
+    class Config(Struct, frozen=False):
         alpha: int = 1
         beta: int = 2
         gamma: int = 3
@@ -193,8 +190,7 @@ def test_no_duplicate_completions_for_dotslash_prog(backend: str) -> None:
     if backend != "tyro":
         pytest.skip("Testing tyro-specific completion behavior")
 
-    @dataclasses.dataclass
-    class Config:
+    class Config(Struct, frozen=False):
         alpha: int = 1
         beta: int = 2
 
@@ -223,8 +219,7 @@ def test_argparse_backend_fish_clean_error(
     if backend != "argparse":
         pytest.skip("Testing argparse/shtab backend behavior")
 
-    @dataclasses.dataclass
-    class Config:
+    class Config(Struct, frozen=False):
         value: int = 1
 
     # The completion path prints a clean message and calls sys.exit() rather
@@ -253,8 +248,7 @@ def test_prog_with_spaces_sources_cleanly(backend: str) -> None:
     if backend != "tyro":
         pytest.skip("Testing tyro-specific completion behavior")
 
-    @dataclasses.dataclass
-    class Config:
+    class Config(Struct, frozen=False):
         alpha: int = 1
 
     script = _generate_fish_script(Config, prog="my prog")
@@ -281,8 +275,7 @@ def test_tyro_backend_tcsh_supported(backend: str) -> None:
     if backend != "tyro":
         pytest.skip("Testing tyro-specific completion behavior")
 
-    @dataclasses.dataclass
-    class Config:
+    class Config(Struct, frozen=False):
         value: int = 1
 
     target = io.StringIO()

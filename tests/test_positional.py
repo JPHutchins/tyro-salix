@@ -1,11 +1,11 @@
 from __future__ import annotations
 
 import pathlib
-from dataclasses import dataclass
 from typing import List, Optional, Sequence, Tuple
 
 import pytest
 from helptext_utils import get_helptext_with_checks
+from salix import Struct
 from typing_extensions import Annotated
 
 import tyro
@@ -223,8 +223,7 @@ def test_tuple_custom_constructors_positional_default_five() -> None:
     assert "A TUPLE METAVAR" in get_helptext_with_checks(main)
 
 
-@dataclass
-class DoubleDashOptions:
+class DoubleDashOptions(Struct, frozen=False):
     """Test dataclass for double-dash parsing."""
 
     command: Annotated[
@@ -233,8 +232,7 @@ class DoubleDashOptions:
     flag: str = "<unset>"
 
 
-@dataclass
-class DoubleDashFixedPositional:
+class DoubleDashFixedPositional(Struct, frozen=False):
     """Test dataclass with a fixed (non-sequence) positional argument."""
 
     command: Annotated[tyro.conf.Positional[str], tyro.conf.arg(metavar="COMMAND")]
@@ -307,8 +305,7 @@ def test_positional_list_with_preceding_positional():
     assert helptext.count("(required)") == 1
 
 
-@dataclass
-class PositionalAndOptionalVarLen:
+class PositionalAndOptionalVarLen(Struct, frozen=False):
     """Test dataclass with a positional and a variable-length optional arg."""
 
     pos: tyro.conf.Positional[str]
@@ -366,8 +363,7 @@ def test_positional_with_varlen_kwarg_positional_nargs_none() -> None:
 def test_positional_with_varlen_kwarg_positional_nargs_plus() -> None:
     """Cover nargs='+' branch in _min_positional_consumption."""
 
-    @dataclass
-    class Config:
+    class Config(Struct, frozen=False):
         pos: tyro.conf.Positional[tuple[str, ...]]
         var_len: Annotated[tuple[str, ...], tyro.conf.arg(aliases=["-x"])] = ()
 
@@ -383,8 +379,7 @@ def test_positional_varlen_rejects_unknown_flags() -> None:
     path value instead of raising an unrecognized-options error.
     """
 
-    @dataclass
-    class Arguments:
+    class Arguments(Struct, frozen=False):
         logfile_paths: tyro.conf.Positional[tuple[pathlib.Path, ...]]
         cfg_file: Annotated[pathlib.Path, tyro.conf.arg(aliases=["-c"])] = pathlib.Path(
             "config.yaml"

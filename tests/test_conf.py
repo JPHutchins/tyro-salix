@@ -1,6 +1,5 @@
 # mypy: ignore-errors
 import contextlib
-import dataclasses
 import io
 import json as json_
 import pathlib
@@ -8,6 +7,7 @@ import shlex
 from typing import Any, Dict, Generic, List, Sequence, Tuple, Type, TypeVar, Union
 
 import pytest
+import salix
 from helptext_utils import get_helptext_with_checks
 from typing_extensions import Annotated, TypedDict
 
@@ -15,38 +15,32 @@ import tyro
 
 
 def test_suppress_subcommand() -> None:
-    @dataclasses.dataclass
-    class DefaultInstanceHTTPServer:
+    class DefaultInstanceHTTPServer(salix.Struct, frozen=False):
         y: int = 0
         flag: bool = True
 
-    @dataclasses.dataclass
-    class DefaultInstanceSMTPServer:
+    class DefaultInstanceSMTPServer(salix.Struct, frozen=False):
         z: int = 0
 
-    @dataclasses.dataclass
-    class DefaultInstanceSubparser:
+    class DefaultInstanceSubparser(salix.Struct, frozen=False):
         x: int
         # bc: Union[DefaultInstanceHTTPServer, DefaultInstanceSMTPServer]
         bc: tyro.conf.Suppress[
             Union[DefaultInstanceHTTPServer, DefaultInstanceSMTPServer]
-        ] = dataclasses.field(default_factory=DefaultInstanceHTTPServer)
+        ] = DefaultInstanceHTTPServer()
 
     assert "bc" not in get_helptext_with_checks(DefaultInstanceSubparser)
 
 
 def test_omit_subcommand_prefix() -> None:
-    @dataclasses.dataclass
-    class DefaultInstanceHTTPServer:
+    class DefaultInstanceHTTPServer(salix.Struct, frozen=False):
         y: int = 0
         flag: bool = True
 
-    @dataclasses.dataclass
-    class DefaultInstanceSMTPServer:
+    class DefaultInstanceSMTPServer(salix.Struct, frozen=False):
         z: int = 0
 
-    @dataclasses.dataclass
-    class DefaultInstanceSubparser:
+    class DefaultInstanceSubparser(salix.Struct, frozen=False):
         x: int
         # bc: Union[DefaultInstanceHTTPServer, DefaultInstanceSMTPServer]
         bc: tyro.conf.OmitSubcommandPrefixes[
@@ -89,17 +83,14 @@ def test_omit_subcommand_prefix() -> None:
 
 
 def test_avoid_subparser_with_unsupported_union_member() -> None:
-    @dataclasses.dataclass
-    class Dummy:
+    class Dummy(salix.Struct, frozen=False):
         pass
 
-    @dataclasses.dataclass
-    class Container:
+    class Container(salix.Struct, frozen=False):
         x: Dict[str, Dummy]
         y: str
 
-    @dataclasses.dataclass
-    class Config:
+    class Config(salix.Struct, frozen=False):
         a: int = 3
         b: Union[Container, None] = None
 
@@ -122,16 +113,13 @@ def test_avoid_subparser_with_unsupported_union_member() -> None:
 
 
 def test_avoid_subparser_with_default() -> None:
-    @dataclasses.dataclass
-    class DefaultInstanceHTTPServer:
+    class DefaultInstanceHTTPServer(salix.Struct, frozen=False):
         y: int = 0
 
-    @dataclasses.dataclass
-    class DefaultInstanceSMTPServer:
+    class DefaultInstanceSMTPServer(salix.Struct, frozen=False):
         z: int = 0
 
-    @dataclasses.dataclass
-    class DefaultInstanceSubparser:
+    class DefaultInstanceSubparser(salix.Struct, frozen=False):
         x: int
         bc: tyro.conf.AvoidSubcommands[
             Union[DefaultInstanceHTTPServer, DefaultInstanceSMTPServer]
@@ -164,16 +152,13 @@ def test_avoid_subparser_with_default() -> None:
 
 
 def test_avoid_subparser_with_default_recursive() -> None:
-    @dataclasses.dataclass
-    class DefaultInstanceHTTPServer:
+    class DefaultInstanceHTTPServer(salix.Struct, frozen=False):
         y: int = 0
 
-    @dataclasses.dataclass
-    class DefaultInstanceSMTPServer:
+    class DefaultInstanceSMTPServer(salix.Struct, frozen=False):
         z: int = 0
 
-    @dataclasses.dataclass
-    class DefaultInstanceSubparser:
+    class DefaultInstanceSubparser(salix.Struct, frozen=False):
         x: int
         bc: Union[DefaultInstanceHTTPServer, DefaultInstanceSMTPServer]
 
@@ -213,28 +198,23 @@ def test_avoid_subparser_with_default_recursive() -> None:
 
 
 def test_subparser_in_nested_with_metadata() -> None:
-    @dataclasses.dataclass(frozen=True)
-    class A:
+    class A(salix.Struct, frozen=False):
         a: int
 
-    @dataclasses.dataclass
-    class B:
+    class B(salix.Struct, frozen=False):
         b: int
         a: A = A(5)
 
-    @dataclasses.dataclass
-    class Nested2:
+    class Nested2(salix.Struct, frozen=False):
         subcommand: Union[
             Annotated[A, tyro.conf.subcommand("command-a", default=A(7))],
             Annotated[B, tyro.conf.subcommand("command-b", default=B(9))],
         ]
 
-    @dataclasses.dataclass
-    class Nested1:
+    class Nested1(salix.Struct, frozen=False):
         nested2: Nested2
 
-    @dataclasses.dataclass
-    class Parent:
+    class Parent(salix.Struct, frozen=False):
         nested1: Nested1
 
     assert tyro.cli(
@@ -265,28 +245,23 @@ def test_subparser_in_nested_with_metadata() -> None:
 
 
 def test_subparser_in_nested_with_metadata_suppressed() -> None:
-    @dataclasses.dataclass(frozen=True)
-    class A:
+    class A(salix.Struct, frozen=False):
         a: tyro.conf.Suppress[int]
 
-    @dataclasses.dataclass
-    class B:
+    class B(salix.Struct, frozen=False):
         b: int
         a: A = A(5)
 
-    @dataclasses.dataclass
-    class Nested2:
+    class Nested2(salix.Struct, frozen=False):
         subcommand: Union[
             Annotated[A, tyro.conf.subcommand("command-a", default=A(7))],
             Annotated[B, tyro.conf.subcommand("command-b", default=B(9))],
         ]
 
-    @dataclasses.dataclass
-    class Nested1:
+    class Nested1(salix.Struct, frozen=False):
         nested2: Nested2
 
-    @dataclasses.dataclass
-    class Parent:
+    class Parent(salix.Struct, frozen=False):
         nested1: Nested1
 
     assert tyro.cli(
@@ -320,23 +295,19 @@ def test_subparser_in_nested_with_metadata_suppressed() -> None:
 
 
 def test_subparser_in_nested_with_metadata_generic() -> None:
-    @dataclasses.dataclass(frozen=True)
-    class A:
+    class A(salix.Struct, frozen=False):
         a: int
 
-    @dataclasses.dataclass
-    class B:
+    class B(salix.Struct, frozen=False):
         b: int
         a: A = A(5)
 
     T = TypeVar("T")
 
-    @dataclasses.dataclass
-    class Nested2(Generic[T]):
+    class Nested2(salix.Struct, Generic[T], frozen=False):
         subcommand: T
 
-    @dataclasses.dataclass
-    class Nested1:
+    class Nested1(salix.Struct, frozen=False):
         nested2: Nested2[
             Union[
                 Annotated[A, tyro.conf.subcommand("command-a", default=A(7))],
@@ -344,8 +315,7 @@ def test_subparser_in_nested_with_metadata_generic() -> None:
             ]
         ]
 
-    @dataclasses.dataclass
-    class Parent:
+    class Parent(salix.Struct, frozen=False):
         nested1: Nested1
 
     assert tyro.cli(
@@ -376,30 +346,25 @@ def test_subparser_in_nested_with_metadata_generic() -> None:
 
 
 def test_subparser_in_nested_with_metadata_generic_alt() -> None:
-    @dataclasses.dataclass(frozen=True)
-    class A:
+    class A(salix.Struct, frozen=False):
         a: int
 
-    @dataclasses.dataclass
-    class B:
+    class B(salix.Struct, frozen=False):
         b: int
         a: A = A(5)
 
     T = TypeVar("T")
 
-    @dataclasses.dataclass
-    class Nested2(Generic[T]):
+    class Nested2(salix.Struct, Generic[T], frozen=False):
         subcommand: Union[
             Annotated[T, tyro.conf.subcommand("command-a", default=A(7))],
             Annotated[B, tyro.conf.subcommand("command-b", default=B(9))],
         ]
 
-    @dataclasses.dataclass
-    class Nested1:
+    class Nested1(salix.Struct, frozen=False):
         nested2: Nested2[A]
 
-    @dataclasses.dataclass
-    class Parent:
+    class Parent(salix.Struct, frozen=False):
         nested1: Nested1
 
     assert tyro.cli(
@@ -430,20 +395,17 @@ def test_subparser_in_nested_with_metadata_generic_alt() -> None:
 
 
 def test_subparser_in_nested_with_metadata_default_matching() -> None:
-    @dataclasses.dataclass(frozen=True)
-    class A:
+    class A(salix.Struct, frozen=False):
         a: int
 
-    @dataclasses.dataclass
-    class B:
+    class B(salix.Struct, frozen=False):
         b: int
         a: A = A(5)
 
     default_one = B(3)
     default_three = B(9)
 
-    @dataclasses.dataclass
-    class Nested:
+    class Nested(salix.Struct, frozen=False):
         subcommand: Union[
             Annotated[B, tyro.conf.subcommand("one", default=default_one)],
             Annotated[B, tyro.conf.subcommand("two")],
@@ -472,8 +434,7 @@ def test_subparser_in_nested_with_metadata_default_matching() -> None:
 def test_flag() -> None:
     """When boolean flags have no default value, they must be explicitly specified."""
 
-    @dataclasses.dataclass
-    class A:
+    class A(salix.Struct, frozen=False):
         x: bool
 
     assert tyro.cli(
@@ -500,8 +461,7 @@ def test_flag() -> None:
 def test_fixed() -> None:
     """When an argument is fixed, we shouldn't be able to override it from the CLI."""
 
-    @dataclasses.dataclass
-    class A:
+    class A(salix.Struct, frozen=False):
         x: tyro.conf.Fixed[bool]
 
     assert tyro.cli(
@@ -535,8 +495,7 @@ def test_fixed_value_error_attribution(capsys) -> None:
     an opaque "Unrecognized options: <value>" message with no flag attribution.
     """
 
-    @dataclasses.dataclass
-    class A:
+    class A(salix.Struct, frozen=False):
         a: int = 0
         b: tyro.conf.Fixed[int] = 0
 
@@ -552,8 +511,7 @@ def test_fixed_value_error_attribution(capsys) -> None:
 def test_fixed_recursive() -> None:
     """When an argument is fixed, we shouldn't be able to override it from the CLI."""
 
-    @dataclasses.dataclass
-    class A:
+    class A(salix.Struct, frozen=False):
         x: bool
 
     assert tyro.cli(
@@ -576,8 +534,7 @@ def test_type_with_no_conf_is_fixed() -> None:
     """The `type` type doesn't make sense to parse via the CLI, and should be
     fixed. See: https://github.com/brentyi/tyro/issues/164"""
 
-    @dataclasses.dataclass
-    class A:
+    class A(salix.Struct, frozen=False):
         x: type = int
 
     assert tyro.cli(A, args=[]) == A()
@@ -587,8 +544,7 @@ def test_type_with_no_conf_is_fixed() -> None:
 def test_suppressed_group() -> None:
     """Reproduction of https://github.com/nerfstudio-project/nerfstudio/issues/882."""
 
-    @dataclasses.dataclass
-    class Inner:
+    class Inner(salix.Struct, frozen=False):
         a: int
         b: int
 
@@ -604,8 +560,7 @@ def test_suppressed_group() -> None:
 def test_fixed_group() -> None:
     """Inspired by https://github.com/nerfstudio-project/nerfstudio/issues/882."""
 
-    @dataclasses.dataclass
-    class Inner:
+    class Inner(salix.Struct, frozen=False):
         a: int
         b: int
 
@@ -621,8 +576,7 @@ def test_fixed_group() -> None:
 def test_fixed_suppressed_group() -> None:
     """Reproduction of https://github.com/nerfstudio-project/nerfstudio/issues/882."""
 
-    @dataclasses.dataclass
-    class Inner:
+    class Inner(salix.Struct, frozen=False):
         a: int
         b: int
 
@@ -636,8 +590,7 @@ def test_fixed_suppressed_group() -> None:
 
 
 def test_suppressed() -> None:
-    @dataclasses.dataclass
-    class Struct:
+    class Struct(salix.Struct, frozen=False):
         a: int = 5
         b: tyro.conf.Suppress[str] = "7"
 
@@ -650,8 +603,7 @@ def test_suppressed() -> None:
 
 
 def test_suppress_manual_fixed() -> None:
-    @dataclasses.dataclass
-    class Struct:
+    class Struct(salix.Struct, frozen=False):
         a: int = 5
         b: tyro.conf.SuppressFixed[tyro.conf.Fixed[str]] = "7"
 
@@ -664,8 +616,7 @@ def test_suppress_manual_fixed() -> None:
 
 
 def test_suppress_manual_fixed_one_arg_only() -> None:
-    @dataclasses.dataclass
-    class Struct:
+    class Struct(salix.Struct, frozen=False):
         b: tyro.conf.SuppressFixed[tyro.conf.Fixed[str]] = "7"
 
     def main(x: Any = Struct()):
@@ -677,8 +628,7 @@ def test_suppress_manual_fixed_one_arg_only() -> None:
 
 
 def test_suppress_auto_fixed() -> None:
-    @dataclasses.dataclass
-    class Struct:
+    class Struct(salix.Struct, frozen=False):
         a: int = 5
 
         def b(self, x):
@@ -693,8 +643,7 @@ def test_suppress_auto_fixed() -> None:
 
 
 def test_argconf_help() -> None:
-    @dataclasses.dataclass
-    class Struct:
+    class Struct(salix.Struct, frozen=False):
         a: Annotated[
             int,
             tyro.conf.arg(
@@ -724,8 +673,7 @@ def test_argconf_help() -> None:
 
 
 def test_argconf_help_behavior_hint_lambda() -> None:
-    @dataclasses.dataclass
-    class Struct:
+    class Struct(salix.Struct, frozen=False):
         a: Annotated[
             int,
             tyro.conf.arg(
@@ -755,8 +703,7 @@ def test_argconf_help_behavior_hint_lambda() -> None:
 
 
 def test_argconf_no_prefix_help() -> None:
-    @dataclasses.dataclass
-    class Struct:
+    class Struct(salix.Struct, frozen=False):
         a: Annotated[
             int,
             tyro.conf.arg(
@@ -792,8 +739,7 @@ def test_positional() -> None:
 
 
 def test_positional_required_args() -> None:
-    @dataclasses.dataclass
-    class Args:
+    class Args(salix.Struct, frozen=False):
         x: int
         y: int = 3
 
@@ -819,16 +765,13 @@ def test_implicit_default_subcommand_on_frontier() -> None:
             "Per-argument CascadeSubcommandArgs only supported with tyro backend"
         )
 
-    @dataclasses.dataclass(frozen=True)
-    class A:
+    class A(salix.Struct, frozen=False):
         a: int = 0
 
-    @dataclasses.dataclass(frozen=True)
-    class B:
+    class B(salix.Struct, frozen=False):
         b: int = 0
 
-    @dataclasses.dataclass(frozen=True)
-    class Args:
+    class Args(salix.Struct, frozen=False):
         one: Union[A, B] = A()
         two: Union[A, B] = B()
 
@@ -855,13 +798,11 @@ def test_cascade_with_union_no_default() -> None:
     if tyro._experimental_options["backend"] != "tyro":
         pytest.skip("CascadeSubcommandArgs only supported with tyro backend")
 
-    @dataclasses.dataclass
-    class A:
+    class A(salix.Struct, frozen=False):
         x: int
         y: str = "default"
 
-    @dataclasses.dataclass
-    class B:
+    class B(salix.Struct, frozen=False):
         a: A
         z: float = 3.14
 
@@ -888,22 +829,17 @@ def test_cascade_with_mixed_defaults() -> None:
     if tyro._experimental_options["backend"] != "tyro":
         pytest.skip("CascadeSubcommandArgs only supported with tyro backend")
 
-    @dataclasses.dataclass
-    class ConfigA:
+    class ConfigA(salix.Struct, frozen=False):
         a_value: int = 1
 
-    @dataclasses.dataclass
-    class ConfigB:
+    class ConfigB(salix.Struct, frozen=False):
         b_value: int = 2
 
-    @dataclasses.dataclass
-    class Args:
+    class Args(salix.Struct, frozen=False):
         # This one has NO default, so default_name will be None.
         config_required: Union[ConfigA, ConfigB]
         # This one has a default, so default_name will be set.
-        config_with_default: Union[ConfigA, ConfigB] = dataclasses.field(
-            default_factory=ConfigA
-        )
+        config_with_default: Union[ConfigA, ConfigB] = ConfigA()
 
     # This should not raise KeyError even though config_required has no default.
     result = tyro.cli(
@@ -931,22 +867,19 @@ def test_cascade_with_mixed_defaults() -> None:
 
 
 def test_omit_subcommand_prefix_and_consolidate_subcommand_args() -> None:
-    @dataclasses.dataclass
-    class DefaultInstanceHTTPServer:
+    class DefaultInstanceHTTPServer(salix.Struct, frozen=False):
         y: int = 0
         flag: bool = True
 
-    @dataclasses.dataclass
-    class DefaultInstanceSMTPServer:
+    class DefaultInstanceSMTPServer(salix.Struct, frozen=False):
         z: int = 0
 
-    @dataclasses.dataclass
-    class DefaultInstanceSubparser:
+    class DefaultInstanceSubparser(salix.Struct, frozen=False):
         x: int
         # bc: Union[DefaultInstanceHTTPServer, DefaultInstanceSMTPServer]
         bc: tyro.conf.OmitSubcommandPrefixes[
             Union[DefaultInstanceHTTPServer, DefaultInstanceSMTPServer]
-        ] = dataclasses.field(default_factory=DefaultInstanceHTTPServer)
+        ] = DefaultInstanceHTTPServer()
 
     assert (
         tyro.cli(
@@ -1013,17 +946,14 @@ def test_omit_subcommand_prefix_and_consolidate_subcommand_args() -> None:
 
 def test_omit_subcommand_prefix_and_consolidate_subcommand_args_in_function() -> None:
     @tyro.conf.configure(tyro.conf.subcommand(name="http-server"))
-    @dataclasses.dataclass
-    class DefaultInstanceHTTPServer:
+    class DefaultInstanceHTTPServer(salix.Struct, frozen=False):
         y: int = 0
         flag: bool = True
 
-    @dataclasses.dataclass
-    class DefaultInstanceSMTPServer:
+    class DefaultInstanceSMTPServer(salix.Struct, frozen=False):
         z: int = 0
 
-    @dataclasses.dataclass
-    class DefaultInstanceSubparser:
+    class DefaultInstanceSubparser(salix.Struct, frozen=False):
         x: int
         # bc: Union[DefaultInstanceHTTPServer, DefaultInstanceSMTPServer]
         bc: Union[DefaultInstanceHTTPServer, DefaultInstanceSMTPServer]
@@ -1061,8 +991,7 @@ def test_omit_subcommand_prefix_and_consolidate_subcommand_args_in_function() ->
 
 
 def test_append_lists() -> None:
-    @dataclasses.dataclass
-    class A:
+    class A(salix.Struct, frozen=False):
         x: tyro.conf.UseAppendAction[List[int]]
 
     assert tyro.cli(A, args=[]) == A(x=[])
@@ -1075,8 +1004,7 @@ def test_append_lists() -> None:
 
 
 def test_append_sequence() -> None:
-    @dataclasses.dataclass
-    class A:
+    class A(salix.Struct, frozen=False):
         x: tyro.conf.UseAppendAction[Sequence[int]]
 
     assert tyro.cli(A, args=[]) == A(x=[])
@@ -1089,8 +1017,7 @@ def test_append_sequence() -> None:
 
 
 def test_append_tuple() -> None:
-    @dataclasses.dataclass
-    class A:
+    class A(salix.Struct, frozen=False):
         x: tyro.conf.UseAppendAction[Tuple[int, ...]]
 
     assert tyro.cli(A, args=[]) == A(x=())
@@ -1103,8 +1030,7 @@ def test_append_tuple() -> None:
 
 
 def test_append_tuple_with_default() -> None:
-    @dataclasses.dataclass
-    class A:
+    class A(salix.Struct, frozen=False):
         x: tyro.conf.UseAppendAction[Tuple[int, ...]] = (1, 2)
 
     assert tyro.cli(A, args="--x 1 --x 2 --x 3".split(" ")) == A(x=(1, 2, 1, 2, 3))
@@ -1116,8 +1042,7 @@ def test_append_tuple_with_default() -> None:
 
 
 def test_append_nested_tuple_fixed_length() -> None:
-    @dataclasses.dataclass
-    class A:
+    class A(salix.Struct, frozen=False):
         x: tyro.conf.UseAppendAction[Tuple[Tuple[str, int], ...]]
 
     assert tyro.cli(A, args="--x 1 1 --x 2 2 --x 3 3".split(" ")) == A(
@@ -1131,8 +1056,7 @@ def test_append_nested_tuple_fixed_length() -> None:
 
 
 def test_append_nested_tuple_with_default_fixed_length() -> None:
-    @dataclasses.dataclass
-    class A:
+    class A(salix.Struct, frozen=False):
         x: tyro.conf.UseAppendAction[Tuple[Tuple[str, int], ...]] = (("1", 1), ("2", 2))
 
     assert tyro.cli(A, args="--x 1 1 --x 2 2 --x 3 3".split(" ")) == A(
@@ -1146,8 +1070,7 @@ def test_append_nested_tuple_with_default_fixed_length() -> None:
 
 
 def test_append_dict() -> None:
-    @dataclasses.dataclass
-    class A:
+    class A(salix.Struct, frozen=False):
         x: tyro.conf.UseAppendAction[Dict[str, int]]
 
     assert tyro.cli(A, args="--x 1 1 --x 2 2 --x 3 3".split(" ")) == A(
@@ -1161,8 +1084,7 @@ def test_append_dict() -> None:
 
 
 def test_append_dict_vague() -> None:
-    @dataclasses.dataclass
-    class A:
+    class A(salix.Struct, frozen=False):
         x: tyro.conf.UseAppendAction[dict]
 
     assert tyro.cli(A, args="--x 1 1 --x 2 2 --x 3 3".split(" ")) == A(
@@ -1173,11 +1095,8 @@ def test_append_dict_vague() -> None:
 def test_append_dict_with_default() -> None:
     """Append has no impact when a dictionary has a default value."""
 
-    @dataclasses.dataclass
-    class A:
-        x: tyro.conf.UseAppendAction[Dict[str, int]] = dataclasses.field(
-            default_factory=lambda: {"1": 1}
-        )
+    class A(salix.Struct, frozen=False):
+        x: tyro.conf.UseAppendAction[Dict[str, int]] = {"1": 1}
 
     assert tyro.cli(A, args=[]) == A(x={"1": 1})
     assert tyro.cli(A, args=["--x.1", "2"]) == A(x={"1": 2})
@@ -1188,8 +1107,7 @@ def test_append_dict_with_default() -> None:
 
 
 def test_append_nested_tuple() -> None:
-    @dataclasses.dataclass
-    class A:
+    class A(salix.Struct, frozen=False):
         x: tyro.conf.UseAppendAction[Tuple[Tuple[str, ...], ...]]
 
     assert tyro.cli(A, args="--x 1 2 3 --x 4 5".split(" ")) == A(
@@ -1199,8 +1117,7 @@ def test_append_nested_tuple() -> None:
 
 
 def test_append_nested_tuple_with_default() -> None:
-    @dataclasses.dataclass
-    class A:
+    class A(salix.Struct, frozen=False):
         x: tyro.conf.UseAppendAction[Tuple[Tuple[str, ...], ...]] = (("1", "2"),)
 
     assert tyro.cli(A, args="--x 1 2 3 --x 4 5".split(" ")) == A(
@@ -1210,8 +1127,7 @@ def test_append_nested_tuple_with_default() -> None:
 
 
 def test_append_nested_list() -> None:
-    @dataclasses.dataclass
-    class A:
+    class A(salix.Struct, frozen=False):
         x: tyro.conf.UseAppendAction[List[List[int]]]
 
     assert tyro.cli(A, args="--x 1 2 3 --x 4 5".split(" ")) == A(x=[[1, 2, 3], [4, 5]])
@@ -1219,8 +1135,7 @@ def test_append_nested_list() -> None:
 
 
 def test_append_nested_dict() -> None:
-    @dataclasses.dataclass
-    class A:
+    class A(salix.Struct, frozen=False):
         x: tyro.conf.UseAppendAction[List[Dict[str, int]]]
 
     assert tyro.cli(A, args="--x 1 2 3 4 --x 4 5".split(" ")) == A(
@@ -1230,8 +1145,7 @@ def test_append_nested_dict() -> None:
 
 
 def test_append_nested_dict_double() -> None:
-    @dataclasses.dataclass
-    class A:
+    class A(salix.Struct, frozen=False):
         x: tyro.conf.UseAppendAction[Dict[str, Dict[str, int]]]
 
     assert tyro.cli(A, args="--x 0 1 2 3 4 --x 4 5 6".split(" ")) == A(
@@ -1241,11 +1155,8 @@ def test_append_nested_dict_double() -> None:
 
 
 def test_append_nested_dict_double_with_default() -> None:
-    @dataclasses.dataclass
-    class A:
-        x: tyro.conf.UseAppendAction[Dict[str, Dict[str, int]]] = dataclasses.field(
-            default_factory=dict
-        )
+    class A(salix.Struct, frozen=False):
+        x: tyro.conf.UseAppendAction[Dict[str, Dict[str, int]]] = {}
 
     assert tyro.cli(A, args="--x 0 1 2 3 4 --x 4 5 6".split(" ")) == A(
         x={"0": {"1": 2, "3": 4}, "4": {"5": 6}}
@@ -1255,12 +1166,10 @@ def test_append_nested_dict_double_with_default() -> None:
 
 def test_duplicated_arg() -> None:
     # Loosely inspired by: https://github.com/brentyi/tyro/issues/49
-    @dataclasses.dataclass
-    class ModelConfig:
+    class ModelConfig(salix.Struct, frozen=False):
         num_slots: Annotated[int, tyro.conf.arg(prefix_name=False)]
 
-    @dataclasses.dataclass
-    class TrainConfig:
+    class TrainConfig(salix.Struct, frozen=False):
         num_slots: int
         model: ModelConfig
 
@@ -1270,12 +1179,10 @@ def test_duplicated_arg() -> None:
 
 def test_omit_arg_prefixes() -> None:
     # Loosely inspired by: https://github.com/brentyi/tyro/issues/49
-    @dataclasses.dataclass
-    class ModelConfig:
+    class ModelConfig(salix.Struct, frozen=False):
         num_slots: int
 
-    @dataclasses.dataclass
-    class TrainConfig:
+    class TrainConfig(salix.Struct, frozen=False):
         model: ModelConfig
 
     assert tyro.cli(
@@ -1298,8 +1205,7 @@ def test_custom_constructor_0() -> None:
     def times_two(n: str) -> int:
         return int(n) * 2
 
-    @dataclasses.dataclass
-    class Config:
+    class Config(salix.Struct, frozen=False):
         x: Annotated[int, tyro.conf.arg(name="x-renamed", constructor=times_two)]
 
     assert tyro.cli(Config, args="--x-renamed.n 5".split(" ")) == Config(x=10)
@@ -1309,16 +1215,14 @@ def test_custom_constructor_1() -> None:
     def times_two(n: int) -> int:
         return int(n) * 2
 
-    @dataclasses.dataclass
-    class Config:
+    class Config(salix.Struct, frozen=False):
         x: Annotated[int, tyro.conf.arg(constructor=times_two)]
 
     assert tyro.cli(Config, args="--x.n 5".split(" ")) == Config(x=10)
 
 
 def test_custom_constructor_2() -> None:
-    @dataclasses.dataclass
-    class Config:
+    class Config(salix.Struct, frozen=False):
         x: Annotated[float, tyro.conf.arg(constructor=int)]
 
     assert tyro.cli(Config, args="--x 5".split(" ")) == Config(x=5)
@@ -1333,8 +1237,7 @@ def test_custom_constructor_3() -> None:
             raise ValueError(f"{json} is not a dict!")
         return out
 
-    @dataclasses.dataclass
-    class Config:
+    class Config(salix.Struct, frozen=False):
         x: Annotated[
             dict,
             tyro.conf.arg(
@@ -1356,8 +1259,7 @@ def test_custom_constructor_3() -> None:
 
 
 def test_custom_constructor_4() -> None:
-    @dataclasses.dataclass
-    class Config:
+    class Config(salix.Struct, frozen=False):
         x: Annotated[float, tyro.conf.arg(constructor=int)] = 3.23
 
     assert tyro.cli(Config, args="--x 5".split(" ")) == Config(x=5)
@@ -1368,8 +1270,7 @@ def test_custom_constructor_5() -> None:
     def make_float(a: float, b: float, c: float = 3) -> float:
         return a * b * c
 
-    @dataclasses.dataclass
-    class Config:
+    class Config(salix.Struct, frozen=False):
         x: Annotated[float, tyro.conf.arg(constructor=make_float)] = 3.23
 
     assert tyro.cli(Config, args=[]) == Config(x=3.23)
@@ -1393,8 +1294,7 @@ def test_custom_constructor_6() -> None:
     ) -> float:
         return a * b2 * c
 
-    @dataclasses.dataclass
-    class Config:
+    class Config(salix.Struct, frozen=False):
         x: Annotated[float, tyro.conf.arg(constructor=make_float)] = 3.23
 
     assert tyro.cli(Config, args=[]) == Config(x=3.23)
@@ -1416,8 +1316,7 @@ def test_custom_constructor_6() -> None:
 
 
 def test_custom_constructor_7() -> None:
-    @dataclasses.dataclass
-    class Struct:
+    class Struct(salix.Struct, frozen=False):
         a: int
         b: int
         c: int = 3
@@ -1425,8 +1324,7 @@ def test_custom_constructor_7() -> None:
     def make_float(struct: Struct) -> float:
         return struct.a * struct.b * struct.c
 
-    @dataclasses.dataclass
-    class Config:
+    class Config(salix.Struct, frozen=False):
         x: Annotated[float, tyro.conf.arg(constructor=make_float)] = 3.23
 
     assert tyro.cli(Config, args=[]) == Config(x=3.23)
@@ -1452,8 +1350,7 @@ def test_custom_constructor_7() -> None:
 
 
 def test_custom_constructor_8() -> None:
-    @dataclasses.dataclass
-    class Struct:
+    class Struct(salix.Struct, frozen=False):
         a: tyro.conf.Positional[int]
         b: int
         c: int = 3
@@ -1461,8 +1358,7 @@ def test_custom_constructor_8() -> None:
     def make_float(struct: Struct) -> float:
         return struct.a * struct.b * struct.c
 
-    @dataclasses.dataclass
-    class Config:
+    class Config(salix.Struct, frozen=False):
         x: Annotated[float, tyro.conf.arg(constructor=make_float)] = 3.23
 
     assert tyro.cli(Config, args=[]) == Config(x=3.23)
@@ -1541,8 +1437,7 @@ def test_custom_constructor_10() -> None:
 def test_alias() -> None:
     """Arguments with aliases."""
 
-    @dataclasses.dataclass
-    class Struct:
+    class Struct(salix.Struct, frozen=False):
         a: Annotated[int, tyro.conf.arg(aliases=["--all", "-d"])]
         b: int
         c: int = 3
@@ -1550,8 +1445,7 @@ def test_alias() -> None:
     def make_float(struct: Struct) -> float:
         return struct.a * struct.b * struct.c
 
-    @dataclasses.dataclass
-    class Config:
+    class Config(salix.Struct, frozen=False):
         x: Annotated[float, tyro.conf.arg(constructor=make_float)] = 3.23
 
     assert tyro.cli(Config, args=[]) == Config(x=3.23)
@@ -1587,8 +1481,7 @@ def test_alias() -> None:
 def test_positional_alias() -> None:
     """Positional arguments with aliases (which will be ignored)."""
 
-    @dataclasses.dataclass
-    class Struct:
+    class Struct(salix.Struct, frozen=False):
         a: Annotated[tyro.conf.Positional[int], tyro.conf.arg(aliases=["--all", "-d"])]
         b: int
         c: int = 3
@@ -1596,8 +1489,7 @@ def test_positional_alias() -> None:
     def make_float(struct: Struct) -> float:
         return struct.a * struct.b * struct.c
 
-    @dataclasses.dataclass
-    class Config:
+    class Config(salix.Struct, frozen=False):
         x: Annotated[float, tyro.conf.arg(constructor=make_float)] = 3.23
 
     with pytest.warns(UserWarning):
@@ -1619,8 +1511,7 @@ def test_positional_alias() -> None:
 
 
 def test_flag_alias() -> None:
-    @dataclasses.dataclass
-    class Struct:
+    class Struct(salix.Struct, frozen=False):
         flag: Annotated[bool, tyro.conf.arg(aliases=["-f", "--flg"])] = False
 
     assert tyro.cli(Struct, args=[]).flag is False
@@ -1646,8 +1537,7 @@ def test_subcommand_constructor_mix() -> None:
         """Make a commit."""
         return f"{message} {all}"
 
-    @dataclasses.dataclass
-    class Arg:
+    class Arg(salix.Struct, frozen=False):
         foo: int = 1
 
     t: Any = Annotated[
@@ -1691,13 +1581,11 @@ def test_merge() -> None:
             args=args,
         )
 
-    @dataclasses.dataclass(frozen=True)
-    class OptimizerConfig:
+    class OptimizerConfig(salix.Struct, frozen=False):
         lr: float = 1e-4
         weight: int = 10
 
-    @dataclasses.dataclass(frozen=True)
-    class DatasetConfig:
+    class DatasetConfig(salix.Struct):
         batch_size: int = 1
         shuffle: bool = False
 
@@ -1770,14 +1658,12 @@ def test_counter_action_nonzero_default() -> None:
 
 
 def test_nested_suppress() -> None:
-    @dataclasses.dataclass
-    class Bconfig:
+    class Bconfig(salix.Struct, frozen=False):
         b: int = 1
 
-    @dataclasses.dataclass
-    class Aconfig:
+    class Aconfig(salix.Struct, frozen=False):
         a: str = "hello"
-        b_conf: Bconfig = dataclasses.field(default_factory=Bconfig)
+        b_conf: Bconfig = Bconfig()
 
     assert tyro.cli(Aconfig, config=(tyro.conf.Suppress,), args=[]) == Aconfig()
 
@@ -1787,8 +1673,7 @@ def test_suppressed_subcommand() -> None:
         name: str
         age: int
 
-    @dataclasses.dataclass
-    class Train:
+    class Train(salix.Struct, frozen=False):
         person: tyro.conf.Suppress[Union[Person, None]] = None
 
     assert tyro.cli(Train, args=[]) == Train(None)
@@ -1797,12 +1682,10 @@ def test_suppressed_subcommand() -> None:
 def test_avoid_subcommands_with_generics() -> None:
     T = TypeVar("T")
 
-    @dataclasses.dataclass(frozen=True)
-    class Person(Generic[T]):
+    class Person(salix.Struct, Generic[T]):
         field: Union[T, bool]
 
-    @dataclasses.dataclass
-    class Train:
+    class Train(salix.Struct, frozen=False):
         person: Union[Person[int], Person[bool], Person[str], Person[float]] = Person(
             "hello"
         )
@@ -1827,15 +1710,12 @@ def test_avoid_subcommands_with_generics() -> None:
 def test_consolidate_subcommand_args_optional() -> None:
     """Adapted from @mirceamironenco: https://github.com/brentyi/tyro/issues/221"""
 
-    @dataclasses.dataclass(frozen=True)
-    class OptimizerConfig:
+    class OptimizerConfig(salix.Struct, frozen=False):
         lr: float = 1e-1
 
-    @dataclasses.dataclass(frozen=True)
-    class AdamConfig(OptimizerConfig):
+    class AdamConfig(OptimizerConfig, frozen=False):
         adam_foo: float = 1.0
 
-    @dataclasses.dataclass(frozen=True)
     class SGDConfig(OptimizerConfig):
         sgd_foo: float = 1.0
 
@@ -1847,8 +1727,7 @@ def test_consolidate_subcommand_args_optional() -> None:
         return Union[cfgs]  # type: ignore
 
     # Required because of --x.
-    @dataclasses.dataclass
-    class Config1:
+    class Config1(salix.Struct, frozen=False):
         x: int
         optimizer: Annotated[
             Union[AdamConfig, SGDConfig],
@@ -1859,8 +1738,7 @@ def test_consolidate_subcommand_args_optional() -> None:
         tyro.cli(Config1, config=(tyro.conf.CascadeSubcommandArgs,), args=[])
 
     # Required because of optimizer.
-    @dataclasses.dataclass
-    class Config2:
+    class Config2(salix.Struct, frozen=False):
         optimizer: Annotated[
             Union[AdamConfig, SGDConfig],
             tyro.conf.arg(constructor_factory=_constructor),
@@ -1870,8 +1748,7 @@ def test_consolidate_subcommand_args_optional() -> None:
         tyro.cli(Config2, config=(tyro.conf.CascadeSubcommandArgs,), args=[])
 
     # Optional!
-    @dataclasses.dataclass
-    class Config3:
+    class Config3(salix.Struct, frozen=False):
         x: int = 3
         optimizer: Annotated[
             Union[AdamConfig, SGDConfig],
@@ -1887,26 +1764,21 @@ def test_consolidate_subcommand_args_optional() -> None:
 def test_consolidate_subcommand_args_optional_harder() -> None:
     """Adapted from @mirceamironenco: https://github.com/brentyi/tyro/issues/221"""
 
-    @dataclasses.dataclass(frozen=True)
-    class Leaf1:
+    class Leaf1(salix.Struct):
         x: int = 5
 
-    @dataclasses.dataclass(frozen=True)
-    class Leaf2:
+    class Leaf2(salix.Struct):
         x: int = 5
 
-    @dataclasses.dataclass(frozen=True)
-    class Branch1:
+    class Branch1(salix.Struct):
         x: int = 5
         leaf: Union[Leaf1, Leaf2] = Leaf2()
 
-    @dataclasses.dataclass(frozen=True)
-    class Branch2:
+    class Branch2(salix.Struct):
         x: int = 5
         leaf: Union[Leaf1, Leaf2] = Leaf2()
 
-    @dataclasses.dataclass(frozen=True)
-    class Trunk:
+    class Trunk(salix.Struct):
         branch: Union[Branch1, Branch2] = Branch2()
 
     assert (
@@ -1930,15 +1802,12 @@ def test_consolidate_subcommand_args_optional_harder() -> None:
 def test_default_subcommand_consistency() -> None:
     """https://github.com/brentyi/tyro/issues/221"""
 
-    @dataclasses.dataclass(frozen=True)
-    class OptimizerConfig:
+    class OptimizerConfig(salix.Struct, frozen=False):
         lr: float = 1e-1
 
-    @dataclasses.dataclass(frozen=True)
-    class AdamConfig(OptimizerConfig):
+    class AdamConfig(OptimizerConfig, frozen=False):
         adam_foo: float = 1.0
 
-    @dataclasses.dataclass(frozen=True)
     class SGDConfig(OptimizerConfig):
         sgd_foo: float = 1.0
 
@@ -1956,8 +1825,7 @@ def test_default_subcommand_consistency() -> None:
         tyro.conf.arg(constructor_factory=_constructor),
     ]
 
-    @dataclasses.dataclass
-    class Config:
+    class Config(salix.Struct, frozen=False):
         optimizer: CLIOptimizer = AdamConfig(adam_foo=0.5)  # type: ignore
         foo: int = 1
         bar: str = "abc"
@@ -1978,12 +1846,10 @@ def test_default_subcommand_consistency() -> None:
 
 
 def test_suppress_in_union() -> None:
-    @dataclasses.dataclass
-    class ConfigA:
+    class ConfigA(salix.Struct, frozen=False):
         x: int
 
-    @dataclasses.dataclass
-    class ConfigB:
+    class ConfigB(salix.Struct, frozen=False):
         y: Union[int, Annotated[str, tyro.conf.Suppress]]
         z: Annotated[Union[str, int], tyro.conf.Suppress] = 3
 
@@ -2045,12 +1911,10 @@ def test_annotated_attribute_inheritance() -> None:
 
     https://github.com/brentyi/tyro/issues/239"""
 
-    @dataclasses.dataclass(frozen=True)
-    class TrainConfig:
+    class TrainConfig(salix.Struct, frozen=False):
         dataset: str = "vicgalle/alpaca-gpt4"
 
-    @dataclasses.dataclass(frozen=True)
-    class CLITrainerConfig(TrainConfig):
+    class CLITrainerConfig(TrainConfig, frozen=False):
         dataset: HFDataset = "vicgalle/alpaca-gpt4"
 
     assert "{alpaca,alpaca_clean,alpaca_gpt4}" in get_helptext_with_checks(
@@ -2062,23 +1926,19 @@ def test_annotated_attribute_inheritance() -> None:
     )
 
 
-@dataclasses.dataclass(frozen=True)
-class OptimizerConfig:
+class OptimizerConfig(salix.Struct, frozen=False):
     lr: float = 1e-1
 
 
-@dataclasses.dataclass(frozen=True)
-class AdamConfig(OptimizerConfig):
+class AdamConfig(OptimizerConfig, frozen=False):
     adam_foo: float = 1.0
 
 
-@dataclasses.dataclass(frozen=True)
 class SGDConfig(OptimizerConfig):
     sgd_foo: float = 1.0
 
 
-@dataclasses.dataclass
-class TrainConfig:
+class TrainConfig(salix.Struct, frozen=False):
     optimizer: OptimizerConfig = AdamConfig()
 
 
@@ -2097,8 +1957,7 @@ def test_attribute_inheritance_2() -> None:
 
     https://github.com/brentyi/tyro/issues/239"""
 
-    @dataclasses.dataclass
-    class CLITrainerConfig(TrainConfig):
+    class CLITrainerConfig(TrainConfig, frozen=False):
         optimizer: CLIOptimizerConfig = SGDConfig()
 
     helptext = get_helptext_with_checks(CLITrainerConfig)
@@ -2108,8 +1967,7 @@ def test_attribute_inheritance_2() -> None:
     assert "[{optimizer:adam-config,optimizer:sgd-config}]" in helptext
 
 
-@dataclasses.dataclass
-class Config:
+class Config(salix.Struct, frozen=False):
     # Comment in helptext.
     y: int = 0
 
@@ -2121,14 +1979,12 @@ def test_helptext_from_contents_off() -> None:
     )
 
 
-@dataclasses.dataclass
-class ShowSourcePathInner:
+class ShowSourcePathInner(salix.Struct, frozen=False):
     z: int = 0
 
 
-@dataclasses.dataclass
-class ShowSourcePathOuter:
-    inner: ShowSourcePathInner = dataclasses.field(default_factory=ShowSourcePathInner)
+class ShowSourcePathOuter(salix.Struct, frozen=False):
+    inner: ShowSourcePathInner = ShowSourcePathInner()
 
 
 def test_show_source_path() -> None:
@@ -2148,12 +2004,9 @@ def test_show_source_path() -> None:
 
 def test_show_source_path_scoped() -> None:
     # The marker can be scoped to a single field/subtree via Annotated.
-    @dataclasses.dataclass
-    class Scoped:
-        a: tyro.conf.ShowSourcePath[ShowSourcePathInner] = dataclasses.field(
-            default_factory=ShowSourcePathInner
-        )
-        b: ShowSourcePathInner = dataclasses.field(default_factory=ShowSourcePathInner)
+    class Scoped(salix.Struct, frozen=False):
+        a: tyro.conf.ShowSourcePath[ShowSourcePathInner] = ShowSourcePathInner()
+        b: ShowSourcePathInner = ShowSourcePathInner()
 
     # Only the annotated subtree should get a source path.
     helptext = get_helptext_with_checks(Scoped)
@@ -2199,31 +2052,27 @@ def test_show_source_path_relpath_error(monkeypatch: pytest.MonkeyPatch) -> None
 # Tests for union types with config parameters (fix for union + config bug)
 
 
-@dataclasses.dataclass
-class UnionCommand1:
+class UnionCommand1(salix.Struct, frozen=False):
     """First command."""
 
     arg1: str
     flag1: bool = False
 
 
-@dataclasses.dataclass
-class UnionCommand2:
+class UnionCommand2(salix.Struct, frozen=False):
     """Second command."""
 
     arg2: int
     flag2: bool = True
 
 
-@dataclasses.dataclass
-class NestedUnionConfig:
+class NestedUnionConfig(salix.Struct, frozen=False):
     """Nested config class."""
 
     value: float = 1.0
 
 
-@dataclasses.dataclass
-class UnionCommand3:
+class UnionCommand3(salix.Struct, frozen=False):
     """Third command with nested config."""
 
     nested: NestedUnionConfig
@@ -2273,12 +2122,10 @@ def test_union_with_omit_subcommand_prefixes() -> None:
 def test_union_with_positional_required_args() -> None:
     """Union types should work with PositionalRequiredArgs."""
 
-    @dataclasses.dataclass
-    class SimpleUnionCmd1:
+    class SimpleUnionCmd1(salix.Struct, frozen=False):
         required_arg: str
 
-    @dataclasses.dataclass
-    class SimpleUnionCmd2:
+    class SimpleUnionCmd2(salix.Struct, frozen=False):
         required_num: int
 
     result = tyro.cli(
@@ -2327,19 +2174,16 @@ def test_conf_inheritance() -> None:
     @tyro.conf.configure(  # type: ignore
         tyro.conf.arg(constructor_factory=lambda: Union[AdamConfig, SgdConfig])  # type: ignore
     )
-    @dataclasses.dataclass
-    class OptimizerConfig:
+    class OptimizerConfig(salix.Struct, frozen=False):
         lr: float
 
     @tyro.conf.configure(
         tyro.conf.subcommand(name="adam")  # type: ignore
     )
-    @dataclasses.dataclass
-    class AdamConfig(OptimizerConfig):
+    class AdamConfig(OptimizerConfig, frozen=False):
         betas: Tuple[float, float]
 
-    @dataclasses.dataclass
-    class SgdConfig(OptimizerConfig):
+    class SgdConfig(OptimizerConfig, frozen=False):
         fused: bool
 
     assert tyro.cli(
@@ -2367,22 +2211,19 @@ def test_per_argument_consolidate_mixed_with_regular() -> None:
             "Per-argument CascadeSubcommandArgs only supported with tyro backend"
         )
 
-    @dataclasses.dataclass
-    class ModeA:
+    class ModeA(salix.Struct, frozen=False):
         # Consolidated arg - only visible at leaf.
         a_consolidated: tyro.conf.CascadeSubcommandArgs[int] = 1
         # Regular arg - also visible at leaf in consolidated mode.
         a_regular: int = 2
 
-    @dataclasses.dataclass
-    class ModeB:
+    class ModeB(salix.Struct, frozen=False):
         b_value: int = 3
 
-    @dataclasses.dataclass
-    class Config:
+    class Config(salix.Struct, frozen=False):
         # Root level regular arg.
         root_arg: int = 0
-        mode: Union[ModeA, ModeB] = dataclasses.field(default_factory=ModeA)
+        mode: Union[ModeA, ModeB] = ModeA()
 
     # Test CLI behavior: With CascadeSubcommandArgs, flexible intermixing is allowed.
     # Regular args (root_arg) must come before subcommands.
@@ -2420,14 +2261,12 @@ def test_implicit_subcommand_selection_with_union() -> None:
     if tyro._experimental_options["backend"] != "tyro":
         pytest.skip("Implicit subcommand selection only supported with tyro backend")
 
-    @dataclasses.dataclass
-    class B:
+    class B(salix.Struct, frozen=False):
         s: str = tyro.MISSING
 
-    @dataclasses.dataclass
-    class A:
+    class A(salix.Struct, frozen=False):
         verbose: bool
-        b: Union[B, None] = dataclasses.field(default_factory=B)
+        b: Union[B, None] = B()
 
     # Test 1: Args without explicit subcommand.
     assert tyro.cli(
@@ -2478,14 +2317,12 @@ def test_implicit_subcommand_selection_error_messages() -> None:
     if tyro._experimental_options["backend"] != "tyro":
         pytest.skip("Implicit subcommand selection only supported with tyro backend")
 
-    @dataclasses.dataclass
-    class B:
+    class B(salix.Struct, frozen=False):
         s: str = tyro.MISSING
 
-    @dataclasses.dataclass
-    class A:
+    class A(salix.Struct, frozen=False):
         verbose: bool
-        b: Union[B, None] = dataclasses.field(default_factory=B)
+        b: Union[B, None] = B()
 
     # Test error when trying to explicitly select after implicit selection.
     with pytest.raises(SystemExit):
@@ -2510,22 +2347,18 @@ def test_implicit_subcommand_selection_nested() -> None:
     if tyro._experimental_options["backend"] != "tyro":
         pytest.skip("Implicit subcommand selection only supported with tyro backend")
 
-    @dataclasses.dataclass
-    class LeafA:
+    class LeafA(salix.Struct, frozen=False):
         value: int = tyro.MISSING
 
-    @dataclasses.dataclass
-    class LeafB:
+    class LeafB(salix.Struct, frozen=False):
         other: str = tyro.MISSING
 
-    @dataclasses.dataclass
-    class Branch:
-        leaf: Union[LeafA, LeafB] = dataclasses.field(default_factory=LeafA)
+    class Branch(salix.Struct, frozen=False):
+        leaf: Union[LeafA, LeafB] = LeafA()
 
-    @dataclasses.dataclass
-    class Root:
+    class Root(salix.Struct, frozen=False):
         x: int
-        branch: Union[Branch, None] = dataclasses.field(default_factory=Branch)
+        branch: Union[Branch, None] = Branch()
 
     # Test: Using nested subcommand selector implicitly selects parent.
     assert tyro.cli(
@@ -2569,28 +2402,21 @@ def test_implicit_subcommand_selection_multiple_branches() -> None:
     if tyro._experimental_options["backend"] != "tyro":
         pytest.skip("Implicit subcommand selection only supported with tyro backend")
 
-    @dataclasses.dataclass
-    class OptimizerA:
+    class OptimizerA(salix.Struct, frozen=False):
         lr: float = tyro.MISSING
 
-    @dataclasses.dataclass
-    class OptimizerB:
+    class OptimizerB(salix.Struct, frozen=False):
         momentum: float = tyro.MISSING
 
-    @dataclasses.dataclass
-    class DatasetA:
+    class DatasetA(salix.Struct, frozen=False):
         batch_size: int = 32
 
-    @dataclasses.dataclass
-    class DatasetB:
+    class DatasetB(salix.Struct, frozen=False):
         samples: int = 100
 
-    @dataclasses.dataclass
-    class Config:
-        optimizer: Union[OptimizerA, OptimizerB] = dataclasses.field(
-            default_factory=OptimizerA
-        )
-        dataset: Union[DatasetA, DatasetB] = dataclasses.field(default_factory=DatasetA)
+    class Config(salix.Struct, frozen=False):
+        optimizer: Union[OptimizerA, OptimizerB] = OptimizerA()
+        dataset: Union[DatasetA, DatasetB] = DatasetA()
 
     # Test: Can implicitly select one branch.
     assert tyro.cli(
@@ -2620,19 +2446,16 @@ def test_implicit_subcommand_selection_with_shared_args() -> None:
     if tyro._experimental_options["backend"] != "tyro":
         pytest.skip("Implicit subcommand selection only supported with tyro backend")
 
-    @dataclasses.dataclass
-    class ModeA:
+    class ModeA(salix.Struct, frozen=False):
         # Both modes have a 'value' arg, but only ModeA has 'extra'.
         value: int = tyro.MISSING
         extra: str = "default"
 
-    @dataclasses.dataclass
-    class ModeB:
+    class ModeB(salix.Struct, frozen=False):
         value: int = tyro.MISSING
 
-    @dataclasses.dataclass
-    class Config:
-        mode: Union[ModeA, ModeB] = dataclasses.field(default_factory=ModeA)
+    class Config(salix.Struct, frozen=False):
+        mode: Union[ModeA, ModeB] = ModeA()
 
     # Test: Using unique arg 'extra' implicitly selects ModeA.
     assert tyro.cli(
@@ -2655,17 +2478,14 @@ def test_implicit_subcommand_selection_ordering_matters() -> None:
     if tyro._experimental_options["backend"] != "tyro":
         pytest.skip("Implicit subcommand selection only supported with tyro backend")
 
-    @dataclasses.dataclass
-    class ModeA:
+    class ModeA(salix.Struct, frozen=False):
         a_value: int = tyro.MISSING
 
-    @dataclasses.dataclass
-    class ModeB:
+    class ModeB(salix.Struct, frozen=False):
         b_value: str = tyro.MISSING
 
-    @dataclasses.dataclass
-    class Config:
-        mode: Union[ModeA, ModeB] = dataclasses.field(default_factory=ModeA)
+    class Config(salix.Struct, frozen=False):
+        mode: Union[ModeA, ModeB] = ModeA()
 
     # Test: Explicit selection first, then args works.
     assert tyro.cli(
@@ -2697,26 +2517,20 @@ def test_implicit_subcommand_selection_nested_no_child_default() -> None:
     if tyro._experimental_options["backend"] != "tyro":
         pytest.skip("Implicit subcommand selection only supported with tyro backend")
 
-    @dataclasses.dataclass
-    class LeafA:
+    class LeafA(salix.Struct, frozen=False):
         value: int = tyro.MISSING
 
-    @dataclasses.dataclass
-    class LeafB:
+    class LeafB(salix.Struct, frozen=False):
         other: str = tyro.MISSING
 
-    @dataclasses.dataclass
-    class Branch:
+    class Branch(salix.Struct, frozen=False):
         # No default for leaf - both options are equal.
         leaf: Union[LeafA, LeafB]
 
-    @dataclasses.dataclass
-    class Root:
+    class Root(salix.Struct, frozen=False):
         x: int
         # But branch has a default.
-        branch: Union[Branch, None] = dataclasses.field(
-            default_factory=lambda: Branch(leaf=LeafA(value=0))
-        )
+        branch: Union[Branch, None] = Branch(leaf=LeafA(value=0))
 
     # Test: Can still use nested selector to implicitly select parent,
     # even though child has no default. The nested selector explicitly
@@ -2741,18 +2555,15 @@ def test_implicit_subcommand_selection_with_non_default() -> None:
     if tyro._experimental_options["backend"] != "tyro":
         pytest.skip("Implicit subcommand selection only supported with tyro backend")
 
-    @dataclasses.dataclass
-    class ModeA:
+    class ModeA(salix.Struct, frozen=False):
         a_value: int = tyro.MISSING
 
-    @dataclasses.dataclass
-    class ModeB:
+    class ModeB(salix.Struct, frozen=False):
         b_value: str = tyro.MISSING
 
-    @dataclasses.dataclass
-    class Config:
+    class Config(salix.Struct, frozen=False):
         # ModeB is default, so only ModeB args can implicitly select.
-        mode: Union[ModeA, ModeB] = dataclasses.field(default_factory=ModeB)
+        mode: Union[ModeA, ModeB] = ModeB()
 
     # Test: ModeB args implicitly select ModeB.
     assert tyro.cli(
@@ -2786,14 +2597,12 @@ def test_field_equality_same_type_different_values() -> None:
     default has more matching field values.
     """
 
-    @dataclasses.dataclass
-    class SharedConfig:
+    class SharedConfig(salix.Struct, frozen=False):
         x: int = 0
         y: int = 0
         z: int = 0
 
-    @dataclasses.dataclass
-    class Container:
+    class Container(salix.Struct, frozen=False):
         # Two subcommands with identical type but different configured defaults.
         config: Union[
             Annotated[
@@ -2833,18 +2642,15 @@ def test_field_equality_no_configured_default() -> None:
     Subcommands without configured defaults should score 0 in field matching.
     """
 
-    @dataclasses.dataclass
-    class ConfigA:
+    class ConfigA(salix.Struct, frozen=False):
         x: int = 1
         y: int = 2
 
-    @dataclasses.dataclass
-    class ConfigB:
+    class ConfigB(salix.Struct, frozen=False):
         x: int = 10
         y: int = 20
 
-    @dataclasses.dataclass
-    class Container:
+    class Container(salix.Struct, frozen=False):
         # ConfigA has a configured default, ConfigB does not (no tyro.conf.subcommand).
         config: Union[
             Annotated[ConfigA, tyro.conf.subcommand(default=ConfigA(x=1, y=2))],
@@ -2869,19 +2675,16 @@ def test_field_equality_nested_structs() -> None:
     Nested struct fields contribute their own field counts (not normalized).
     """
 
-    @dataclasses.dataclass
-    class Inner:
+    class Inner(salix.Struct, frozen=False):
         a: int = 0
         b: int = 0
         c: int = 0
 
-    @dataclasses.dataclass
-    class Outer:
-        inner: Inner = dataclasses.field(default_factory=Inner)
+    class Outer(salix.Struct, frozen=False):
+        inner: Inner = Inner()
         top_level: int = 0
 
-    @dataclasses.dataclass
-    class Config:
+    class Config(salix.Struct, frozen=False):
         outer: Union[
             Annotated[
                 Outer,
@@ -2935,16 +2738,13 @@ def test_field_equality_empty_struct() -> None:
     Empty structs should use direct equality comparison.
     """
 
-    @dataclasses.dataclass
-    class EmptyA:
+    class EmptyA(salix.Struct, frozen=False):
         pass
 
-    @dataclasses.dataclass
-    class EmptyB:
+    class EmptyB(salix.Struct, frozen=False):
         pass
 
-    @dataclasses.dataclass
-    class Container:
+    class Container(salix.Struct, frozen=False):
         config: Union[
             Annotated[EmptyA, tyro.conf.subcommand(default=EmptyA())],
             Annotated[EmptyB, tyro.conf.subcommand(default=EmptyB())],
@@ -2974,16 +2774,13 @@ def test_field_equality_single_compatible_subcommand() -> None:
     (except for argparse backend which always computes for error checking).
     """
 
-    @dataclasses.dataclass
-    class ConfigA:
+    class ConfigA(salix.Struct, frozen=False):
         x: int = 1
 
-    @dataclasses.dataclass
-    class ConfigB:
+    class ConfigB(salix.Struct, frozen=False):
         y: str = "hello"  # Different field name and type.
 
-    @dataclasses.dataclass
-    class Container:
+    class Container(salix.Struct, frozen=False):
         config: Union[
             Annotated[ConfigA, tyro.conf.subcommand(default=ConfigA(x=1))],
             Annotated[ConfigB, tyro.conf.subcommand(default=ConfigB(y="hello"))],
@@ -3006,18 +2803,15 @@ def test_field_equality_different_field_names() -> None:
     default are skipped during field counting.
     """
 
-    @dataclasses.dataclass
-    class ConfigA:
+    class ConfigA(salix.Struct, frozen=False):
         shared: int = 0
         only_a: int = 1
 
-    @dataclasses.dataclass
-    class ConfigB:
+    class ConfigB(salix.Struct, frozen=False):
         shared: int = 0
         only_b: int = 2
 
-    @dataclasses.dataclass
-    class Container:
+    class Container(salix.Struct, frozen=False):
         config: Union[
             Annotated[
                 ConfigA, tyro.conf.subcommand(default=ConfigA(shared=10, only_a=1))
@@ -3059,18 +2853,15 @@ def test_field_equality_uncomparable_values() -> None:
         def __eq__(self, other: object) -> bool:
             raise ValueError("Cannot compare")
 
-    @dataclasses.dataclass
-    class ConfigA:
+    class ConfigA(salix.Struct, frozen=False):
         x: int = 1
         y: int = 2
 
-    @dataclasses.dataclass
-    class ConfigB:
+    class ConfigB(salix.Struct, frozen=False):
         x: int = 10
         y: int = 20
 
-    @dataclasses.dataclass
-    class Container:
+    class Container(salix.Struct, frozen=False):
         config: Union[
             Annotated[ConfigA, tyro.conf.subcommand(default=ConfigA(x=1, y=2))],
             Annotated[ConfigB, tyro.conf.subcommand(default=ConfigB(x=10, y=20))],
@@ -3094,22 +2885,18 @@ def test_field_equality_missing_nested_fields() -> None:
     skipped during field counting (they contribute 0 to the match).
     """
 
-    @dataclasses.dataclass
-    class BaseInner:
+    class BaseInner(salix.Struct, frozen=False):
         a: int = 0
 
-    @dataclasses.dataclass
-    class ExtendedInner(BaseInner):
+    class ExtendedInner(BaseInner, frozen=False):
         extra: str = "default"
 
-    @dataclasses.dataclass
-    class Outer:
+    class Outer(salix.Struct, frozen=False):
         # Type is BaseInner, but we can pass ExtendedInner instances.
-        inner: BaseInner = dataclasses.field(default_factory=BaseInner)
+        inner: BaseInner = BaseInner()
         x: int = 0
 
-    @dataclasses.dataclass
-    class Config:
+    class Config(salix.Struct, frozen=False):
         outer: Union[
             Annotated[
                 Outer,
@@ -3148,22 +2935,18 @@ def test_field_equality_nested_union_fields() -> None:
     AvoidSubcommands to handle nested unions correctly.
     """
 
-    @dataclasses.dataclass
-    class InnerA:
+    class InnerA(salix.Struct, frozen=False):
         a: int = 0
 
-    @dataclasses.dataclass
-    class InnerB:
+    class InnerB(salix.Struct, frozen=False):
         b: int = 0
 
-    @dataclasses.dataclass
-    class Outer:
+    class Outer(salix.Struct, frozen=False):
         # This union field would normally generate subcommands.
-        inner: Union[InnerA, InnerB] = dataclasses.field(default_factory=InnerA)
+        inner: Union[InnerA, InnerB] = InnerA()
         x: int = 0
 
-    @dataclasses.dataclass
-    class Config:
+    class Config(salix.Struct, frozen=False):
         outer: Union[
             Annotated[
                 Outer,
@@ -3204,21 +2987,17 @@ def test_field_equality_nested_union_fields() -> None:
 def test_field_equality_nested_union_different_variants() -> None:
     """Test matching when nested union has different variant types."""
 
-    @dataclasses.dataclass
-    class InnerA:
+    class InnerA(salix.Struct, frozen=False):
         a: int = 0
 
-    @dataclasses.dataclass
-    class InnerB:
+    class InnerB(salix.Struct, frozen=False):
         b: int = 0
 
-    @dataclasses.dataclass
-    class Outer:
-        inner: Union[InnerA, InnerB] = dataclasses.field(default_factory=InnerA)
+    class Outer(salix.Struct, frozen=False):
+        inner: Union[InnerA, InnerB] = InnerA()
         x: int = 0
 
-    @dataclasses.dataclass
-    class Config:
+    class Config(salix.Struct, frozen=False):
         outer: Union[
             Annotated[
                 Outer,
@@ -3250,18 +3029,15 @@ def test_field_equality_nested_union_different_variants() -> None:
 def test_new_subcommand_for_defaults_creates_default() -> None:
     """Test that NewSubcommandForDefaults creates a 'default' subcommand."""
 
-    @dataclasses.dataclass
-    class PlaneConfig:
+    class PlaneConfig(salix.Struct, frozen=False):
         height: float = 0.0
 
-    @dataclasses.dataclass
-    class MixedConfig:
+    class MixedConfig(salix.Struct, frozen=False):
         ratio: float = 0.5
 
-    @dataclasses.dataclass
-    class Config:
+    class Config(salix.Struct, frozen=False):
         terrain: tyro.conf.NewSubcommandForDefaults[Union[PlaneConfig, MixedConfig]] = (
-            dataclasses.field(default_factory=lambda: PlaneConfig(height=5.0))
+            PlaneConfig(height=5.0)
         )
 
     # Default subcommand selected when no args.
@@ -3276,16 +3052,13 @@ def test_new_subcommand_for_defaults_creates_default() -> None:
 def test_new_subcommand_for_defaults_preserves_originals() -> None:
     """Test that original subcommand defaults are preserved."""
 
-    @dataclasses.dataclass
-    class PlaneConfig:
+    class PlaneConfig(salix.Struct, frozen=False):
         height: float = 0.0
 
-    @dataclasses.dataclass
-    class MixedConfig:
+    class MixedConfig(salix.Struct, frozen=False):
         ratio: float = 0.5
 
-    @dataclasses.dataclass
-    class Config:
+    class Config(salix.Struct, frozen=False):
         terrain: tyro.conf.NewSubcommandForDefaults[
             Union[
                 Annotated[
@@ -3293,7 +3066,7 @@ def test_new_subcommand_for_defaults_preserves_originals() -> None:
                 ],
                 MixedConfig,
             ]
-        ] = dataclasses.field(default_factory=lambda: PlaneConfig(height=99.0))
+        ] = PlaneConfig(height=99.0)
 
     # Selecting plane-config should use its original default (0.0).
     result = tyro.cli(Config, args=["terrain:plane-config"])
@@ -3309,19 +3082,16 @@ def test_new_subcommand_for_defaults_preserves_originals() -> None:
 def test_new_subcommand_for_defaults_with_omit_prefix() -> None:
     """Test interaction with OmitSubcommandPrefixes."""
 
-    @dataclasses.dataclass
-    class PlaneConfig:
+    class PlaneConfig(salix.Struct, frozen=False):
         height: float = 0.0
 
-    @dataclasses.dataclass
-    class MixedConfig:
+    class MixedConfig(salix.Struct, frozen=False):
         ratio: float = 0.5
 
-    @dataclasses.dataclass
-    class Config:
+    class Config(salix.Struct, frozen=False):
         terrain: tyro.conf.NewSubcommandForDefaults[
             tyro.conf.OmitSubcommandPrefixes[Union[PlaneConfig, MixedConfig]]
-        ] = dataclasses.field(default_factory=lambda: PlaneConfig(height=5.0))
+        ] = PlaneConfig(height=5.0)
 
     # Should be able to use "default" without prefix.
     result = tyro.cli(Config, args=["default"])
@@ -3335,8 +3105,7 @@ def test_new_subcommand_for_defaults_with_omit_prefix() -> None:
 def test_append_ignored_for_positional() -> None:
     # UseAppendAction doesn't make sense for positional arguments since you
     # can't repeat a positional like `--flag val1 --flag val2`.
-    @dataclasses.dataclass
-    class A:
+    class A(salix.Struct, frozen=False):
         x: tyro.conf.Positional[tyro.conf.UseAppendAction[Tuple[str, ...]]]
 
     assert tyro.cli(A, args="hello world".split(" ")) == A(x=("hello", "world"))
@@ -3346,8 +3115,7 @@ def test_append_ignored_for_positional() -> None:
 def test_append_ignored_for_positional_required_args() -> None:
     # UseAppendAction should be ignored for positional arguments created via
     # PositionalRequiredArgs (required fields become positional).
-    @dataclasses.dataclass
-    class A:
+    class A(salix.Struct, frozen=False):
         x: Tuple[str, ...]
 
     assert tyro.cli(
@@ -3360,8 +3128,7 @@ def test_append_ignored_for_positional_required_args() -> None:
 def test_append_works_for_optional_with_positional_required_args() -> None:
     # UseAppendAction should still work for optional (keyword) arguments even
     # when PositionalRequiredArgs is set.
-    @dataclasses.dataclass
-    class A:
+    class A(salix.Struct, frozen=False):
         x: Tuple[str, ...] = ()
 
     assert tyro.cli(
@@ -3376,8 +3143,7 @@ def test_positional_metavar_from_field_name() -> None:
     name instead of a type-based metavar.
     https://github.com/brentyi/tyro/issues/484"""
 
-    @dataclasses.dataclass
-    class Args:
+    class Args(salix.Struct, frozen=False):
         input_file: tyro.conf.Positional[pathlib.Path]
 
     # Without the marker: type-based metavar.
@@ -3404,8 +3170,7 @@ def test_positional_metavar_from_field_name_consistency() -> None:
     """The field-name metavar should be used consistently in the usage line
     and the helptext body. https://github.com/brentyi/tyro/issues/484"""
 
-    @dataclasses.dataclass
-    class Args:
+    class Args(salix.Struct, frozen=False):
         input_file: tyro.conf.Positional[pathlib.Path]
 
     helptext = get_helptext_with_checks(
@@ -3422,8 +3187,7 @@ def test_positional_metavar_from_field_name_required_args() -> None:
     """`PositionalMetavarFromFieldName` composes with
     `PositionalRequiredArgs`. https://github.com/brentyi/tyro/issues/484"""
 
-    @dataclasses.dataclass
-    class Args:
+    class Args(salix.Struct, frozen=False):
         indir: pathlib.Path
         verbose: bool = False
 
@@ -3449,8 +3213,7 @@ def test_positional_metavar_from_field_name_optional_positional() -> None:
     """Optional positionals keep their brackets with the field-name metavar.
     https://github.com/brentyi/tyro/issues/484"""
 
-    @dataclasses.dataclass
-    class Args:
+    class Args(salix.Struct, frozen=False):
         opt_pos: tyro.conf.Positional[int] = 3
 
     helptext = get_helptext_with_checks(
@@ -3469,8 +3232,7 @@ def test_positional_metavar_from_field_name_use_underscores() -> None:
     """`use_underscores=True` should be reflected in field-name metavars.
     https://github.com/brentyi/tyro/issues/484"""
 
-    @dataclasses.dataclass
-    class Args:
+    class Args(salix.Struct, frozen=False):
         input_file: tyro.conf.Positional[pathlib.Path]
 
     helptext = get_helptext_with_checks(
@@ -3486,8 +3248,7 @@ def test_positional_metavar_from_field_name_explicit_metavar() -> None:
     """Explicit `tyro.conf.arg(metavar=...)` takes precedence over the
     field-name metavar. https://github.com/brentyi/tyro/issues/484"""
 
-    @dataclasses.dataclass
-    class Args:
+    class Args(salix.Struct, frozen=False):
         input_file: Annotated[
             tyro.conf.Positional[pathlib.Path], tyro.conf.arg(metavar="SRC")
         ]
@@ -3503,12 +3264,10 @@ def test_positional_metavar_from_field_name_nested() -> None:
     """Field-name metavars include prefixes for nested positional fields.
     https://github.com/brentyi/tyro/issues/484"""
 
-    @dataclasses.dataclass
-    class Inner:
+    class Inner(salix.Struct, frozen=False):
         x: tyro.conf.Positional[int]
 
-    @dataclasses.dataclass
-    class Outer:
+    class Outer(salix.Struct, frozen=False):
         inner: Inner
 
     helptext = get_helptext_with_checks(
@@ -3524,8 +3283,7 @@ def test_positional_metavar_from_field_name_per_field() -> None:
     """The marker can also be applied to individual fields via Annotated.
     https://github.com/brentyi/tyro/issues/484"""
 
-    @dataclasses.dataclass
-    class Args:
+    class Args(salix.Struct, frozen=False):
         named: tyro.conf.PositionalMetavarFromFieldName[
             tyro.conf.Positional[pathlib.Path]
         ]

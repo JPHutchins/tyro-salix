@@ -1,6 +1,6 @@
 """Adapted from @mirceamironenco: https://github.com/brentyi/tyro/issues/170"""
 
-from dataclasses import dataclass
+from salix import Struct
 
 import tyro
 
@@ -9,8 +9,7 @@ class LayerAExample:
     def __init__(self, **kwargs): ...
 
 
-@dataclass
-class LayerAConfig:
+class LayerAConfig(Struct, frozen=False):
     _target: type = LayerAExample
     foo: int = 13
 
@@ -19,14 +18,12 @@ class LayerBExample:
     def __init__(self, **kwargs): ...
 
 
-@dataclass
-class LayerBConfig:
+class LayerBConfig(Struct, frozen=False):
     _target: type = LayerBExample
     bar: int = 13
 
 
-@dataclass
-class BlockConfig:
+class BlockConfig(Struct, frozen=False):
     layer_a: LayerAConfig
     layer_b: LayerBConfig
 

@@ -15,18 +15,17 @@
 
 from __future__ import annotations
 
-import dataclasses
 from typing import List, Tuple
 
 import pytest
+from salix import Struct
 
 import tyro
 from tyro.conf import Positional
 
 
 def test_fixed_nargs_does_not_swallow_flags() -> None:
-    @dataclasses.dataclass
-    class FS:
+    class FS(Struct, frozen=False):
         x: str = "def"
         verbose: bool = False
 
@@ -37,8 +36,7 @@ def test_fixed_nargs_does_not_swallow_flags() -> None:
         tyro.cli(FS, args=["--x", "--y"])  # unknown but flag-like
 
     # The `--` end-of-options marker must not be consumed as a value.
-    @dataclasses.dataclass
-    class T2:
+    class T2(Struct, frozen=False):
         pair: Tuple[str, str] = ("a", "b")
 
     with pytest.raises(SystemExit):
@@ -54,8 +52,7 @@ def test_fixed_nargs_does_not_swallow_flags() -> None:
 
 
 def test_variable_positional_reserves_for_later_positionals() -> None:
-    @dataclasses.dataclass
-    class A:
+    class A(Struct, frozen=False):
         xs: Positional[List[int]]
         y: Positional[int]
 
@@ -63,8 +60,7 @@ def test_variable_positional_reserves_for_later_positionals() -> None:
     assert tyro.cli(A, args=["1"]) == A(xs=[], y=1)
 
     # Two trailing required positionals.
-    @dataclasses.dataclass
-    class B:
+    class B(Struct, frozen=False):
         xs: Positional[List[int]]
         y: Positional[int]
         z: Positional[int]
@@ -72,16 +68,14 @@ def test_variable_positional_reserves_for_later_positionals() -> None:
     assert tyro.cli(B, args=["1", "2", "3", "4", "5"]) == B(xs=[1, 2, 3], y=4, z=5)
 
     # A leading fixed positional followed by a greedy one is unaffected.
-    @dataclasses.dataclass
-    class C:
+    class C(Struct, frozen=False):
         a: Positional[int]
         xs: Positional[List[str]]
 
     assert tyro.cli(C, args=["1", "a", "b", "c"]) == C(a=1, xs=["a", "b", "c"])
 
     # A lone greedy positional still consumes everything.
-    @dataclasses.dataclass
-    class D:
+    class D(Struct, frozen=False):
         xs: Positional[List[int]]
 
     assert tyro.cli(D, args=["1", "2", "3"]) == D(xs=[1, 2, 3])

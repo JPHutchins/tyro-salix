@@ -9,11 +9,11 @@ This tests the functionality added to support types like:
 - List[Union[Tuple[int, int], Tuple[int, int, int]]]
 """
 
-import dataclasses
 from typing import Any, List, Tuple, Union
 
 import pytest
 from helptext_utils import get_helptext_with_checks
+from salix import Struct
 
 import tyro
 
@@ -131,8 +131,7 @@ def test_list_union_triple_tuple_sizes() -> None:
 def test_dataclass_with_list_union_tuples() -> None:
     """Test dataclass containing list of union tuples."""
 
-    @dataclasses.dataclass
-    class Config:
+    class Config(Struct, frozen=False):
         points: List[Union[Tuple[int, int], Tuple[int, int, int]]]
         names: List[str]
 
@@ -292,8 +291,7 @@ def test_helptext_list_union_tuples() -> None:
     assert "List of 2D or 3D points." in helptext
 
 
-@dataclasses.dataclass
-class Config1:
+class Config1(Struct, frozen=False):
     values: List[Union[bool, Tuple[int, int]]]
     """A list of boolean flags or coordinate pairs."""
 
@@ -307,8 +305,7 @@ def test_helptext_list_bool_or_tuple() -> None:
     assert "A list of boolean flags or coordinate pairs." in helptext
 
 
-@dataclasses.dataclass
-class Config2:
+class Config2(Struct, frozen=False):
     points: List[Union[Tuple[int, int], Tuple[int, int, int]]]
     """List of 2D or 3D points."""
     names: List[str]
@@ -326,14 +323,9 @@ def test_helptext_dataclass_with_union_list() -> None:
     assert "List of point names. (required)" in helptext
 
 
-@dataclasses.dataclass
-class Config3:
-    points: List[Union[Tuple[int, int], Tuple[int, int, int]]] = dataclasses.field(
-        default_factory=lambda: [(1, 2), (3, 4, 5)]
-    )
-    flags: List[Union[bool, Tuple[int, int]]] = dataclasses.field(
-        default_factory=lambda: [True, (10, 20), False]
-    )
+class Config3(Struct, frozen=False):
+    points: List[Union[Tuple[int, int], Tuple[int, int, int]]] = [(1, 2), (3, 4, 5)]
+    flags: List[Union[bool, Tuple[int, int]]] = [True, (10, 20), False]
 
 
 def test_list_union_with_defaults() -> None:
@@ -358,11 +350,8 @@ def test_list_union_with_defaults() -> None:
 def test_list_union_empty_default() -> None:
     """Test list of unions with empty default."""
 
-    @dataclasses.dataclass
-    class Config:
-        points: List[Union[Tuple[int, int], Tuple[int, int, int]]] = dataclasses.field(
-            default_factory=list
-        )
+    class Config(Struct, frozen=False):
+        points: List[Union[Tuple[int, int], Tuple[int, int, int]]] = []
 
     # Test with empty default.
     result = tyro.cli(Config, args=[])
@@ -394,11 +383,8 @@ def test_function_with_default_list_union() -> None:
     ]
 
 
-@dataclasses.dataclass
-class Config4:
-    points: List[Union[Tuple[int, int], Tuple[int, int, int]]] = dataclasses.field(
-        default_factory=lambda: [(1, 2), (3, 4, 5)]
-    )
+class Config4(Struct, frozen=False):
+    points: List[Union[Tuple[int, int], Tuple[int, int, int]]] = [(1, 2), (3, 4, 5)]
     """List of 2D or 3D points."""
 
 
@@ -418,11 +404,8 @@ def test_helptext_with_defaults() -> None:
 def test_mixed_type_union_defaults() -> None:
     """Test mixed type unions with defaults."""
 
-    @dataclasses.dataclass
-    class Config:
-        values: List[Union[str, Tuple[int, int]]] = dataclasses.field(
-            default_factory=lambda: ["hello", (1, 2), "world"]
-        )
+    class Config(Struct, frozen=False):
+        values: List[Union[str, Tuple[int, int]]] = ["hello", (1, 2), "world"]
 
     # Test with default.
     result = tyro.cli(Config, args=[])

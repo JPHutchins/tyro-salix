@@ -4,9 +4,9 @@ from __future__ import annotations
 
 import contextlib
 import io
-from dataclasses import dataclass, field
 
 import pytest
+from salix import Struct
 from typing_extensions import Annotated
 
 import tyro
@@ -19,8 +19,7 @@ from tyro.conf import (
 )
 
 
-@dataclass
-class RunConfig:
+class RunConfig(Struct, frozen=False):
     """run tests"""
 
     num: int = 5
@@ -28,20 +27,18 @@ class RunConfig:
     verbose: Annotated[bool, arg(aliases=["-v"])] = False
 
 
-@dataclass
-class CompareConfig:
+class CompareConfig(Struct, frozen=False):
     """compare runs"""
 
     a: int | str = -2
     b: int | str = -1
 
 
-@dataclass
-class Config:
+class Config(Struct, frozen=False):
     command: OmitSubcommandPrefixes[
         Annotated[RunConfig, subcommand("run", prefix_name=False)]
         | Annotated[CompareConfig, subcommand("compare", prefix_name=False)]
-    ] = field(default_factory=RunConfig)
+    ] = RunConfig()
 
 
 def _skip_if_argparse(backend: str) -> None:
@@ -102,33 +99,27 @@ def test_verbose_flag_expands_in_compact_mode(backend: str):
     assert "source subcommand:" in helptext
 
 
-@dataclass
-class _SubcommandA:
+class _SubcommandA(Struct, frozen=False):
     x: int = 1
 
 
-@dataclass
-class _SubcommandB:
+class _SubcommandB(Struct, frozen=False):
     y: int = 2
 
 
-@dataclass
-class _RegularNested:
+class _RegularNested(Struct, frozen=False):
     z: int = 99
 
 
-@dataclass
-class _MixedConfig:
+class _MixedConfig(Struct, frozen=False):
     # This is a subcommand with a default — its args get "dataset" extern prefix.
     dataset0: Annotated[
         _SubcommandA | _SubcommandB,
         arg(name="dataset"),
-    ] = field(default_factory=_SubcommandA)
+    ] = _SubcommandA()
     # This is a plain nested struct, also renamed to "dataset" extern prefix.
     # Its args will share the same "dataset options" group.
-    dataset1: Annotated[_RegularNested, arg(name="dataset")] = field(
-        default_factory=_RegularNested
-    )
+    dataset1: Annotated[_RegularNested, arg(name="dataset")] = _RegularNested()
 
 
 def test_no_source_label_when_group_has_mixed_args(backend: str):
@@ -156,27 +147,24 @@ def test_no_source_label_when_group_has_mixed_args(backend: str):
     assert helptext.count("source subcommand:") == 1
 
 
-@dataclass
-class _RequiredArgSub:
+class _RequiredArgSub(Struct, frozen=False):
     """subcommand with a required arg"""
 
     required_val: int = tyro.MISSING_NONPROP
     optional_val: int = 10
 
 
-@dataclass
-class _OtherSub:
+class _OtherSub(Struct, frozen=False):
     """other subcommand"""
 
     w: int = 0
 
 
-@dataclass
-class _RequiredArgConfig:
+class _RequiredArgConfig(Struct, frozen=False):
     command: OmitSubcommandPrefixes[
         Annotated[_RequiredArgSub, subcommand("req", prefix_name=False)]
         | Annotated[_OtherSub, subcommand("other", prefix_name=False)]
-    ] = field(default_factory=_RequiredArgSub)
+    ] = _RequiredArgSub()
 
 
 def test_compact_required_arg_in_default_subcommand(backend: str):
@@ -196,43 +184,38 @@ def test_compact_required_arg_in_default_subcommand(backend: str):
     assert "--required-val" in helptext
 
 
-@dataclass
-class _InnerSubA:
+class _InnerSubA(Struct, frozen=False):
     """inner sub A"""
 
     p: int = 1
 
 
-@dataclass
-class _InnerSubB:
+class _InnerSubB(Struct, frozen=False):
     """inner sub B"""
 
     q: int = 2
 
 
-@dataclass
-class _OuterSub:
+class _OuterSub(Struct, frozen=False):
     """outer sub with nested subcommand"""
 
     val: int = 5
-    inner: Annotated[_InnerSubA | _InnerSubB, subcommand(prefix_name=False)] = field(
-        default_factory=_InnerSubA
+    inner: Annotated[_InnerSubA | _InnerSubB, subcommand(prefix_name=False)] = (
+        _InnerSubA()
     )
 
 
-@dataclass
-class _OuterOther:
+class _OuterOther(Struct, frozen=False):
     """other outer sub"""
 
     r: int = 0
 
 
-@dataclass
-class _NestedSubConfig:
+class _NestedSubConfig(Struct, frozen=False):
     command: OmitSubcommandPrefixes[
         Annotated[_OuterSub, subcommand("outer", prefix_name=False)]
         | Annotated[_OuterOther, subcommand("other", prefix_name=False)]
-    ] = field(default_factory=_OuterSub)
+    ] = _OuterSub()
 
 
 def test_nested_default_subcommand_recursive(backend: str):

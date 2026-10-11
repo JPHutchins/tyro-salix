@@ -1,9 +1,9 @@
 """Tests to improve coverage of _tyro_backend.py."""
 
-import dataclasses
 from typing import List, Literal, Optional, Tuple, Union
 
 import pytest
+from salix import Struct
 from typing_extensions import Annotated
 
 import tyro
@@ -44,16 +44,13 @@ def test_positional():
 def test_cascade_misplaced_subcommand() -> None:
     """Test when subcommand appears after other arguments in cascaded mode."""
 
-    @dataclasses.dataclass
-    class SubcommandA:
+    class SubcommandA(Struct, frozen=False):
         value: int = 1
 
-    @dataclasses.dataclass
-    class SubcommandB:
+    class SubcommandB(Struct, frozen=False):
         value: int = 2
 
-    @dataclasses.dataclass
-    class Config:
+    class Config(Struct, frozen=False):
         x: int
         subcommand: Union[SubcommandA, SubcommandB]
 
@@ -73,17 +70,14 @@ def test_cascade_misplaced_subcommand() -> None:
 def test_cascade_optional_nargs() -> None:
     """Test nargs='?' handling in cascaded mode."""
 
-    @dataclasses.dataclass
-    class SubcommandA:
+    class SubcommandA(Struct, frozen=False):
         required_value: int
         optional_value: Optional[int] = None
 
-    @dataclasses.dataclass
-    class SubcommandB:
+    class SubcommandB(Struct, frozen=False):
         value: int = 1
 
-    @dataclasses.dataclass
-    class Config:
+    class Config(Struct, frozen=False):
         subcommand: Union[SubcommandA, SubcommandB]
 
     # Test with the optional value provided.
@@ -114,16 +108,13 @@ def test_cascade_optional_nargs() -> None:
 def test_cascade_positional_values() -> None:
     """Test variadic positional arguments in cascaded mode."""
 
-    @dataclasses.dataclass
-    class SubcommandA:
+    class SubcommandA(Struct, frozen=False):
         values: Tuple[int, ...]
 
-    @dataclasses.dataclass
-    class SubcommandB:
+    class SubcommandB(Struct, frozen=False):
         value: int = 1
 
-    @dataclasses.dataclass
-    class Config:
+    class Config(Struct, frozen=False):
         subcommand: Union[SubcommandA, SubcommandB]
 
     result = tyro.cli(
@@ -143,16 +134,13 @@ def test_cascade_positional_values() -> None:
 def test_cascade_nargs_plus_empty() -> None:
     """Test nargs='+' with values in cascaded mode."""
 
-    @dataclasses.dataclass
-    class SubcommandA:
+    class SubcommandA(Struct, frozen=False):
         values: Tuple[int, ...]
 
-    @dataclasses.dataclass
-    class SubcommandB:
+    class SubcommandB(Struct, frozen=False):
         value: int = 1
 
-    @dataclasses.dataclass
-    class Config:
+    class Config(Struct, frozen=False):
         subcommand: Union[SubcommandA, SubcommandB]
 
     result = tyro.cli(
@@ -171,8 +159,7 @@ def test_cascade_nargs_plus_empty() -> None:
 def test_cascade_count_flag_basic() -> None:
     """Test count flags in cascaded mode."""
 
-    @dataclasses.dataclass
-    class Command:
+    class Command(Struct, frozen=False):
         verbose: Annotated[
             tyro.conf.UseCounterAction[int], tyro.conf.arg(aliases=["-v"])
         ] = 0
@@ -198,16 +185,13 @@ def test_cascade_count_flag_basic() -> None:
 def test_cascade_count_flag() -> None:
     """Test count flags in cascaded mode."""
 
-    @dataclasses.dataclass
-    class SubcommandA:
+    class SubcommandA(Struct, frozen=False):
         verbose: tyro.conf.UseCounterAction[int] = 0
 
-    @dataclasses.dataclass
-    class SubcommandB:
+    class SubcommandB(Struct, frozen=False):
         value: int = 1
 
-    @dataclasses.dataclass
-    class Config:
+    class Config(Struct, frozen=False):
         subcommand: Union[SubcommandA, SubcommandB]
 
     result = tyro.cli(
@@ -226,16 +210,13 @@ def test_cascade_count_flag() -> None:
 def test_cascade_flag_with_equals() -> None:
     """Test --flag=value syntax in cascaded mode."""
 
-    @dataclasses.dataclass
-    class SubcommandA:
+    class SubcommandA(Struct, frozen=False):
         value: int = 1
 
-    @dataclasses.dataclass
-    class SubcommandB:
+    class SubcommandB(Struct, frozen=False):
         value: int = 2
 
-    @dataclasses.dataclass
-    class Config:
+    class Config(Struct, frozen=False):
         subcommand: Union[SubcommandA, SubcommandB]
 
     result = tyro.cli(
@@ -249,16 +230,13 @@ def test_cascade_flag_with_equals() -> None:
 def test_cascade_unknown_positional() -> None:
     """Test handling of unknown positional arguments in cascaded mode."""
 
-    @dataclasses.dataclass
-    class SubcommandA:
+    class SubcommandA(Struct, frozen=False):
         value: int = 1
 
-    @dataclasses.dataclass
-    class SubcommandB:
+    class SubcommandB(Struct, frozen=False):
         value: int = 2
 
-    @dataclasses.dataclass
-    class Config:
+    class Config(Struct, frozen=False):
         subcommand: Union[SubcommandA, SubcommandB]
 
     # This should fail because there's an unknown positional argument.
@@ -272,19 +250,14 @@ def test_cascade_unknown_positional() -> None:
 def test_cascade_default_subcommand() -> None:
     """Test default subcommand handling in cascaded mode."""
 
-    @dataclasses.dataclass
-    class SubcommandA:
+    class SubcommandA(Struct, frozen=False):
         value: int = 1
 
-    @dataclasses.dataclass
-    class SubcommandB:
+    class SubcommandB(Struct, frozen=False):
         value: int = 2
 
-    @dataclasses.dataclass
-    class Config:
-        subcommand: Union[SubcommandA, SubcommandB] = dataclasses.field(
-            default_factory=SubcommandA
-        )
+    class Config(Struct, frozen=False):
+        subcommand: Union[SubcommandA, SubcommandB] = SubcommandA()
 
     result = tyro.cli(
         tyro.conf.CascadeSubcommandArgs[Config],
@@ -298,19 +271,14 @@ def test_cascade_default_subcommand() -> None:
 def test_recursive_mode_default_subcommand() -> None:
     """Test default subcommand in recursive mode."""
 
-    @dataclasses.dataclass
-    class SubcommandA:
+    class SubcommandA(Struct, frozen=False):
         value: int = 1
 
-    @dataclasses.dataclass
-    class SubcommandB:
+    class SubcommandB(Struct, frozen=False):
         value: int = 2
 
-    @dataclasses.dataclass
-    class Config:
-        subcommand: Union[SubcommandA, SubcommandB] = dataclasses.field(
-            default_factory=SubcommandA
-        )
+    class Config(Struct, frozen=False):
+        subcommand: Union[SubcommandA, SubcommandB] = SubcommandA()
 
     result = tyro.cli(
         Config,
@@ -324,8 +292,7 @@ def test_recursive_mode_default_subcommand() -> None:
 def test_recursive_mode_unknown_args() -> None:
     """Test unknown arguments in recursive mode cause an error."""
 
-    @dataclasses.dataclass
-    class Config:
+    class Config(Struct, frozen=False):
         value: int = 1
 
     # Unknown args should cause an error.
@@ -339,8 +306,7 @@ def test_recursive_mode_unknown_args() -> None:
 def test_choices_validation() -> None:
     """Test choices validation."""
 
-    @dataclasses.dataclass
-    class Config:
+    class Config(Struct, frozen=False):
         option: Literal["a", "b", "c"]
 
     result = tyro.cli(Config, args=["--option", "a"])
@@ -354,8 +320,7 @@ def test_choices_validation() -> None:
 def test_integer_nargs() -> None:
     """Test nargs with integer values."""
 
-    @dataclasses.dataclass
-    class Config:
+    class Config(Struct, frozen=False):
         values: Tuple[int, int, int] = (1, 2, 3)
 
     result = tyro.cli(Config, args=["--values", "4", "5", "6"], default=Config())
@@ -369,8 +334,7 @@ def test_integer_nargs() -> None:
 def test_help_flag_display() -> None:
     """Test help flag triggers help display."""
 
-    @dataclasses.dataclass
-    class Config:
+    class Config(Struct, frozen=False):
         value: int = 1
 
     with pytest.raises(SystemExit) as exc_info:
@@ -382,16 +346,13 @@ def test_help_flag_display() -> None:
 def test_cascaded_help_display() -> None:
     """Test help display in cascaded mode."""
 
-    @dataclasses.dataclass
-    class SubcommandA:
+    class SubcommandA(Struct, frozen=False):
         value: int = 1
 
-    @dataclasses.dataclass
-    class SubcommandB:
+    class SubcommandB(Struct, frozen=False):
         value: int = 2
 
-    @dataclasses.dataclass
-    class Config:
+    class Config(Struct, frozen=False):
         subcommand: Union[SubcommandA, SubcommandB]
 
     with pytest.raises(SystemExit) as exc_info:
@@ -406,8 +367,7 @@ def test_cascaded_help_display() -> None:
 def test_missing_required_args_error() -> None:
     """Test error when required arguments are missing."""
 
-    @dataclasses.dataclass
-    class Config:
+    class Config(Struct, frozen=False):
         required_value: int
 
     with pytest.raises(SystemExit):
@@ -417,8 +377,7 @@ def test_missing_required_args_error() -> None:
 def test_boolean_flags() -> None:
     """Test boolean flags with store_true behavior."""
 
-    @dataclasses.dataclass
-    class Config:
+    class Config(Struct, frozen=False):
         verbose: bool = False
 
     result = tyro.cli(Config, args=["--verbose"], default=Config())
@@ -431,9 +390,8 @@ def test_boolean_flags() -> None:
 def test_nargs_star() -> None:
     """Test nargs='*' handling."""
 
-    @dataclasses.dataclass
-    class Config:
-        values: List[int] = dataclasses.field(default_factory=list)
+    class Config(Struct, frozen=False):
+        values: List[int] = []
 
     result = tyro.cli(Config, args=["--values", "1", "2", "3"], default=Config())
     assert result.values == [1, 2, 3]
@@ -445,8 +403,7 @@ def test_nargs_star() -> None:
 def test_register_parser_args() -> None:
     """Test registering arguments from parser specification."""
 
-    @dataclasses.dataclass
-    class Config:
+    class Config(Struct, frozen=False):
         value1: int = 1
         value2: str = "test"
         value3: bool = False
@@ -464,8 +421,7 @@ def test_register_parser_args() -> None:
 def test_add_help_flags() -> None:
     """Test help flags are registered."""
 
-    @dataclasses.dataclass
-    class Config:
+    class Config(Struct, frozen=False):
         value: int = 1
 
     # Test both -h and --help.
@@ -481,8 +437,7 @@ def test_add_help_flags() -> None:
 def test_validate_required_args() -> None:
     """Test validation of required arguments."""
 
-    @dataclasses.dataclass
-    class Config:
+    class Config(Struct, frozen=False):
         required1: int
         required2: str
         optional: bool = False
@@ -508,8 +463,7 @@ def test_short_flag_terminates_nargs_star() -> None:
     flag like -x should terminate consumption, matching argparse behavior.
     """
 
-    @dataclasses.dataclass
-    class Config:
+    class Config(Struct, frozen=False):
         # Variadic string values.
         values: Tuple[str, ...] = ()
 
@@ -529,8 +483,7 @@ def test_short_flag_terminates_nargs_star() -> None:
 def test_negative_numbers_in_nargs() -> None:
     """Test that negative numbers are not treated as flags in variadic args."""
 
-    @dataclasses.dataclass
-    class Config:
+    class Config(Struct, frozen=False):
         values: Tuple[int, ...] = ()
 
     if tyro._experimental_options["backend"] != "tyro":
@@ -552,8 +505,7 @@ def test_negative_numbers_in_nargs() -> None:
 def test_negative_floats_in_nargs() -> None:
     """Test that negative floats are not treated as flags in variadic args."""
 
-    @dataclasses.dataclass
-    class Config:
+    class Config(Struct, frozen=False):
         values: Tuple[float, ...] = ()
 
     if tyro._experimental_options["backend"] != "tyro":
@@ -570,8 +522,7 @@ def test_negative_floats_in_nargs() -> None:
 def test_negative_number_with_known_flag() -> None:
     """Test that known flags still terminate nargs even when preceded by negative numbers."""
 
-    @dataclasses.dataclass
-    class Config:
+    class Config(Struct, frozen=False):
         values: Tuple[int, ...] = ()
         flag: int = 0
 
@@ -587,8 +538,7 @@ def test_negative_number_with_known_flag() -> None:
 def test_negative_numbers_with_unknown_args() -> None:
     """Test negative numbers work alongside unknown flags with return_unknown_args."""
 
-    @dataclasses.dataclass
-    class Config:
+    class Config(Struct, frozen=False):
         values: Tuple[int, ...] = ()
 
     if tyro._experimental_options["backend"] != "tyro":
@@ -616,8 +566,7 @@ def test_negative_numbers_with_unknown_args() -> None:
 def test_bare_dash_in_nargs() -> None:
     """Test that a bare '-' is consumed as a value, not treated as a flag."""
 
-    @dataclasses.dataclass
-    class Config:
+    class Config(Struct, frozen=False):
         values: Tuple[str, ...] = ()
 
     if tyro._experimental_options["backend"] != "tyro":
@@ -630,8 +579,7 @@ def test_bare_dash_in_nargs() -> None:
 def test_negative_number_nargs_fixed() -> None:
     """Test that negative numbers work in fixed-length nargs too."""
 
-    @dataclasses.dataclass
-    class Config:
+    class Config(Struct, frozen=False):
         pair: Tuple[int, int] = (0, 0)
 
     if tyro._experimental_options["backend"] != "tyro":
@@ -651,28 +599,23 @@ def test_nested_subcommand_help_prog() -> None:
     import io
     import sys
 
-    @dataclasses.dataclass
-    class Inner1:
+    class Inner1(Struct, frozen=False):
         # Inner field.
         x: int = 1
 
-    @dataclasses.dataclass
-    class Inner2:
+    class Inner2(Struct, frozen=False):
         # Inner field.
         y: int = 2
 
-    @dataclasses.dataclass
-    class Middle1:
+    class Middle1(Struct, frozen=False):
         # Nested subcommand.
         inner: Union[Inner1, Inner2]
 
-    @dataclasses.dataclass
-    class Middle2:
+    class Middle2(Struct, frozen=False):
         # Simple field.
         z: int = 3
 
-    @dataclasses.dataclass
-    class Outer:
+    class Outer(Struct, frozen=False):
         # Top-level subcommand.
         cmd: Union[Middle1, Middle2]
 
@@ -705,22 +648,18 @@ def test_nested_subcommand_help_prog() -> None:
 def test_nested_subcommands_cascaded() -> None:
     """Test nested subcommands in cascaded mode."""
 
-    @dataclasses.dataclass
-    class NestedA:
+    class NestedA(Struct, frozen=False):
         value: int = 1
 
-    @dataclasses.dataclass
-    class NestedB:
+    class NestedB(Struct, frozen=False):
         value: int = 2
 
-    @dataclasses.dataclass
-    class SubcommandA:
+    class SubcommandA(Struct, frozen=False):
         x: int = 10
-        nested: Union[NestedA, NestedB] = dataclasses.field(default_factory=NestedA)
+        nested: Union[NestedA, NestedB] = NestedA()
 
-    @dataclasses.dataclass
-    class Config:
-        subcommand: SubcommandA = dataclasses.field(default_factory=SubcommandA)
+    class Config(Struct, frozen=False):
+        subcommand: SubcommandA = SubcommandA()
 
     result = tyro.cli(
         tyro.conf.CascadeSubcommandArgs[Config],

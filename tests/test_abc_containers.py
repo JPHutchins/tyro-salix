@@ -7,11 +7,11 @@
 # defaultdict (plus their typing.* aliases).
 import collections
 import collections.abc
-import dataclasses
 import sys
 from typing import Any, Counter, DefaultDict, OrderedDict, cast
 
 import pytest
+from salix import Struct
 from typing_extensions import Annotated
 
 import tyro
@@ -29,8 +29,7 @@ pytestmark = pytest.mark.skipif(
 
 
 def test_abc_set() -> None:
-    @dataclasses.dataclass
-    class A:
+    class A(Struct, frozen=False):
         x: collections.abc.Set[int]
 
     out = tyro.cli(A, args=["--x", "1", "2", "3", "3"])
@@ -44,8 +43,7 @@ def test_abc_set() -> None:
 
 
 def test_abc_mutable_set() -> None:
-    @dataclasses.dataclass
-    class A:
+    class A(Struct, frozen=False):
         x: collections.abc.MutableSet[int]
 
     out = tyro.cli(A, args=["--x", "1", "2", "3", "3"])
@@ -56,8 +54,7 @@ def test_abc_mutable_set() -> None:
 
 
 def test_abc_set_with_default() -> None:
-    @dataclasses.dataclass
-    class A:
+    class A(Struct, frozen=False):
         x: collections.abc.Set[int] = frozenset({0, 1, 2})
 
     # Round-trip: default is reused when no args are passed.
@@ -70,8 +67,7 @@ def test_abc_set_with_default() -> None:
 
 
 def test_abc_mutable_sequence() -> None:
-    @dataclasses.dataclass
-    class A:
+    class A(Struct, frozen=False):
         x: collections.abc.MutableSequence[int]
 
     out = tyro.cli(A, args=["--x", "1", "2", "3"])
@@ -85,8 +81,7 @@ def test_abc_mutable_sequence() -> None:
 
 
 def test_abc_mutable_mapping() -> None:
-    @dataclasses.dataclass
-    class A:
+    class A(Struct, frozen=False):
         x: collections.abc.MutableMapping[str, int]
 
     out = tyro.cli(A, args=["--x", "a", "1", "b", "2"])
@@ -96,8 +91,7 @@ def test_abc_mutable_mapping() -> None:
 
 
 def test_ordered_dict() -> None:
-    @dataclasses.dataclass
-    class A:
+    class A(Struct, frozen=False):
         x: collections.OrderedDict[str, int]
 
     out = tyro.cli(A, args=["--x", "a", "1", "b", "2"])
@@ -108,8 +102,7 @@ def test_ordered_dict() -> None:
 
 
 def test_typing_ordered_dict() -> None:
-    @dataclasses.dataclass
-    class A:
+    class A(Struct, frozen=False):
         x: OrderedDict[str, int]
 
     out = tyro.cli(A, args=["--x", "a", "1"])
@@ -118,8 +111,7 @@ def test_typing_ordered_dict() -> None:
 
 
 def test_counter() -> None:
-    @dataclasses.dataclass
-    class A:
+    class A(Struct, frozen=False):
         x: collections.Counter[str]
 
     out = tyro.cli(A, args=["--x", "a", "1", "b", "2"])
@@ -130,8 +122,7 @@ def test_counter() -> None:
 
 
 def test_typing_counter() -> None:
-    @dataclasses.dataclass
-    class A:
+    class A(Struct, frozen=False):
         x: Counter[str]
 
     out = tyro.cli(A, args=["--x", "a", "3"])
@@ -140,11 +131,8 @@ def test_typing_counter() -> None:
 
 
 def test_counter_with_default() -> None:
-    @dataclasses.dataclass
-    class A:
-        x: collections.Counter[str] = dataclasses.field(
-            default_factory=lambda: collections.Counter({"z": 3})
-        )
+    class A(Struct, frozen=False):
+        x: collections.Counter[str] = collections.Counter({"z": 3})
 
     # Round-trip: default reused & re-validated when no args passed.
     out = tyro.cli(A, args=[])
@@ -153,8 +141,7 @@ def test_counter_with_default() -> None:
 
 
 def test_defaultdict() -> None:
-    @dataclasses.dataclass
-    class A:
+    class A(Struct, frozen=False):
         x: collections.defaultdict[str, int]
 
     out = tyro.cli(A, args=["--x", "a", "1", "b", "2"])
@@ -168,8 +155,7 @@ def test_defaultdict() -> None:
 
 
 def test_typing_defaultdict() -> None:
-    @dataclasses.dataclass
-    class A:
+    class A(Struct, frozen=False):
         x: DefaultDict[str, int]
 
     out = tyro.cli(A, args=["--x", "a", "1"])
@@ -183,8 +169,7 @@ def test_typing_defaultdict() -> None:
 # from generic-base resolution on 3.9-3.11 -- the base library behaves
 # identically), so we only assert that parsing does not succeed.
 def test_chainmap_unsupported() -> None:
-    @dataclasses.dataclass
-    class A:
+    class A(Struct, frozen=False):
         x: collections.ChainMap[str, int]
 
     with pytest.raises((SystemExit, AssertionError)):
@@ -199,46 +184,40 @@ def test_abc_containers_with_append_action() -> None:
 
     from tyro.conf import UseAppendAction
 
-    @dataclasses.dataclass
-    class Seq:
+    class Seq(Struct, frozen=False):
         x: Annotated[abc.MutableSequence[int], UseAppendAction]
 
     out = tyro.cli(Seq, args=["--x", "1", "--x", "2"])
     assert out.x == [1, 2] and isinstance(out.x, list)
 
-    @dataclasses.dataclass
-    class St:
+    class St(Struct, frozen=False):
         x: Annotated[abc.Set[int], UseAppendAction]
 
     out_set = tyro.cli(St, args=["--x", "1", "--x", "2"])
     assert out_set.x == frozenset({1, 2}) and isinstance(out_set.x, frozenset)
 
-    @dataclasses.dataclass
-    class Od:
+    class Od(Struct, frozen=False):
         x: Annotated[collections.OrderedDict[str, int], UseAppendAction]
 
     out_od = tyro.cli(Od, args=["--x", "a", "1", "--x", "b", "2"])
     assert out_od.x == collections.OrderedDict({"a": 1, "b": 2})
     assert isinstance(out_od.x, collections.OrderedDict)
 
-    @dataclasses.dataclass
-    class Ct:
+    class Ct(Struct, frozen=False):
         x: Annotated[collections.Counter[str], UseAppendAction]
 
     out_ct = tyro.cli(Ct, args=["--x", "a", "2", "--x", "b", "3"])
     assert out_ct.x == collections.Counter({"a": 2, "b": 3})
     assert isinstance(out_ct.x, collections.Counter)
 
-    @dataclasses.dataclass
-    class Dd:
+    class Dd(Struct, frozen=False):
         x: Annotated[DefaultDict[str, int], UseAppendAction]
 
     out_dd = tyro.cli(Dd, args=["--x", "a", "1", "--x", "b", "2"])
     assert out_dd.x == {"a": 1, "b": 2}
     assert isinstance(out_dd.x, collections.defaultdict)
 
-    @dataclasses.dataclass
-    class Ms:
+    class Ms(Struct, frozen=False):
         x: Annotated[abc.MutableSet[int], UseAppendAction]
 
     out_ms = tyro.cli(Ms, args=["--x", "1", "--x", "2"])
