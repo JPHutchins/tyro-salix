@@ -8,31 +8,29 @@ cases when combining nested tuple types, renamed arguments, and subcommands.
 Largely written by @wookayin.
 """
 
-import dataclasses
 from pathlib import Path
 from typing import Annotated, Generic, Tuple, TypeVar
+
+from salix import Struct
 
 import tyro.conf
 
 T = TypeVar("T")
 
 
-@dataclasses.dataclass
-class Checkout(Generic[T]):
+class Checkout(Struct, Generic[T], frozen=False):
     """Check out a branch."""
 
     branch: T
 
 
-@dataclasses.dataclass
-class Commit:
+class Commit(Struct, frozen=False):
     """Commit something."""
 
     input: tyro.conf.Positional[Path]
 
 
-@dataclasses.dataclass
-class Arg:
+class Arg(Struct, frozen=False):
     verbose: bool = True
 
 

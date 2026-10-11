@@ -1,12 +1,13 @@
-import dataclasses
+from dataclasses import InitVar
+
+from salix import Struct
 
 import tyro
 
 
 def test_dataclass_init_var() -> None:
-    @dataclasses.dataclass
-    class DataclassWithInitVar:
-        i: dataclasses.InitVar[int]
+    class DataclassWithInitVar(Struct, frozen=False):
+        i: InitVar[int]
         x: str
 
         def __post_init__(self, i: int) -> None:

@@ -1,31 +1,27 @@
-from dataclasses import dataclass
 from typing import TYPE_CHECKING, Callable, Literal, Tuple
 
 from helptext_utils import get_helptext_with_checks
+from salix import Struct
 from torch import nn
 
 import tyro
 
 
-@dataclass(frozen=True)
-class AdamOptimizer:
+class AdamOptimizer(Struct):
     learning_rate: float = 1e-3
     betas: Tuple[float, float] = (0.9, 0.999)
 
 
-@dataclass(frozen=True)
-class SGDOptimizer:
+class SGDOptimizer(Struct):
     learning_rate: float = 1e-3
     momentum: float = 0.9
 
 
-@dataclass(frozen=True)
-class DataConfig:
+class DataConfig(Struct):
     test: int = 0
 
 
-@dataclass(frozen=True)
-class ExperimentConfig:
+class ExperimentConfig(Struct):
     # Dataset to run experiment on.
     dataset: Literal["mnist", "imagenet-50"]
 
@@ -106,8 +102,7 @@ else:
     ]  # Omit prefixes of flags in subcommands.
 
 
-@dataclass
-class BaseConfig:
+class BaseConfig(Struct, frozen=False):
     # The name of the experiment to run.
     experiment: str
 

@@ -5,7 +5,6 @@
 import collections
 import collections.abc
 import contextlib
-import dataclasses
 import enum
 import io
 import sys
@@ -25,13 +24,13 @@ from typing import (
 
 import pytest
 from helptext_utils import get_helptext_with_checks
+from salix import Struct
 
 import tyro
 
 
 def test_tuples_fixed() -> None:
-    @dataclasses.dataclass
-    class A:
+    class A(Struct, frozen=False):
         x: Tuple[int, int, int]
 
     assert tyro.cli(A, args=["--x", "1", "2", "3"]) == A(x=(1, 2, 3))
@@ -42,8 +41,7 @@ def test_tuples_fixed() -> None:
 
 
 def test_tuples_fixed_mixed() -> None:
-    @dataclasses.dataclass
-    class A:
+    class A(Struct, frozen=False):
         x: Tuple[int, str, int]
 
     assert tyro.cli(A, args=["--x", "1", "2", "3"]) == A(x=(1, "2", 3))
@@ -54,8 +52,7 @@ def test_tuples_fixed_mixed() -> None:
 
 
 def test_tuples_with_default() -> None:
-    @dataclasses.dataclass
-    class A:
+    class A(Struct, frozen=False):
         x: Tuple[int, int, int] = (0, 1, 2)
 
     assert tyro.cli(A, args=[]) == A(x=(0, 1, 2))
@@ -65,8 +62,7 @@ def test_tuples_with_default() -> None:
 
 
 def test_tuple_with_literal_and_default() -> None:
-    @dataclasses.dataclass
-    class A:
+    class A(Struct, frozen=False):
         x: Tuple[Literal[1, 2, 3], ...] = (1, 2)
 
     assert tyro.cli(A, args=["--x", "1", "2", "3"]) == A(x=(1, 2, 3))
@@ -77,8 +73,7 @@ def test_tuple_with_literal_and_default() -> None:
 
 
 def test_positional_tuple_with_literal_and_default() -> None:
-    @dataclasses.dataclass
-    class A:
+    class A(Struct, frozen=False):
         x: tyro.conf.Positional[Tuple[Literal[1, 2, 3], ...]] = (1, 2)
 
     assert tyro.cli(A, args=["1", "2", "3"]) == A(x=(1, 2, 3))
@@ -91,8 +86,7 @@ def test_positional_tuple_with_literal_and_default() -> None:
 
 
 def test_tuples_fixed_multitype() -> None:
-    @dataclasses.dataclass
-    class A:
+    class A(Struct, frozen=False):
         x: Tuple[int, str, float]
 
     assert tyro.cli(A, args=["--x", "1", "2", "3.5"]) == A(x=(1, "2", 3.5))
@@ -103,8 +97,7 @@ def test_tuples_fixed_multitype() -> None:
 
 
 def test_tuples_fixed_bool() -> None:
-    @dataclasses.dataclass
-    class A:
+    class A(Struct, frozen=False):
         x: Tuple[bool, bool, bool]
 
     assert tyro.cli(A, args=["--x", "True", "True", "False"]) == A(
@@ -117,8 +110,7 @@ def test_tuples_fixed_bool() -> None:
 
 
 def test_tuples_variable() -> None:
-    @dataclasses.dataclass
-    class A:
+    class A(Struct, frozen=False):
         x: Tuple[int, ...]
 
     assert tyro.cli(A, args=["--x", "1", "2", "3"]) == A(x=(1, 2, 3))
@@ -128,8 +120,7 @@ def test_tuples_variable() -> None:
 
 
 def test_tuples_variable_bool() -> None:
-    @dataclasses.dataclass
-    class A:
+    class A(Struct, frozen=False):
         x: Tuple[bool, ...]
 
     assert tyro.cli(A, args=["--x", "True", "True", "False"]) == A(
@@ -141,8 +132,7 @@ def test_tuples_variable_bool() -> None:
 
 
 def test_tuples_variable_optional() -> None:
-    @dataclasses.dataclass
-    class A:
+    class A(Struct, frozen=False):
         x: Optional[Tuple[int, ...]] = None
 
     assert tyro.cli(A, args=["--x", "1", "2", "3"]) == A(x=(1, 2, 3))
@@ -151,8 +141,7 @@ def test_tuples_variable_optional() -> None:
 
 
 def test_sequences() -> None:
-    @dataclasses.dataclass
-    class A:
+    class A(Struct, frozen=False):
         x: Sequence[int]
 
     assert tyro.cli(A, args=["--x", "1", "2", "3"]) == A(x=[1, 2, 3])
@@ -162,9 +151,8 @@ def test_sequences() -> None:
 
 
 def test_sequences_narrow() -> None:
-    @dataclasses.dataclass
-    class A:
-        x: Sequence = dataclasses.field(default_factory=lambda: [0])
+    class A(Struct, frozen=False):
+        x: Sequence = [0]
 
     assert tyro.cli(A, args=["--x", "1", "2", "3"]) == A(x=[1, 2, 3])
     assert tyro.cli(A, args=[]) == A(x=[0])
@@ -172,9 +160,8 @@ def test_sequences_narrow() -> None:
 
 
 def test_sequences_narrow_any() -> None:
-    @dataclasses.dataclass
-    class A:
-        x: Sequence[Any] = dataclasses.field(default_factory=lambda: [0])
+    class A(Struct, frozen=False):
+        x: Sequence[Any] = [0]
 
     assert tyro.cli(A, args=["--x", "1", "2", "3"]) == A(x=[1, 2, 3])
     assert tyro.cli(A, args=[]) == A(x=[0])
@@ -184,8 +171,7 @@ def test_sequences_narrow_any() -> None:
 if sys.version_info >= (3, 9):
 
     def test_abc_sequences() -> None:
-        @dataclasses.dataclass
-        class A:
+        class A(Struct, frozen=False):
             x: collections.abc.Sequence[int]
 
         assert tyro.cli(A, args=["--x", "1", "2", "3"]) == A(x=[1, 2, 3])
@@ -195,9 +181,8 @@ if sys.version_info >= (3, 9):
 
 
 def test_abc_sequences_narrow() -> None:
-    @dataclasses.dataclass
-    class A:
-        x: collections.abc.Sequence = dataclasses.field(default_factory=lambda: [0])
+    class A(Struct, frozen=False):
+        x: collections.abc.Sequence = [0]
 
     assert tyro.cli(A, args=["--x", "1", "2", "3"]) == A(x=[1, 2, 3])
     assert tyro.cli(A, args=[]) == A(x=[0])
@@ -207,11 +192,8 @@ def test_abc_sequences_narrow() -> None:
 if sys.version_info >= (3, 9):
 
     def test_abc_sequences_narrow_any() -> None:
-        @dataclasses.dataclass
-        class A:
-            x: collections.abc.Sequence[Any] = dataclasses.field(
-                default_factory=lambda: [0]
-            )
+        class A(Struct, frozen=False):
+            x: collections.abc.Sequence[Any] = [0]
 
         assert tyro.cli(A, args=["--x", "1", "2", "3"]) == A(x=[1, 2, 3])
         assert tyro.cli(A, args=[]) == A(x=[0])
@@ -219,8 +201,7 @@ if sys.version_info >= (3, 9):
 
 
 def test_lists() -> None:
-    @dataclasses.dataclass
-    class A:
+    class A(Struct, frozen=False):
         x: List[int]
 
     assert tyro.cli(A, args=["--x", "1", "2", "3"]) == A(x=[1, 2, 3])
@@ -230,8 +211,7 @@ def test_lists() -> None:
 
 
 def test_list_with_literal() -> None:
-    @dataclasses.dataclass
-    class A:
+    class A(Struct, frozen=False):
         x: List[Literal[1, 2, 3]]
 
     assert tyro.cli(A, args=["--x", "1", "2", "3"]) == A(x=[1, 2, 3])
@@ -248,8 +228,7 @@ def test_list_with_enums() -> None:
         GREEN = enum.auto()
         BLUE = enum.auto()
 
-    @dataclasses.dataclass
-    class A:
+    class A(Struct, frozen=False):
         x: List[Color]
 
     assert tyro.cli(A, args=["--x", "RED", "RED", "BLUE"]) == A(
@@ -268,11 +247,8 @@ def test_lists_with_default() -> None:
         GREEN = enum.auto()
         BLUE = enum.auto()
 
-    @dataclasses.dataclass
-    class A:
-        x: List[Color] = dataclasses.field(
-            default_factory=[Color.RED, Color.GREEN].copy
-        )
+    class A(Struct, frozen=False):
+        x: List[Color] = [Color.RED, Color.GREEN].copy()
 
     assert tyro.cli(A, args=[]) == A(x=[Color.RED, Color.GREEN])
     assert tyro.cli(A, args=["--x", "RED", "GREEN", "BLUE"]) == A(
@@ -281,8 +257,7 @@ def test_lists_with_default() -> None:
 
 
 def test_lists_bool() -> None:
-    @dataclasses.dataclass
-    class A:
+    class A(Struct, frozen=False):
         x: List[bool]
 
     assert tyro.cli(A, args=["--x", "True", "False", "True"]) == A(
@@ -294,8 +269,7 @@ def test_lists_bool() -> None:
 
 
 def test_sets() -> None:
-    @dataclasses.dataclass
-    class A:
+    class A(Struct, frozen=False):
         x: Set[int]
 
     assert tyro.cli(A, args=["--x", "1", "2", "3", "3"]) == A(x={1, 2, 3})
@@ -305,8 +279,7 @@ def test_sets() -> None:
 
 
 def test_frozen_sets() -> None:
-    @dataclasses.dataclass
-    class A:
+    class A(Struct, frozen=False):
         x: FrozenSet[int]
 
     assert tyro.cli(A, args=["--x", "1", "2", "3", "3"]) == A(x=frozenset({1, 2, 3}))
@@ -316,8 +289,7 @@ def test_frozen_sets() -> None:
 
 
 def test_deque() -> None:
-    @dataclasses.dataclass
-    class A:
+    class A(Struct, frozen=False):
         x: Deque[int]
 
     assert tyro.cli(A, args=["--x", "1", "2", "3", "3"]) == A(
@@ -329,9 +301,8 @@ def test_deque() -> None:
 
 
 def test_sets_with_default() -> None:
-    @dataclasses.dataclass
-    class A:
-        x: Set[int] = dataclasses.field(default_factory={0, 1, 2}.copy)
+    class A(Struct, frozen=False):
+        x: Set[int] = {0, 1, 2}.copy()
 
     assert tyro.cli(A, args=[]) == A(x={0, 1, 2})
     assert tyro.cli(A, args=["--x", "1", "2", "3", "3"]) == A(x={1, 2, 3})
@@ -339,8 +310,7 @@ def test_sets_with_default() -> None:
 
 
 def test_optional_sequences() -> None:
-    @dataclasses.dataclass
-    class A:
+    class A(Struct, frozen=False):
         x: Optional[Sequence[int]] = None
 
     assert tyro.cli(A, args=["--x", "1", "2", "3"]) == A(x=[1, 2, 3])
@@ -350,8 +320,7 @@ def test_optional_sequences() -> None:
 
 
 def test_optional_lists() -> None:
-    @dataclasses.dataclass
-    class A:
+    class A(Struct, frozen=False):
         x: Optional[List[int]] = None
 
     assert tyro.cli(A, args=["--x", "1", "2", "3"]) == A(x=[1, 2, 3])
@@ -365,8 +334,7 @@ def test_nested_optional_types() -> None:
     Optional[str] might interpret "None" as either a string or an actual `None`
     value)"""
 
-    @dataclasses.dataclass
-    class A:
+    class A(Struct, frozen=False):
         x: Tuple[Optional[int], ...]
 
     assert tyro.cli(A, args=["--x", "0", "1"]) == A((0, 1))
@@ -406,24 +374,21 @@ def test_union_over_collections_3() -> None:
 
 
 def test_choices_in_tuples_0() -> None:
-    @dataclasses.dataclass
-    class A:
+    class A(Struct, frozen=False):
         x: Tuple[bool, bool]
 
     assert tyro.cli(A, args=["--x", "True", "False"]) == A((True, False))
 
 
 def test_choices_in_tuples_1() -> None:
-    @dataclasses.dataclass
-    class A:
+    class A(Struct, frozen=False):
         x: Tuple[bool, Literal["True", "False"]]
 
     assert tyro.cli(A, args=["--x", "True", "False"]) == A((True, "False"))
 
 
 def test_choices_in_tuples_2() -> None:
-    @dataclasses.dataclass
-    class A:
+    class A(Struct, frozen=False):
         x: Tuple[bool, Literal["True", "False", "None"]]
 
     assert tyro.cli(A, args=["--x", "True", "False"]).x == (True, "False")
@@ -433,8 +398,7 @@ def test_choices_in_tuples_2() -> None:
 
 
 def test_nested_tuple_types() -> None:
-    @dataclasses.dataclass
-    class A:
+    class A(Struct, frozen=False):
         x: Tuple[Tuple[int, int], Tuple[str, str]]
 
     assert tyro.cli(A, args="--x 5 5 5 5".split(" ")).x == ((5, 5), ("5", "5"))
@@ -621,13 +585,12 @@ def test_tuple_narrowing_empty_default() -> None:
 def test_narrowing_edge_case() -> None:
     """https://github.com/brentyi/tyro/issues/136"""
 
-    @dataclasses.dataclass
-    class Config:
-        _target: Type = dataclasses.field(default_factory=lambda: MyClass)
-
     class MyClass:
         def __len__(self):
             return 0
+
+    class Config(Struct, frozen=False):
+        _target: Type = MyClass
 
     assert tyro.cli(Config, args=[]) == Config()
 
@@ -662,29 +625,22 @@ def test_tuple_direct() -> None:
 def test_nested_dict_in_list() -> None:
     """https://github.com/nerfstudio-project/nerfstudio/pull/3567"""
 
-    @dataclasses.dataclass
-    class Args:
-        proposal_net_args_list: List[Dict] = dataclasses.field(
-            default_factory=lambda: [
-                {
-                    "hidden_dim": 16,
-                },
-                {
-                    "hidden_dim": 16,
-                },
-            ]
-        )
+    class Args(Struct, frozen=False):
+        proposal_net_args_list: List[Dict] = [
+            {
+                "hidden_dim": 16,
+            },
+            {
+                "hidden_dim": 16,
+            },
+        ]
         proposal_net_args_list2: Tuple[Dict[str, List], Dict[str, List]] = (
-            dataclasses.field(
-                default_factory=lambda: (
-                    {
-                        "hidden_dim": [16, 32],
-                    },
-                    {
-                        "hidden_dim": [16, 32],
-                    },
-                )
-            )
+            {
+                "hidden_dim": [16, 32],
+            },
+            {
+                "hidden_dim": [16, 32],
+            },
         )
 
     assert tyro.cli(Args, args=[]) == Args()
@@ -723,16 +679,14 @@ def test_double_list_in_tuple() -> None:
 
 
 def test_ambiguous_collection_0() -> None:
-    @dataclasses.dataclass
-    class A:
+    class A(Struct, frozen=False):
         x: Tuple[Tuple[int, ...], ...]
 
     assert tyro.cli(A, args=["--x", "0", "1"]) == A(x=((0, 1),))
 
 
 def test_ambiguous_collection_1() -> None:
-    @dataclasses.dataclass
-    class A:
+    class A(Struct, frozen=False):
         x: List[List[int]]
 
     assert tyro.cli(A, args=["--x", "0", "1"]).x == [[0, 1]]
@@ -749,24 +703,21 @@ def test_ambiguous_collection_3() -> None:
 
 
 def test_ambiguous_collection_4() -> None:
-    @dataclasses.dataclass
-    class A:
+    class A(Struct, frozen=False):
         x: Dict[str, List[int]]
 
     assert tyro.cli(A, args=["--x", "a", "0", "1"]).x == {"a": [0, 1]}
 
 
 def test_ambiguous_collection_5() -> None:
-    @dataclasses.dataclass
-    class A:
+    class A(Struct, frozen=False):
         x: Dict[Tuple[int, ...], str]
 
     assert tyro.cli(A, args=["--x", "0", "1", "a"]).x == {(0, 1): "a"}
 
 
 def test_ambiguous_collection_6() -> None:
-    @dataclasses.dataclass
-    class A:
+    class A(Struct, frozen=False):
         x: Dict[Tuple[Tuple[Tuple[int, ...]]], str]
 
     assert tyro.cli(A, args=["--x", "0", "1", "a", "2", "3"]).x == {
@@ -776,8 +727,7 @@ def test_ambiguous_collection_6() -> None:
 
 
 def test_ambiguous_collection_7() -> None:
-    @dataclasses.dataclass
-    class A:
+    class A(Struct, frozen=False):
         x: Tuple[List[str], int, List[str]]
 
     # We resolve ambiguity in fixed-length tuples by breaking inputs into

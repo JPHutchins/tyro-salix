@@ -1,19 +1,18 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
 from typing import Annotated
+
+from salix import Struct
 
 import tyro
 
 
-@dataclass
-class Dataclass:
+class Dataclass(Struct, frozen=False):
     a: int
     b: str = "default"
 
 
-@dataclass
-class Config:
+class Config(Struct, frozen=False):
     x: Annotated[
         Dataclass | None,
         tyro.conf.arg(

@@ -5,29 +5,27 @@ cases when combining nested tuple types, renamed arguments, and subcommands.
 Largely written by @wookayin.
 """
 
-import dataclasses
 from pathlib import Path
 from typing import Annotated, cast
+
+from salix import Struct
 
 import tyro.conf
 
 
-@dataclasses.dataclass
-class Checkout[T]:
+class Checkout[T](Struct, frozen=False):
     """Check out a branch."""
 
     branch: T
 
 
-@dataclasses.dataclass
-class Commit:
+class Commit(Struct, frozen=False):
     """Commit something."""
 
     input: tyro.conf.Positional[Path]
 
 
-@dataclasses.dataclass
-class Arg:
+class Arg(Struct, frozen=False):
     verbose: bool = True
 
 
@@ -128,8 +126,7 @@ type PositionalPath = tyro.conf.Positional[Path]  # type: ignore
 
 
 def test_case7() -> None:
-    @dataclasses.dataclass
-    class NewCommit:
+    class NewCommit(Struct, frozen=False):
         """Commit something with a message."""
 
         input: PositionalPath
@@ -152,8 +149,7 @@ type VerboseArg = Annotated[
 
 
 def test_case8() -> None:
-    @dataclasses.dataclass
-    class ConfigWithVerbose:
+    class ConfigWithVerbose(Struct, frozen=False):
         action: ActionUnion
         verbose: VerboseArg = False
 

@@ -1,7 +1,8 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
 from typing import Annotated, Optional, Tuple
+
+from salix import Struct
 
 import tyro
 
@@ -9,8 +10,7 @@ import tyro
 def test_arg_default() -> None:
     """Test that tyro.conf.arg(default=) is used when field has no default."""
 
-    @dataclass
-    class Config:
+    class Config(Struct, frozen=False):
         # Field with no default, arg default is used.
         no_field_default: Annotated[int, tyro.conf.arg(default=100)]
 
@@ -53,8 +53,7 @@ def test_arg_default() -> None:
 def test_arg_default_with_help() -> None:
     """Test that default values appear correctly in help text."""
 
-    @dataclass
-    class Config:
+    class Config(Struct, frozen=False):
         # Field with no default, arg default is used.
         no_field_default: Annotated[int, tyro.conf.arg(default=100)]
 
@@ -134,8 +133,7 @@ def test_arg_default_with_function() -> None:
 def test_arg_default_with_immutable_types() -> None:
     """Test that tyro.conf.arg(default=) works with immutable complex types."""
 
-    @dataclass
-    class Config:
+    class Config(Struct, frozen=False):
         # No default, use arg default for tuple (immutable).
         tuple_arg: Annotated[Tuple[int, str], tyro.conf.arg(default=(42, "hello"))]
 
@@ -155,8 +153,7 @@ def test_arg_default_with_immutable_types() -> None:
 def test_arg_default_with_none() -> None:
     """Test that tyro.conf.arg(default=None) works properly."""
 
-    @dataclass
-    class Config:
+    class Config(Struct, frozen=False):
         # No default, explicitly set to None via arg default.
         none_default: Annotated[Optional[str], tyro.conf.arg(default=None)]
 
@@ -178,8 +175,7 @@ def test_arg_default_with_none() -> None:
 def test_arg_default_with_union_of_primitives() -> None:
     """Test that tyro.conf.arg(default=) works with union types of primitives."""
 
-    @dataclass
-    class Config:
+    class Config(Struct, frozen=False):
         # No default, use arg default for Union of primitives.
         union_arg: Annotated[int | str, tyro.conf.arg(default=42)]
 
@@ -200,8 +196,7 @@ def test_arg_default_with_union_of_primitives() -> None:
 def test_arg_default_with_other_arg_params() -> None:
     """Test that tyro.conf.arg(default=) can be used with other arg parameters."""
 
-    @dataclass
-    class Config:
+    class Config(Struct, frozen=False):
         # No default, with custom name, help, and aliases.
         custom_arg: Annotated[
             int,

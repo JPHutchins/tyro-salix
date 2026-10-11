@@ -1,4 +1,3 @@
-import dataclasses
 import enum
 import sys
 from pathlib import Path
@@ -7,6 +6,7 @@ from typing import Any, Callable, Generic, Optional, TypeVar, cast
 import msgspec
 import pytest
 from helptext_utils import get_helptext_with_checks
+from salix import Struct
 
 import tyro
 
@@ -110,8 +110,7 @@ def test_msgspec_subcommands_with_same_type_different_generics() -> None:
 def test_msgspec_mixed_dataclass_and_msgspec_subcommands() -> None:
     """Test mixing dataclass and msgspec types in subcommands."""
 
-    @dataclasses.dataclass
-    class DataclassCommand:
+    class DataclassCommand(Struct, frozen=False):
         """A command implemented as a dataclass."""
 
         value: int

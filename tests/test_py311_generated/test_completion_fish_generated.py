@@ -1,7 +1,6 @@
 """Tests for fish completion script generation and functional testing."""
 
 import contextlib
-import dataclasses
 import io
 import pathlib
 import shutil
@@ -11,6 +10,7 @@ import tempfile
 from typing import Annotated, List, Literal
 
 import pytest
+from salix import Struct
 
 import tyro
 
@@ -29,23 +29,19 @@ requires_fish = pytest.mark.skipif(
 )
 
 
-@dataclasses.dataclass(frozen=True)
-class Subtype:
+class Subtype(Struct):
     data: int = 1
 
 
-@dataclasses.dataclass(frozen=True)
-class TypeA:
+class TypeA(Struct):
     subtype: Subtype = Subtype(1)
 
 
-@dataclasses.dataclass(frozen=True)
-class TypeB:
+class TypeB(Struct):
     subtype: Subtype = Subtype(2)
 
 
-@dataclasses.dataclass(frozen=True)
-class Wrapper:
+class Wrapper(Struct):
     supertype: TypeA | TypeB = TypeA()
 
 
@@ -160,8 +156,7 @@ def test_fish_functional_completion_simple(backend: str) -> None:
     if backend != "tyro":
         pytest.skip("Testing tyro-specific completion behavior")
 
-    @dataclasses.dataclass
-    class Config:
+    class Config(Struct, frozen=False):
         mode: Literal["train", "eval", "test"] = "train"
         verbose: bool = False
 
@@ -200,16 +195,13 @@ def test_fish_functional_completion_with_subcommands(backend: str) -> None:
     if backend != "tyro":
         pytest.skip("Testing tyro-specific completion behavior")
 
-    @dataclasses.dataclass
-    class DatasetMnist:
+    class DatasetMnist(Struct, frozen=False):
         binary: bool = False
 
-    @dataclasses.dataclass
-    class DatasetImageNet:
+    class DatasetImageNet(Struct, frozen=False):
         subset: Literal[50, 100, 1000] = 50
 
-    @dataclasses.dataclass
-    class OptimizerConfig:
+    class OptimizerConfig(Struct, frozen=False):
         dataset: DatasetMnist | DatasetImageNet
 
     target = io.StringIO()
@@ -268,24 +260,19 @@ def test_fish_functional_completion_frontier_subcommands(backend: str) -> None:
     if backend != "tyro":
         pytest.skip("Testing tyro-specific completion behavior")
 
-    @dataclasses.dataclass
-    class DatasetMnist:
+    class DatasetMnist(Struct, frozen=False):
         pass
 
-    @dataclasses.dataclass
-    class DatasetImageNet:
+    class DatasetImageNet(Struct, frozen=False):
         pass
 
-    @dataclasses.dataclass
-    class OptimizerAdam:
+    class OptimizerAdam(Struct, frozen=False):
         learning_rate: float = 1e-4
 
-    @dataclasses.dataclass
-    class OptimizerSgd:
+    class OptimizerSgd(Struct, frozen=False):
         learning_rate: float = 1e-3
 
-    @dataclasses.dataclass
-    class Config:
+    class Config(Struct, frozen=False):
         dataset: DatasetMnist | DatasetImageNet
         optimizer: OptimizerAdam | OptimizerSgd
 
@@ -329,22 +316,17 @@ def test_fish_functional_completion_cascade_subcommand_args(backend: str) -> Non
     if backend != "tyro":
         pytest.skip("Testing tyro-specific completion behavior")
 
-    @dataclasses.dataclass
-    class SubcommandA:
+    class SubcommandA(Struct, frozen=False):
         arg_a: int = 1
 
-    @dataclasses.dataclass
-    class SubcommandB:
+    class SubcommandB(Struct, frozen=False):
         arg_b: str = "hello"
 
-    @dataclasses.dataclass
-    class Config:
+    class Config(Struct, frozen=False):
         """Config with CascadeSubcommandArgs."""
 
         common: Annotated[int, tyro.conf.arg(aliases=["-c"])] = 5
-        subcommand: SubcommandA | SubcommandB = dataclasses.field(
-            default_factory=SubcommandA
-        )
+        subcommand: SubcommandA | SubcommandB = SubcommandA()
 
     target = io.StringIO()
     with pytest.raises(SystemExit), contextlib.redirect_stdout(target):
@@ -408,24 +390,19 @@ def test_deeply_nested_subcommand_completion(backend: str) -> None:
         pytest.skip("Testing tyro-specific completion behavior")
 
     # Create nested subcommand structure: root -> level1 -> level2.
-    @dataclasses.dataclass
-    class Level2A:
+    class Level2A(Struct, frozen=False):
         level2_opt: int = 1
 
-    @dataclasses.dataclass
-    class Level2B:
+    class Level2B(Struct, frozen=False):
         level2_opt: int = 2
 
-    @dataclasses.dataclass
-    class Level1A:
+    class Level1A(Struct, frozen=False):
         nested: Level2A | Level2B
 
-    @dataclasses.dataclass
-    class Level1B:
+    class Level1B(Struct, frozen=False):
         other: str = "x"
 
-    @dataclasses.dataclass
-    class Root:
+    class Root(Struct, frozen=False):
         child: Level1A | Level1B
 
     # Generate completion script.
@@ -494,8 +471,7 @@ def test_path_completion_functional(backend: str) -> None:
 
     from pathlib import Path
 
-    @dataclasses.dataclass
-    class Config:
+    class Config(Struct, frozen=False):
         input_file: Path
         name: str = "default"
 
@@ -519,8 +495,7 @@ def test_fish_path_completion_marker(backend: str) -> None:
     if backend != "tyro":
         pytest.skip("Testing tyro-specific path completion")
 
-    @dataclasses.dataclass
-    class Config:
+    class Config(Struct, frozen=False):
         input_file: pathlib.Path
         output: str = "out.txt"
         count: int = 5

@@ -1,13 +1,13 @@
 """Tests for mutually exclusive argument groups."""
 
 import contextlib
-import dataclasses
 import io
 from pathlib import Path
 from typing import Annotated, Literal, Optional, Tuple
 
 import pytest
 from helptext_utils import get_helptext_with_checks
+from salix import Struct
 
 import tyro
 import tyro._strings
@@ -167,8 +167,7 @@ def test_mutex_group_in_dataclass() -> None:
     RequiredGroup = tyro.conf.create_mutex_group(required=True)
     OptionalGroup = tyro.conf.create_mutex_group(required=False)
 
-    @dataclasses.dataclass
-    class Config:
+    class Config(Struct, frozen=False):
         # Required mutex group.
         option_a: Annotated[str | None, RequiredGroup] = None
         option_b: Annotated[int | None, RequiredGroup] = None
@@ -310,8 +309,7 @@ def test_mutex_group_on_dataclass_is_ignored() -> None:
     """
     MutexGroup = tyro.conf.create_mutex_group(required=True)
 
-    @dataclasses.dataclass
-    class Config:
+    class Config(Struct, frozen=False):
         """A configuration dataclass."""
 
         foo: int = 1
@@ -346,18 +344,16 @@ def test_nested_mutex_groups() -> None:
     """Test that mutex groups work correctly across nested dataclasses."""
     SharedGroup = tyro.conf.create_mutex_group(required=False)
 
-    @dataclasses.dataclass
-    class Inner:
+    class Inner(Struct, frozen=False):
         """Inner config."""
 
         option_a: Annotated[int, SharedGroup] = 1
         option_b: Annotated[int, SharedGroup] = 2
 
-    @dataclasses.dataclass
-    class Outer:
+    class Outer(Struct, frozen=False):
         """Outer config."""
 
-        inner: Inner = dataclasses.field(default_factory=Inner)
+        inner: Inner = Inner()
         option_c: Annotated[int, SharedGroup] = 3
         option_d: Annotated[int, SharedGroup] = 4
 
@@ -585,8 +581,7 @@ def test_mutex_group_with_short_alias() -> None:
     """
     MutexGroup = tyro.conf.create_mutex_group(required=False)
 
-    @dataclasses.dataclass
-    class Config:
+    class Config(Struct, frozen=False):
         foo: Annotated[
             bool,
             MutexGroup,
@@ -614,8 +609,7 @@ def test_boolean_flag_with_short_alias_helptext() -> None:
     Help text should show -f, --foo, --no-foo, not -f, --no-, --foo, --no-foo.
     """
 
-    @dataclasses.dataclass
-    class Config:
+    class Config(Struct, frozen=False):
         foo: Annotated[bool, tyro.conf.arg(aliases=["-f"])] = False
 
     helptext = get_helptext_with_checks(Config)
@@ -637,8 +631,7 @@ def test_boolean_flag_with_short_alias_functionality() -> None:
     Adapted from Aleksander Krastev: https://github.com/brentyi/tyro/issues/419
     """
 
-    @dataclasses.dataclass
-    class Config:
+    class Config(Struct, frozen=False):
         foo: Annotated[bool, tyro.conf.arg(aliases=["-f"])] = False
 
     # Short alias should set to True.
@@ -665,8 +658,7 @@ def test_short_multi_char_alias() -> None:
     of the number of characters after the dash.
     """
 
-    @dataclasses.dataclass
-    class Config:
+    class Config(Struct, frozen=False):
         bar: Annotated[bool, tyro.conf.arg(aliases=["-foo"])] = False
 
     # Short multi-char alias should work.
@@ -689,8 +681,7 @@ def test_short_multi_char_alias() -> None:
 def test_short_multi_char_alias_helptext() -> None:
     """Test that -foo alias shows correct help text without --no-foo."""
 
-    @dataclasses.dataclass
-    class Config:
+    class Config(Struct, frozen=False):
         bar: Annotated[bool, tyro.conf.arg(aliases=["-foo"])] = False
 
     helptext = get_helptext_with_checks(Config)
@@ -708,8 +699,7 @@ def test_short_multi_char_alias_in_mutex_group() -> None:
     """Test -foo alias in mutex group works correctly."""
     MutexGroup = tyro.conf.create_mutex_group(required=False)
 
-    @dataclasses.dataclass
-    class Config:
+    class Config(Struct, frozen=False):
         bar: Annotated[
             bool,
             MutexGroup,
@@ -737,8 +727,7 @@ def test_long_single_char_alias() -> None:
     of the number of characters after the dashes.
     """
 
-    @dataclasses.dataclass
-    class Config:
+    class Config(Struct, frozen=False):
         bar: Annotated[bool, tyro.conf.arg(aliases=["--f"])] = False
 
     # Long single-char alias should work.
@@ -765,8 +754,7 @@ def test_long_single_char_alias() -> None:
 def test_long_single_char_alias_helptext() -> None:
     """Test that --f alias shows --no-f in help text."""
 
-    @dataclasses.dataclass
-    class Config:
+    class Config(Struct, frozen=False):
         bar: Annotated[bool, tyro.conf.arg(aliases=["--f"])] = False
 
     helptext = get_helptext_with_checks(Config)
@@ -782,8 +770,7 @@ def test_long_single_char_alias_in_mutex_group() -> None:
     """Test --f alias in mutex group works correctly."""
     MutexGroup = tyro.conf.create_mutex_group(required=False)
 
-    @dataclasses.dataclass
-    class Config:
+    class Config(Struct, frozen=False):
         bar: Annotated[
             bool,
             MutexGroup,

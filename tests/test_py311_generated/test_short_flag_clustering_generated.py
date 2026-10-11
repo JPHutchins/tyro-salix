@@ -7,17 +7,16 @@ token (after an optional ``=``) becomes that value: ``-nfoo`` -> ``-n foo``.
 
 from __future__ import annotations
 
-import dataclasses
 from typing import Annotated, Optional, Tuple
 
 import pytest
+from salix import Struct
 
 import tyro
 from tyro.conf import UseCounterAction, arg
 
 
-@dataclasses.dataclass
-class Flags:
+class Flags(Struct, frozen=False):
     a: Annotated[bool, arg(aliases=["-a"])] = False
     b: Annotated[bool, arg(aliases=["-b"])] = False
     c: Annotated[bool, arg(aliases=["-c"])] = False
@@ -50,8 +49,7 @@ def test_cluster_repeated_char_is_idempotent_for_bool() -> None:
 
 
 def test_value_taking_short_glued() -> None:
-    @dataclasses.dataclass
-    class C:
+    class C(Struct, frozen=False):
         n: Annotated[str, arg(aliases=["-n"])] = "default"
 
     assert tyro.cli(C, args=["-nfoo"]).n == "foo"
@@ -62,8 +60,7 @@ def test_value_taking_short_glued() -> None:
 
 
 def test_value_taking_short_at_end_of_cluster() -> None:
-    @dataclasses.dataclass
-    class C:
+    class C(Struct, frozen=False):
         a: Annotated[bool, arg(aliases=["-a"])] = False
         b: Annotated[bool, arg(aliases=["-b"])] = False
         n: Annotated[str, arg(aliases=["-n"])] = "default"
@@ -83,8 +80,7 @@ def test_value_taking_short_in_middle_consumes_rest() -> None:
     """If a value-taking short appears mid-cluster, the rest is its value
     (POSIX semantics), even if subsequent characters look like other flags."""
 
-    @dataclasses.dataclass
-    class C:
+    class C(Struct, frozen=False):
         a: Annotated[bool, arg(aliases=["-a"])] = False
         b: Annotated[bool, arg(aliases=["-b"])] = False
         n: Annotated[str, arg(aliases=["-n"])] = "default"
@@ -95,8 +91,7 @@ def test_value_taking_short_in_middle_consumes_rest() -> None:
 
 
 def test_counter_short_cluster() -> None:
-    @dataclasses.dataclass
-    class C:
+    class C(Struct, frozen=False):
         verbose: Annotated[int, arg(aliases=["-v"]), UseCounterAction] = 0
 
     assert tyro.cli(C, args=["-vvv"]).verbose == 3
@@ -105,8 +100,7 @@ def test_counter_short_cluster() -> None:
 
 
 def test_counter_mixed_with_bool_cluster() -> None:
-    @dataclasses.dataclass
-    class C:
+    class C(Struct, frozen=False):
         verbose: Annotated[int, arg(aliases=["-v"]), UseCounterAction] = 0
         a: Annotated[bool, arg(aliases=["-a"])] = False
 
@@ -120,8 +114,7 @@ def test_registered_multichar_short_takes_precedence() -> None:
     """If ``-cail`` is explicitly registered as an alias, it must win over
     cluster expansion of ``-c -a -i -l``."""
 
-    @dataclasses.dataclass
-    class C:
+    class C(Struct, frozen=False):
         a: Annotated[bool, arg(aliases=["-a"])] = False
         c: Annotated[bool, arg(aliases=["-c"])] = False
         i: Annotated[bool, arg(aliases=["-i"])] = False
@@ -138,8 +131,7 @@ def test_registered_multichar_short_takes_precedence() -> None:
 def test_double_dash_long_flag_not_clustered() -> None:
     """``--abc`` is a long flag; never expanded as a cluster."""
 
-    @dataclasses.dataclass
-    class C:
+    class C(Struct, frozen=False):
         a: Annotated[bool, arg(aliases=["-a"])] = False
         b: Annotated[bool, arg(aliases=["-b"])] = False
         c: Annotated[bool, arg(aliases=["-c"])] = False
@@ -151,8 +143,7 @@ def test_double_dash_long_flag_not_clustered() -> None:
 def test_cluster_after_double_dash_marker_treated_as_positional() -> None:
     """Tokens after the ``--`` end-of-options marker are not flags."""
 
-    @dataclasses.dataclass
-    class C:
+    class C(Struct, frozen=False):
         a: Annotated[bool, arg(aliases=["-a"])] = False
         rest: tyro.conf.Positional[Tuple[str, ...]] = ()
 
@@ -164,8 +155,7 @@ def test_cluster_after_double_dash_marker_treated_as_positional() -> None:
 def test_negative_number_not_cluster() -> None:
     """Negative numbers must still be parseable as positional/value args."""
 
-    @dataclasses.dataclass
-    class C:
+    class C(Struct, frozen=False):
         n: int = 0
 
     assert tyro.cli(C, args=["--n", "-3"]).n == -3
@@ -175,8 +165,7 @@ def test_cluster_with_value_taking_first() -> None:
     """If the first short in a cluster takes a value, the entire rest is
     its value (no further flag interpretation)."""
 
-    @dataclasses.dataclass
-    class C:
+    class C(Struct, frozen=False):
         n: Annotated[str, arg(aliases=["-n"])] = "x"
         a: Annotated[bool, arg(aliases=["-a"])] = False
 
@@ -185,8 +174,7 @@ def test_cluster_with_value_taking_first() -> None:
 
 
 def test_cluster_int_value() -> None:
-    @dataclasses.dataclass
-    class C:
+    class C(Struct, frozen=False):
         a: Annotated[bool, arg(aliases=["-a"])] = False
         n: Annotated[int, arg(aliases=["-n"])] = 0
 
@@ -195,8 +183,7 @@ def test_cluster_int_value() -> None:
 
 
 def test_cluster_optional_value_taking() -> None:
-    @dataclasses.dataclass
-    class C:
+    class C(Struct, frozen=False):
         a: Annotated[bool, arg(aliases=["-a"])] = False
         n: Annotated[Optional[str], arg(aliases=["-n"])] = None
 
@@ -215,8 +202,7 @@ def test_cluster_does_not_match_long_flag_chars() -> None:
     """Cluster expansion must use only registered single-letter shorts, not
     arbitrary characters from long flag names."""
 
-    @dataclasses.dataclass
-    class C:
+    class C(Struct, frozen=False):
         apple: bool = False
         banana: bool = False
 
@@ -228,8 +214,7 @@ def test_cluster_with_unrelated_short() -> None:
     """If only some chars are registered shorts, the cluster as a whole
     fails (we don't partial-expand)."""
 
-    @dataclasses.dataclass
-    class C:
+    class C(Struct, frozen=False):
         a: Annotated[bool, arg(aliases=["-a"])] = False
         # -b NOT registered.
 
@@ -240,8 +225,7 @@ def test_cluster_with_unrelated_short() -> None:
 def test_help_short_unaffected() -> None:
     """``-h`` still triggers help and is not interpreted as a cluster."""
 
-    @dataclasses.dataclass
-    class C:
+    class C(Struct, frozen=False):
         a: Annotated[bool, arg(aliases=["-a"])] = False
 
     with pytest.raises(SystemExit) as exc_info:
@@ -255,8 +239,7 @@ def test_glued_value_starting_with_dash() -> None:
     This matches argparse; the value must NOT be rejected by the flag-like
     value-consumption guard."""
 
-    @dataclasses.dataclass
-    class C:
+    class C(Struct, frozen=False):
         name: Annotated[str, arg(aliases=["-n"])] = "default"
 
     assert tyro.cli(C, args=["-n-x"]).name == "-x"

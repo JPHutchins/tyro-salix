@@ -2,9 +2,9 @@
 # the symbol is still public though, and we use it throughout.
 # pyright: reportPrivateImportUsage=none
 
-from dataclasses import dataclass
 from typing import Any, Callable, Tuple
 
+import salix
 import torch
 from helptext_utils import get_helptext_with_checks
 from torch import nn
@@ -32,8 +32,7 @@ def test_torch_device_2() -> None:
 
 
 def test_unparsable() -> None:
-    @dataclass
-    class Struct:
+    class Struct(salix.Struct, frozen=False):
         a: int = 5
         b: str = "7"
 

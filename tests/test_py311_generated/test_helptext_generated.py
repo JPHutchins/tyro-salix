@@ -1,5 +1,4 @@
 import contextlib
-import dataclasses
 import enum
 import io
 import json
@@ -23,14 +22,14 @@ from typing import (
 
 import pytest
 from helptext_utils import get_helptext_with_checks
+from salix import Struct
 
 import tyro
 import tyro._strings
 
 
 def test_helptext() -> None:
-    @dataclasses.dataclass
-    class Helptext:
+    class Helptext(Struct, frozen=False):
         """This docstring should be printed as a description."""
 
         x: int  # Documentation 1
@@ -52,8 +51,7 @@ def test_helptext() -> None:
 
 
 def test_helptext_paragraphs() -> None:
-    @dataclasses.dataclass
-    class Helptext:
+    class Helptext(Struct, frozen=False):
         """
         First
 
@@ -68,8 +66,7 @@ def test_helptext_paragraphs() -> None:
 
 
 def test_helptext_backslash_n_literal() -> None:
-    @dataclasses.dataclass
-    class Helptext:
+    class Helptext(Struct, frozen=False):
         """First paragraph with \\n literal.
 
         Second paragraph.
@@ -81,8 +78,7 @@ def test_helptext_backslash_n_literal() -> None:
 
 
 def test_helptext_empty_docstring() -> None:
-    @dataclasses.dataclass
-    class Helptext:
+    class Helptext(Struct, frozen=False):
         """ """
 
         x: int = 3
@@ -93,8 +89,7 @@ def test_helptext_empty_docstring() -> None:
 
 
 def test_helptext_non_indented_first_line() -> None:
-    @dataclasses.dataclass
-    class Helptext:
+    class Helptext(Struct, frozen=False):
         """Summary line, not indented.
 
         Body paragraph with indentation that should be stripped.
@@ -109,8 +104,7 @@ def test_helptext_non_indented_first_line() -> None:
 
 
 def test_helptext_sphinx_autodoc_style() -> None:
-    @dataclasses.dataclass
-    class Helptext:
+    class Helptext(Struct, frozen=False):
         """This docstring should be printed as a description."""
 
         x: int  #: Documentation 1
@@ -134,8 +128,7 @@ def test_helptext_sphinx_autodoc_style() -> None:
 
 
 def test_helptext_from_class_docstring() -> None:
-    @dataclasses.dataclass
-    class Helptext2:
+    class Helptext2(Struct, frozen=False):
         """This docstring should be printed as a description.
 
         Attributes:
@@ -160,8 +153,7 @@ def test_helptext_from_class_docstring() -> None:
 
 
 def test_helptext_from_class_docstring_args() -> None:
-    @dataclasses.dataclass
-    class Helptext3:
+    class Helptext3(Struct, frozen=False):
         """This docstring should be printed as a description.
 
         Args:
@@ -189,8 +181,7 @@ def test_helptext_inherited() -> None:
     class UnrelatedParentClass:
         pass
 
-    @dataclasses.dataclass
-    class ActualParentClass:
+    class ActualParentClass(Struct, frozen=False):
         """This docstring should be printed as a description."""
 
         x: int  # Documentation 1
@@ -205,8 +196,7 @@ def test_helptext_inherited() -> None:
             """Coverage stress test."""
         # fmt: on
 
-    @dataclasses.dataclass
-    class ChildClass(UnrelatedParentClass, ActualParentClass):
+    class ChildClass(UnrelatedParentClass, ActualParentClass, frozen=False):
         pass
 
     helptext = get_helptext_with_checks(ChildClass)
@@ -215,8 +205,7 @@ def test_helptext_inherited() -> None:
 
 
 def test_helptext_inherited_default_override() -> None:
-    @dataclasses.dataclass
-    class ParentClass:
+    class ParentClass(Struct, frozen=False):
         """This docstring should __not__ be printed as a description."""
 
         x: int  # Documentation 1
@@ -231,8 +220,7 @@ def test_helptext_inherited_default_override() -> None:
             """Coverage stress test."""
         # fmt: on
 
-    @dataclasses.dataclass
-    class ChildClass(ParentClass):
+    class ChildClass(ParentClass, frozen=False):
         """This docstring should be printed as a description."""
 
     def main(x: ParentClass = ChildClass(x=5, y=5)) -> Any:
@@ -290,8 +278,7 @@ def test_helptext_defaults() -> None:
         GREEN = enum.auto()
         BLUE = enum.auto()
 
-    @dataclasses.dataclass
-    class HelptextWithVariousDefaults:
+    class HelptextWithVariousDefaults(Struct, frozen=False):
         x: pathlib.Path = pathlib.Path("/some/path/to/a/file")
         y: Color = Color.RED
         z: str = "%"
@@ -310,8 +297,7 @@ def test_helptext_upath_defaults() -> None:
     """Test UPath helptext with metavar and default rendering."""
     from upath import UPath
 
-    @dataclasses.dataclass
-    class HelptextWithUPath:
+    class HelptextWithUPath(Struct, frozen=False):
         x: UPath = UPath("s3://bucket/path")
 
     helptext = get_helptext_with_checks(HelptextWithUPath)
@@ -320,8 +306,7 @@ def test_helptext_upath_defaults() -> None:
 
 
 def test_multiline_helptext() -> None:
-    @dataclasses.dataclass
-    class HelptextMultiline:
+    class HelptextMultiline(Struct, frozen=False):
         x: int  # Documentation 1
 
         # This comment should be ignored!
@@ -343,8 +328,7 @@ def test_multiline_helptext() -> None:
 
 
 def test_grouped_helptext() -> None:
-    @dataclasses.dataclass
-    class HelptextGrouped:
+    class HelptextGrouped(Struct, frozen=False):
         x: int  # Documentation 1
         # Description of both y and z.
         y: int
@@ -357,8 +341,7 @@ def test_grouped_helptext() -> None:
 
 
 def test_none_default_value_helptext() -> None:
-    @dataclasses.dataclass
-    class Config:
+    class Config(Struct, frozen=False):
         x: Optional[int] = None
         """An optional variable."""
 
@@ -368,8 +351,7 @@ def test_none_default_value_helptext() -> None:
 
 
 def test_helptext_hard_bool() -> None:
-    @dataclasses.dataclass
-    class HelptextHardString:
+    class HelptextHardString(Struct, frozen=False):
         # fmt: off
         x: bool = (
             False
@@ -386,8 +368,7 @@ def test_helptext_hard_bool() -> None:
 
 
 def test_helptext_with_inheritance() -> None:
-    @dataclasses.dataclass
-    class Parent:
+    class Parent(Struct, frozen=False):
         # fmt: off
         x: str = (
             "This docstring may be tougher to parse!"
@@ -395,8 +376,7 @@ def test_helptext_with_inheritance() -> None:
         """Helptext."""
         # fmt: on
 
-    @dataclasses.dataclass
-    class Child(Parent):
+    class Child(Parent, frozen=False):
         pass
 
     helptext = get_helptext_with_checks(Child)
@@ -406,8 +386,7 @@ def test_helptext_with_inheritance() -> None:
 
 
 def test_helptext_with_inheritance_overriden() -> None:
-    @dataclasses.dataclass
-    class Parent2:
+    class Parent2(Struct, frozen=False):
         # fmt: off
         x: str = (
             "This docstring may be tougher to parse!"
@@ -415,8 +394,7 @@ def test_helptext_with_inheritance_overriden() -> None:
         """Helptext."""
         # fmt: on
 
-    @dataclasses.dataclass
-    class Child2(Parent2):
+    class Child2(Parent2, frozen=False):
         # fmt: off
         x: str = (
             "This docstring may be tougher to parse?"
@@ -430,8 +408,7 @@ def test_helptext_with_inheritance_overriden() -> None:
 
 
 def test_tuple_helptext() -> None:
-    @dataclasses.dataclass
-    class TupleHelptext:
+    class TupleHelptext(Struct, frozen=False):
         x: Tuple[int, str, float]
 
     helptext = get_helptext_with_checks(TupleHelptext)
@@ -439,8 +416,7 @@ def test_tuple_helptext() -> None:
 
 
 def test_tuple_helptext_defaults() -> None:
-    @dataclasses.dataclass
-    class TupleHelptextDefaults:
+    class TupleHelptextDefaults(Struct, frozen=False):
         x: Tuple[int, str, str] = (5, "hello world", "hello")
 
     helptext = get_helptext_with_checks(TupleHelptextDefaults)
@@ -451,8 +427,7 @@ def test_tuple_helptext_defaults() -> None:
 def test_generic_helptext() -> None:
     T = TypeVar("T")
 
-    @dataclasses.dataclass
-    class GenericTupleHelptext(Generic[T]):
+    class GenericTupleHelptext(Struct, Generic[T], frozen=False):
         x: T
 
     helptext = get_helptext_with_checks(GenericTupleHelptext[int])
@@ -462,8 +437,7 @@ def test_generic_helptext() -> None:
 def test_generic_tuple_helptext() -> None:
     T = TypeVar("T")
 
-    @dataclasses.dataclass
-    class GenericTupleHelptext(Generic[T]):
+    class GenericTupleHelptext(Struct, Generic[T], frozen=False):
         x: Tuple[T, T, T]
 
     helptext = get_helptext_with_checks(GenericTupleHelptext[int])
@@ -473,8 +447,7 @@ def test_generic_tuple_helptext() -> None:
 def test_generic_list_helptext() -> None:
     T = TypeVar("T")
 
-    @dataclasses.dataclass
-    class GenericTupleHelptext(Generic[T]):
+    class GenericTupleHelptext(Struct, Generic[T], frozen=False):
         x: List[T]
 
     helptext = get_helptext_with_checks(GenericTupleHelptext[int])
@@ -482,8 +455,7 @@ def test_generic_list_helptext() -> None:
 
 
 def test_literal_helptext() -> None:
-    @dataclasses.dataclass
-    class LiteralHelptext:
+    class LiteralHelptext(Struct, frozen=False):
         x: Literal[1, 2, 3]
         """A number."""
 
@@ -493,8 +465,7 @@ def test_literal_helptext() -> None:
 
 
 def test_optional_literal_helptext() -> None:
-    @dataclasses.dataclass
-    class OptionalLiteralHelptext:
+    class OptionalLiteralHelptext(Struct, frozen=False):
         x: Optional[Literal[1, 2, 3]] = None
         """A number."""
 
@@ -504,30 +475,24 @@ def test_optional_literal_helptext() -> None:
 
 
 def test_multiple_subparsers_helptext() -> None:
-    @dataclasses.dataclass
-    class Subcommand1:
+    class Subcommand1(Struct, frozen=False):
         """2% milk."""  # % symbol is prone to bugs in argparse.
 
         x: int = 0
 
-    @dataclasses.dataclass
-    class Subcommand2:
+    class Subcommand2(Struct, frozen=False):
         y: int = 1
 
-    @dataclasses.dataclass
-    class Subcommand3:
+    class Subcommand3(Struct, frozen=False):
         z: int = 2
 
-    @dataclasses.dataclass
-    class MultipleSubparsers:
+    class MultipleSubparsers(Struct, frozen=False):
         # Field a description.
         a: Subcommand1 | Subcommand2 | Subcommand3
         # Field b description.
         b: Subcommand1 | Subcommand2 | Subcommand3
         # Field c description.
-        c: Subcommand1 | Subcommand2 | Subcommand3 = dataclasses.field(
-            default_factory=Subcommand3
-        )
+        c: Subcommand1 | Subcommand2 | Subcommand3 = Subcommand3()
 
         d: bool = False
 
@@ -575,8 +540,7 @@ def test_multiple_subparsers_helptext() -> None:
 
 
 def test_multiple_subparsers_helptext_shortened_usage() -> None:
-    @dataclasses.dataclass
-    class Subcommand1:
+    class Subcommand1(Struct, frozen=False):
         """2% milk."""  # % symbol is prone to bugs in argparse.
 
         aaaaaaa: int = 0
@@ -585,32 +549,27 @@ def test_multiple_subparsers_helptext_shortened_usage() -> None:
         ddddddd: int = 0
         eeeeeee: int = 0
 
-    @dataclasses.dataclass
-    class Subcommand2:
+    class Subcommand2(Struct, frozen=False):
         aaaaaaa: int = 0
         bbbbbbb: int = 0
         ccccccc: int = 0
         ddddddd: int = 0
         eeeeeee: int = 0
 
-    @dataclasses.dataclass
-    class Subcommand3:
+    class Subcommand3(Struct, frozen=False):
         a: int = 0
         b: int = 0
         c: int = 0
         d: int = 0
         e: int = 0
 
-    @dataclasses.dataclass
-    class MultipleSubparsers:
+    class MultipleSubparsers(Struct, frozen=False):
         # Field a description.
         a: Subcommand1 | Subcommand2 | Subcommand3
         # Field b description.
         b: Subcommand1 | Subcommand2 | Subcommand3
         # Field c description.
-        c: Subcommand1 | Subcommand2 | Subcommand3 = dataclasses.field(
-            default_factory=Subcommand3
-        )
+        c: Subcommand1 | Subcommand2 | Subcommand3 = Subcommand3()
 
         ddddddd: bool = False
         fffffff: bool = False
@@ -651,8 +610,7 @@ def test_multiple_subparsers_helptext_shortened_usage() -> None:
 
 
 def test_optional_helptext() -> None:
-    @dataclasses.dataclass
-    class OptionalHelptext:
+    class OptionalHelptext(Struct, frozen=False):
         """This docstring should be printed as a description. 2% milk."""
 
         x: Optional[int]  # Documentation 1
@@ -747,8 +705,7 @@ def test_metavar_6() -> None:
 def test_empty_metavar() -> None:
     """Test that empty metavar doesn't add trailing space."""
 
-    @dataclasses.dataclass
-    class Args:
+    class Args(Struct, frozen=False):
         verbose: Annotated[int, tyro.conf.arg(metavar="", aliases=("-v",))] = 0
 
     helptext = get_helptext_with_checks(Args)
@@ -759,11 +716,7 @@ def test_empty_metavar() -> None:
 
 
 def test_comment_in_subclass_list() -> None:
-    @dataclasses.dataclass
-    class Something(
-        # This text should not show up in the helptext anywhere.
-        object,
-    ):
+    class Something(Struct, object, frozen=False):
         a: int
 
         # But this text should!
@@ -783,8 +736,7 @@ def test_pathlike() -> None:
 
 
 def test_nested_bool() -> None:
-    @dataclasses.dataclass
-    class Child:
+    class Child(Struct, frozen=False):
         x: bool = False
 
     def main(child: Child) -> None:
@@ -795,31 +747,25 @@ def test_nested_bool() -> None:
 
 
 def test_multiple_subparsers_helptext_hyphens() -> None:
-    @dataclasses.dataclass
-    class SubcommandOne:
+    class SubcommandOne(Struct, frozen=False):
         """2% milk."""  # % symbol is prone to bugs in argparse.
 
         arg_x: int = 0
         arg_flag: bool = False
 
-    @dataclasses.dataclass
-    class SubcommandTwo:
+    class SubcommandTwo(Struct, frozen=False):
         arg_y: int = 1
 
-    @dataclasses.dataclass
-    class SubcommandThree:
+    class SubcommandThree(Struct, frozen=False):
         arg_z: int = 2
 
-    @dataclasses.dataclass
-    class MultipleSubparsers:
+    class MultipleSubparsers(Struct, frozen=False):
         # Field a description.
         a: SubcommandOne | SubcommandTwo | SubcommandThree
         # Field b description.
         b: SubcommandOne | SubcommandTwo | SubcommandThree
         # Field c description.
-        c: SubcommandOne | SubcommandTwo | SubcommandThree = dataclasses.field(
-            default_factory=SubcommandThree
-        )
+        c: SubcommandOne | SubcommandTwo | SubcommandThree = SubcommandThree()
 
     helptext = get_helptext_with_checks(MultipleSubparsers)
 
@@ -850,31 +796,25 @@ def test_multiple_subparsers_helptext_hyphens() -> None:
 
 
 def test_multiple_subparsers_helptext_underscores() -> None:
-    @dataclasses.dataclass
-    class SubcommandOne:
+    class SubcommandOne(Struct, frozen=False):
         """2% milk."""  # % symbol is prone to bugs in argparse.
 
         arg_x: int = 0
         arg_flag: bool = False
 
-    @dataclasses.dataclass
-    class SubcommandTwo:
+    class SubcommandTwo(Struct, frozen=False):
         arg_y: int = 1
 
-    @dataclasses.dataclass
-    class SubcommandThree:
+    class SubcommandThree(Struct, frozen=False):
         arg_z: int = 2
 
-    @dataclasses.dataclass
-    class MultipleSubparsers:
+    class MultipleSubparsers(Struct, frozen=False):
         # Field a description.
         a: SubcommandOne | SubcommandTwo | SubcommandThree
         # Field b description.
         b: SubcommandOne | SubcommandTwo | SubcommandThree
         # Field c description.
-        c: SubcommandOne | SubcommandTwo | SubcommandThree = dataclasses.field(
-            default_factory=SubcommandThree
-        )
+        c: SubcommandOne | SubcommandTwo | SubcommandThree = SubcommandThree()
 
     helptext = get_helptext_with_checks(MultipleSubparsers, use_underscores=True)
 
@@ -907,14 +847,12 @@ def test_multiple_subparsers_helptext_underscores() -> None:
 
 
 def test_subparsers_wrapping() -> None:
-    @dataclasses.dataclass
-    class A:
+    class A(Struct, frozen=False):
         """Help message."""
 
         x: int
 
-    @dataclasses.dataclass
-    class CheckoutCompletion:
+    class CheckoutCompletion(Struct, frozen=False):
         """Help message."""
 
         y: int
@@ -926,14 +864,12 @@ def test_subparsers_wrapping() -> None:
 
 
 def test_subparsers_wrapping1() -> None:
-    @dataclasses.dataclass
-    class A:
+    class A(Struct, frozen=False):
         """Help message."""
 
         x: int
 
-    @dataclasses.dataclass
-    class CheckoutCompletio:
+    class CheckoutCompletio(Struct, frozen=False):
         """Help message."""
 
         y: int
@@ -944,14 +880,12 @@ def test_subparsers_wrapping1() -> None:
 
 
 def test_subparsers_wrapping2() -> None:
-    @dataclasses.dataclass
-    class A:
+    class A(Struct, frozen=False):
         """Help message."""
 
         x: int
 
-    @dataclasses.dataclass
-    class CheckoutCompletionn:
+    class CheckoutCompletionn(Struct, frozen=False):
         """Help message."""
 
         y: int
@@ -962,14 +896,12 @@ def test_subparsers_wrapping2() -> None:
 
 
 def test_subparsers_wrapping3() -> None:
-    @dataclasses.dataclass
-    class A:
+    class A(Struct, frozen=False):
         """Help message."""
 
         x: int
 
-    @dataclasses.dataclass
-    class CmdCheckout012:
+    class CmdCheckout012(Struct, frozen=False):
         """Help message."""
 
         y: int
@@ -980,8 +912,7 @@ def test_subparsers_wrapping3() -> None:
 
 
 def test_tuple_default() -> None:
-    @dataclasses.dataclass
-    class A:
+    class A(Struct, frozen=False):
         """Help message."""
 
         x: Tuple[str, str] = ("hello", "world")
@@ -993,8 +924,7 @@ def test_tuple_default() -> None:
 
 
 def test_argconf_constructor() -> None:
-    @dataclasses.dataclass
-    class A:
+    class A(Struct, frozen=False):
         """Help message."""
 
         x: Annotated[
@@ -1008,8 +938,7 @@ def test_argconf_constructor() -> None:
 
 
 def test_argconf_constructor_json_special_case() -> None:
-    @dataclasses.dataclass
-    class A:
+    class A(Struct, frozen=False):
         """Help message."""
 
         x: Annotated[
@@ -1095,12 +1024,10 @@ def test_typeddict_exclude() -> None:
 
 
 def test_conf_erased_argname() -> None:
-    @dataclasses.dataclass(frozen=True)
-    class Verbose:
+    class Verbose(Struct):
         is_verbose: bool = True
 
-    @dataclasses.dataclass(frozen=True)
-    class Args:
+    class Args(Struct, frozen=False):
         verbose: Annotated[Verbose, tyro.conf.arg(name="")]
 
     def main(args: Args) -> None:
@@ -1215,12 +1142,10 @@ def test_help_with_required_subcommands_consolidated() -> None:
     """
     import pytest
 
-    @dataclasses.dataclass
-    class ConfigA:
+    class ConfigA(Struct, frozen=False):
         a: int = 1
 
-    @dataclasses.dataclass
-    class ConfigB:
+    class ConfigB(Struct, frozen=False):
         b: int = 2
 
     def main(config: ConfigA | ConfigB) -> None:
@@ -1239,15 +1164,13 @@ def test_help_with_required_subcommands_consolidated() -> None:
 def test_implicit_arguments_show_required() -> None:
     """Test that default subcommand options show '(required)' indicator for required args."""
 
-    @dataclasses.dataclass
-    class SubcommandWithRequiredArg:
+    class SubcommandWithRequiredArg(Struct, frozen=False):
         """Subcommand with a required argument."""
 
         required_arg: int  # Required: no default value.
         optional_arg: str = "default"  # Optional: has default value.
 
-    @dataclasses.dataclass
-    class SubcommandAllOptional:
+    class SubcommandAllOptional(Struct, frozen=False):
         """Another subcommand with all optional args."""
 
         x: int = 0
@@ -1289,26 +1212,22 @@ def test_multiple_default_subcommands_with_required() -> None:
     where dataset and optimizer are both default subcommands with required fields.
     """
 
-    @dataclasses.dataclass
-    class Mnist:
+    class Mnist(Struct, frozen=False):
         """MNIST dataset configuration."""
 
         binary: bool  # Required: no default value, like the example.
 
-    @dataclasses.dataclass
-    class ImageNet:
+    class ImageNet(Struct, frozen=False):
         """ImageNet dataset configuration."""
 
         subset: int = 1000
 
-    @dataclasses.dataclass
-    class Adam:
+    class Adam(Struct, frozen=False):
         """Adam optimizer configuration."""
 
         learning_rate: float = 1e-3
 
-    @dataclasses.dataclass
-    class Sgd:
+    class Sgd(Struct, frozen=False):
         """SGD optimizer configuration."""
 
         learning_rate: float = 3e-4
@@ -1352,8 +1271,7 @@ def test_compact_help_short_text() -> None:
     if tyro._experimental_options["backend"] != "tyro":
         return
 
-    @dataclasses.dataclass
-    class ShortArgs:
+    class ShortArgs(Struct, frozen=False):
         """Test program with short arguments."""
 
         x: int = 5
@@ -1379,8 +1297,7 @@ def test_compact_help_long_text() -> None:
     if tyro._experimental_options["backend"] != "tyro":
         return
 
-    @dataclasses.dataclass
-    class LongArgs:
+    class LongArgs(Struct, frozen=False):
         """Test program with very long argument names."""
 
         very_long_argument_name_that_takes_up_a_lot_of_terminal_space: int = 5
@@ -1404,8 +1321,7 @@ def test_verbose_help_short_invocation() -> None:
     if tyro._experimental_options["backend"] != "tyro":
         return
 
-    @dataclasses.dataclass
-    class VerboseArgs:
+    class VerboseArgs(Struct, frozen=False):
         """Test program for verbose mode."""
 
         x: int = 5
@@ -1429,8 +1345,7 @@ def test_verbose_help_long_invocation() -> None:
     if tyro._experimental_options["backend"] != "tyro":
         return
 
-    @dataclasses.dataclass
-    class VeryLongInvocationArgs:
+    class VeryLongInvocationArgs(Struct, frozen=False):
         """Test program with very long argument names."""
 
         extremely_long_argument_name_that_exceeds_maximum_width_threshold: int = 5
@@ -1460,8 +1375,7 @@ def test_compact_vs_verbose_help() -> None:
     if tyro._experimental_options["backend"] != "tyro":
         return
 
-    @dataclasses.dataclass
-    class CompareArgs:
+    class CompareArgs(Struct, frozen=False):
         """Test comparing compact vs verbose."""
 
         x: int = 5
@@ -1531,14 +1445,12 @@ def test_literal_invalid_choice_error_message() -> None:
 def test_optional_union_subparser_helptext() -> None:
     """Test that optional union subparsers are marked as optional in help text."""
 
-    @dataclasses.dataclass
-    class StructA:
+    class StructA(Struct, frozen=False):
         """First option."""
 
         a: int = 1
 
-    @dataclasses.dataclass
-    class StructB:
+    class StructB(Struct, frozen=False):
         """Second option."""
 
         b: int = 2
@@ -1606,12 +1518,10 @@ def test_subcommand_help_with_required_parent_args() -> None:
     argument: --x" instead of showing the subcommand help.
     """
 
-    @dataclasses.dataclass
-    class A:
+    class A(Struct, frozen=False):
         a: int
 
-    @dataclasses.dataclass
-    class B:
+    class B(Struct, frozen=False):
         b: int
 
     def main(x: int, sub: A | B) -> None:
@@ -1659,8 +1569,7 @@ def test_subcommand_help_with_required_parent_args() -> None:
 def test_comment_not_leaking_through_non_field_lines() -> None:
     """Comments above non-field lines should not leak to subsequent fields."""
 
-    @dataclasses.dataclass
-    class Config:
+    class Config(Struct, frozen=False):
         x: int = 1
         # This comment is for the internal variable.
         _internal = "something"
@@ -1677,8 +1586,7 @@ def test_callable_description_without_pydantic_imported() -> None:
 
     from tyro import _docstrings
 
-    @dataclasses.dataclass
-    class FreshForNoPydantic:
+    class FreshForNoPydantic(Struct, frozen=False):
         """Docstring for FreshForNoPydantic."""
 
         x: int = 0
@@ -1693,8 +1601,7 @@ def test_usage_positional_shown_when_short() -> None:
     """Positional metavars appear in the usage line when it's short enough to
     show all arguments. https://github.com/brentyi/tyro/issues/484"""
 
-    @dataclasses.dataclass
-    class Args:
+    class Args(Struct, frozen=False):
         indir: tyro.conf.Positional[pathlib.Path]
         verbose: bool = False
 
@@ -1708,8 +1615,7 @@ def test_usage_positional_shown_when_abbreviated() -> None:
     """Positional metavars stay visible when the usage line is abbreviated to
     [OPTIONS]. https://github.com/brentyi/tyro/issues/484"""
 
-    @dataclasses.dataclass
-    class Args:
+    class Args(Struct, frozen=False):
         indir: tyro.conf.Positional[pathlib.Path]
         first_long_option_name: int = 0
         second_long_option_name: int = 1
@@ -1729,8 +1635,7 @@ def test_usage_optional_positional_shown_when_abbreviated() -> None:
     """Optional positional metavars keep their brackets in the abbreviated
     usage line. https://github.com/brentyi/tyro/issues/484"""
 
-    @dataclasses.dataclass
-    class Args:
+    class Args(Struct, frozen=False):
         indir: tyro.conf.Positional[pathlib.Path] = pathlib.Path("in")
         first_long_option_name: int = 0
         second_long_option_name: int = 1
@@ -1749,8 +1654,7 @@ def test_usage_abbreviated_with_field_name_metavar() -> None:
     `PositionalMetavarFromFieldName` is set.
     https://github.com/brentyi/tyro/issues/484"""
 
-    @dataclasses.dataclass
-    class Args:
+    class Args(Struct, frozen=False):
         indir: pathlib.Path
         first_long_option_name: int = 0
         second_long_option_name: int = 1
@@ -1774,8 +1678,7 @@ def test_usage_abbreviated_multiple_positionals() -> None:
     """All positional metavars are preserved, in order, in the abbreviated
     usage line. https://github.com/brentyi/tyro/issues/484"""
 
-    @dataclasses.dataclass
-    class Args:
+    class Args(Struct, frozen=False):
         indir: tyro.conf.Positional[pathlib.Path]
         outdir: tyro.conf.Positional[pathlib.Path]
         count: tyro.conf.Positional[int]
@@ -1800,8 +1703,7 @@ def test_usage_no_positionals_abbreviated_unchanged() -> None:
     """The abbreviated usage line is unchanged when there are no positional
     arguments. https://github.com/brentyi/tyro/issues/484"""
 
-    @dataclasses.dataclass
-    class Args:
+    class Args(Struct, frozen=False):
         first_long_option_name: int = 0
         second_long_option_name: int = 1
         third_long_option_name: int = 2
@@ -1818,17 +1720,13 @@ def test_nested_group_docstring_as_description() -> None:
     """Class docstrings of nested types should be used as the default group
     description. https://github.com/brentyi/tyro/issues/483"""
 
-    @dataclasses.dataclass
-    class NestedGroupFromDocstring:
+    class NestedGroupFromDocstring(Struct, frozen=False):
         """Settings related to workflow execution."""
 
         cores: int = 1
 
-    @dataclasses.dataclass
-    class ParentOfDocstringGroup:
-        work: NestedGroupFromDocstring = dataclasses.field(
-            default_factory=NestedGroupFromDocstring
-        )
+    class ParentOfDocstringGroup(Struct, frozen=False):
+        work: NestedGroupFromDocstring = NestedGroupFromDocstring()
 
     helptext = get_helptext_with_checks(ParentOfDocstringGroup)
     assert "Settings related to workflow execution." in helptext
@@ -1838,17 +1736,13 @@ def test_nested_group_attribute_docstring_takes_precedence() -> None:
     """An attribute docstring on the field should override the nested type's
     class docstring. https://github.com/brentyi/tyro/issues/483"""
 
-    @dataclasses.dataclass
-    class NestedGroupWithClassDoc:
+    class NestedGroupWithClassDoc(Struct, frozen=False):
         """Class-level description."""
 
         cores: int = 1
 
-    @dataclasses.dataclass
-    class ParentWithAttributeDoc:
-        work: NestedGroupWithClassDoc = dataclasses.field(
-            default_factory=NestedGroupWithClassDoc
-        )
+    class ParentWithAttributeDoc(Struct, frozen=False):
+        work: NestedGroupWithClassDoc = NestedGroupWithClassDoc()
         """Attribute-level description."""
 
     helptext = get_helptext_with_checks(ParentWithAttributeDoc)
@@ -1860,17 +1754,15 @@ def test_nested_group_arg_help_overrides_docstring() -> None:
     """`tyro.conf.arg(help=...)` should override the nested type's class
     docstring. https://github.com/brentyi/tyro/issues/483"""
 
-    @dataclasses.dataclass
-    class NestedGroupForArgHelp:
+    class NestedGroupForArgHelp(Struct, frozen=False):
         """Class-level description."""
 
         cores: int = 1
 
-    @dataclasses.dataclass
-    class ParentWithArgHelp:
+    class ParentWithArgHelp(Struct, frozen=False):
         work: Annotated[
             NestedGroupForArgHelp, tyro.conf.arg(help="Explicit description.")
-        ] = dataclasses.field(default_factory=NestedGroupForArgHelp)
+        ] = NestedGroupForArgHelp()
 
     helptext = get_helptext_with_checks(ParentWithArgHelp)
     assert "Explicit description." in helptext
@@ -1881,16 +1773,14 @@ def test_nested_group_arg_help_empty_suppresses_docstring() -> None:
     """An explicit `tyro.conf.arg(help="")` should suppress the nested type's
     class docstring. https://github.com/brentyi/tyro/issues/483"""
 
-    @dataclasses.dataclass
-    class NestedGroupForEmptyHelp:
+    class NestedGroupForEmptyHelp(Struct, frozen=False):
         """Class-level description."""
 
         cores: int = 1
 
-    @dataclasses.dataclass
-    class ParentWithEmptyHelp:
+    class ParentWithEmptyHelp(Struct, frozen=False):
         work: Annotated[NestedGroupForEmptyHelp, tyro.conf.arg(help="")] = (
-            dataclasses.field(default_factory=NestedGroupForEmptyHelp)
+            NestedGroupForEmptyHelp()
         )
 
     helptext = get_helptext_with_checks(ParentWithEmptyHelp)
@@ -1902,15 +1792,11 @@ def test_nested_group_no_docstring() -> None:
     autogenerated `Name(field: type)` docstring into the group description.
     https://github.com/brentyi/tyro/issues/483"""
 
-    @dataclasses.dataclass
-    class NestedGroupNoDocstring:
+    class NestedGroupNoDocstring(Struct, frozen=False):
         cores: int = 1
 
-    @dataclasses.dataclass
-    class ParentOfNoDocstringGroup:
-        work: NestedGroupNoDocstring = dataclasses.field(
-            default_factory=NestedGroupNoDocstring
-        )
+    class ParentOfNoDocstringGroup(Struct, frozen=False):
+        work: NestedGroupNoDocstring = NestedGroupNoDocstring()
 
     helptext = get_helptext_with_checks(ParentOfNoDocstringGroup)
     assert "NestedGroupNoDocstring(" not in helptext
@@ -1920,14 +1806,12 @@ def test_nested_group_docstring_required_field() -> None:
     """The class docstring fallback should also apply when the nested field is
     required. https://github.com/brentyi/tyro/issues/483"""
 
-    @dataclasses.dataclass
-    class NestedGroupRequired:
+    class NestedGroupRequired(Struct, frozen=False):
         """Settings for a required group."""
 
         cores: int
 
-    @dataclasses.dataclass
-    class ParentOfRequiredGroup:
+    class ParentOfRequiredGroup(Struct, frozen=False):
         work: NestedGroupRequired
 
     helptext = get_helptext_with_checks(ParentOfRequiredGroup)

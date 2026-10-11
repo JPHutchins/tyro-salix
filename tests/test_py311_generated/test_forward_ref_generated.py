@@ -1,30 +1,26 @@
-import dataclasses
 from typing import Union
 
 import pytest
+from salix import Struct
 
 import tyro
 
 
-@dataclasses.dataclass
-class A1:
+class A1(Struct, frozen=False):
     x: int
     bc: "B| C"
 
 
-@dataclasses.dataclass
-class A2:
+class A2(Struct, frozen=False):
     x: int
     bc: Union["B", "C"]
 
 
-@dataclasses.dataclass
-class B:
+class B(Struct, frozen=False):
     y: "int"
 
 
-@dataclasses.dataclass
-class C:
+class C(Struct, frozen=False):
     z: int
 
 

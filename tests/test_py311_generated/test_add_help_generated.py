@@ -1,18 +1,17 @@
 # mypy: ignore-errors
 """Tests for add_help parameter functionality."""
 
-import dataclasses
 import io
 import sys
 from typing import Any, Callable, Dict
 
 import pytest
+from salix import Struct
 
 import tyro
 
 
-@dataclasses.dataclass
-class SimpleConfig:
+class SimpleConfig(Struct, frozen=False):
     """A simple configuration class."""
 
     value: int
@@ -151,8 +150,7 @@ def test_subcommand_cli_from_dict_add_help() -> None:
 def test_overridable_config_cli_add_help() -> None:
     """Test add_help parameter with overridable_config_cli."""
 
-    @dataclasses.dataclass
-    class Config:
+    class Config(Struct, frozen=False):
         a: int
         b: str
 
@@ -175,12 +173,10 @@ def test_overridable_config_cli_add_help() -> None:
 def test_subparsers_respect_add_help() -> None:
     """Test that subparsers inherit the add_help setting from parent parser."""
 
-    @dataclasses.dataclass
-    class ConfigA:
+    class ConfigA(Struct, frozen=False):
         value_a: int = 1
 
-    @dataclasses.dataclass
-    class ConfigB:
+    class ConfigB(Struct, frozen=False):
         value_b: str = "test"
 
     # Test with add_help=False - subparsers should also not have help
@@ -207,8 +203,7 @@ def test_subparsers_respect_add_help() -> None:
 def test_return_unknown_args_with_add_help_false() -> None:
     """Test that --help/-h are returned as unknown args when add_help=False and return_unknown_args=True."""
 
-    @dataclasses.dataclass
-    class Config:
+    class Config(Struct, frozen=False):
         value: int = 5
 
     # Test that --help is returned in unknown args
@@ -252,8 +247,7 @@ def test_error_messages_respect_add_help() -> None:
     """Test that error messages don't suggest --help when add_help=False."""
     import contextlib
 
-    @dataclasses.dataclass
-    class Config:
+    class Config(Struct, frozen=False):
         required_field: int
 
     # Capture stderr to check error messages

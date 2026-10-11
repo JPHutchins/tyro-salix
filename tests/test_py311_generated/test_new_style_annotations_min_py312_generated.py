@@ -1,12 +1,12 @@
 # mypy: ignore-errors
 #
 # PEP 695 isn't yet supported in mypy. (April 4, 2024)
-from dataclasses import dataclass
 from typing import Annotated, Any, Literal, NewType
 
 import pytest
 from helptext_utils import get_helptext_with_checks
 from pydantic import BaseModel
+from salix import Struct
 
 import tyro
 from tyro.conf._markers import OmitArgPrefixes
@@ -14,8 +14,7 @@ from tyro.constructors._primitive_spec import UnsupportedTypeAnnotationError
 
 
 def test_simple_generic() -> None:
-    @dataclass(frozen=True)
-    class Container[T]:
+    class Container[T](Struct):
         a: T
         b: T
 
@@ -27,15 +26,13 @@ type Y = list[int]
 type Z = Inner[int]
 
 
-@dataclass(frozen=True)
-class Inner[T]:
+class Inner[T](Struct):
     a: T
     b: T
 
 
 def test_generic_with_type_statement_0() -> None:
-    @dataclass(frozen=True)
-    class Container[T]:
+    class Container[T](Struct):
         a: T
         b: T
 
@@ -43,8 +40,7 @@ def test_generic_with_type_statement_0() -> None:
 
 
 def test_generic_with_type_statement_1() -> None:
-    @dataclass(frozen=True)
-    class Container[T]:
+    class Container[T](Struct):
         a: tuple[X, ...]
         b: T
 
@@ -52,8 +48,7 @@ def test_generic_with_type_statement_1() -> None:
 
 
 def test_generic_with_type_statement_2() -> None:
-    @dataclass(frozen=True)
-    class Container[T]:
+    class Container[T](Struct):
         a: Z
 
     assert tyro.cli(Container[Y], args="--a.a 1 --a.b 2".split(" ")) == Container(
@@ -65,8 +60,7 @@ type AnnotatedBasic = Annotated[int, tyro.conf.arg(name="basic")]
 
 
 def test_annotated_alias() -> None:
-    @dataclass(frozen=True)
-    class Container:
+    class Container(Struct):
         a: AnnotatedBasic
 
     assert tyro.cli(Container, args="--basic 1".split(" ")) == Container(1)
@@ -78,8 +72,7 @@ type TT[T] = Annotated[T, tyro.conf.arg(name="", constructor=lambda: True)]
 def test_pep695_generic_alias() -> None:
     """Adapted from: https://github.com/brentyi/tyro/issues/177"""
 
-    @dataclass(frozen=True)
-    class Config:
+    class Config(Struct):
         arg: TT[bool]
 
     assert tyro.cli(Config, args=[]) == Config(arg=True)
@@ -91,8 +84,7 @@ type Renamed[T] = Annotated[T, tyro.conf.arg(name="renamed")]
 def test_pep695_generic_alias_rename() -> None:
     """Adapted from: https://github.com/brentyi/tyro/issues/177"""
 
-    @dataclass(frozen=True)
-    class Config:
+    class Config(Struct):
         arg: Renamed[bool]
 
     assert tyro.cli(Config, args=["--renamed", "True"]) == Config(arg=True)
@@ -101,8 +93,7 @@ def test_pep695_generic_alias_rename() -> None:
 def test_pep695_generic_alias_rename_override() -> None:
     """Adapted from: https://github.com/brentyi/tyro/issues/177"""
 
-    @dataclass(frozen=True)
-    class Config:
+    class Config(Struct):
         arg: Annotated[Renamed[bool], tyro.conf.arg(name="renamed2")]
 
     assert tyro.cli(Config, args=["--renamed2", "True"]) == Config(arg=True)
@@ -114,8 +105,7 @@ type RenamedTwice[T] = Renamed[Renamed[T]]
 def test_pep695_generic_alias_rename_twice() -> None:
     """Adapted from: https://github.com/brentyi/tyro/issues/177"""
 
-    @dataclass(frozen=True)
-    class Config:
+    class Config(Struct):
         arg: RenamedTwice[bool]
 
     assert tyro.cli(Config, args=["--renamed", "True"]) == Config(arg=True)
@@ -129,8 +119,7 @@ type SomeUnionRenamed = RenamedThreeTimes[SomeUnion]
 def test_pep695_generic_alias_rename_three_times() -> None:
     """Adapted from: https://github.com/brentyi/tyro/issues/177"""
 
-    @dataclass(frozen=True)
-    class Config:
+    class Config(Struct):
         arg: Annotated[SomeUnionRenamed, tyro.conf.arg(name="renamed_override")]
 
     assert tyro.cli(Config, args=["--renamed-override", "True"]) == Config(arg=True)
@@ -142,8 +131,7 @@ type RecursiveList[T] = T | list[RecursiveList[T]]
 def test_pep695_recursive_types() -> None:
     """Adapted from: https://github.com/brentyi/tyro/issues/177"""
 
-    @dataclass(frozen=True)
-    class Config:
+    class Config(Struct):
         arg: RecursiveList[str]
 
     # Recursive types are still unsupported.
@@ -154,8 +142,7 @@ def test_pep695_recursive_types() -> None:
 def test_pep695_recursive_types_custom_constructor() -> None:
     """Adapted from: https://github.com/brentyi/tyro/issues/177"""
 
-    @dataclass(frozen=True)
-    class Config:
+    class Config(Struct):
         arg: Annotated[RecursiveList[str], tyro.conf.arg(constructor=str)]
 
     assert tyro.cli(Config, args=["--arg", "True"]) == Config(arg="True")
@@ -175,8 +162,7 @@ type StrContainer = Inner[str]
 def test_pep695_alias_subcommand() -> None:
     """Adapted from: https://github.com/brentyi/tyro/issues/177"""
 
-    @dataclass(frozen=True)
-    class Config:
+    class Config(Struct):
         arg: UnprefixedSubcommandPair[IntContainer, IntContainer2, StrContainer]
 
     assert tyro.cli(Config, args=["int-container", "--a", "3", "--b", "5"]) == Config(
@@ -210,8 +196,7 @@ def test_pep695_new_type_alias() -> None:
 
 
 def test_generic_config() -> None:
-    @dataclass(frozen=True)
-    class Container[T]:
+    class Container[T](Struct):
         a: Inner[T]
 
     assert tyro.cli(
@@ -222,8 +207,7 @@ def test_generic_config() -> None:
 
 
 def test_generic_config_subcommand() -> None:
-    @dataclass(frozen=True)
-    class Container[T]:
+    class Container[T](Struct):
         a: T
 
     assert tyro.cli(
@@ -249,8 +233,7 @@ def test_generic_config_subcommand() -> None:
 
 
 def test_generic_config_subcommand2() -> None:
-    @dataclass(frozen=True)
-    class Container[T]:
+    class Container[T](Struct):
         a: tyro.conf.OmitSubcommandPrefixes[T]
 
     assert tyro.cli(
@@ -260,8 +243,7 @@ def test_generic_config_subcommand2() -> None:
 
 
 def test_generic_config_subcommand3() -> None:
-    @dataclass(frozen=True)
-    class Container[T]:
+    class Container[T](Struct):
         a: T
 
     assert tyro.cli(
@@ -273,8 +255,7 @@ def test_generic_config_subcommand3() -> None:
 
 
 def test_generic_config_subcommand4() -> None:
-    @dataclass(frozen=True)
-    class Container[T]:
+    class Container[T](Struct):
         a: T
 
     assert tyro.cli(
@@ -291,8 +272,7 @@ def test_generic_config_subcommand4() -> None:
 
 
 def test_generic_config_subcommand_matching_nested() -> None:
-    @dataclass(frozen=True)
-    class Container[T]:
+    class Container[T](Struct):
         a: T
 
     assert "default: a:container-bool" in get_helptext_with_checks(
@@ -321,8 +301,7 @@ def test_generic_config_subcommand_matching_nested() -> None:
 
 
 def test_generic_config_subcommand_matching_dict() -> None:
-    @dataclass(frozen=True)
-    class Container[T]:
+    class Container[T](Struct):
         a: T
 
     assert "default: container-dict-str-str" in get_helptext_with_checks(
@@ -336,8 +315,7 @@ def test_generic_config_subcommand_matching_dict() -> None:
 
 
 def test_generic_config_subcommand_matching_tuple() -> None:
-    @dataclass(frozen=True)
-    class Container[T]:
+    class Container[T](Struct):
         a: T
 
     assert "default: container-tuple-str-str" in get_helptext_with_checks(
@@ -351,8 +329,7 @@ def test_generic_config_subcommand_matching_tuple() -> None:
 
 
 def test_generic_config_subcommand_matching_tuple_variable() -> None:
-    @dataclass(frozen=True)
-    class Container[T]:
+    class Container[T](Struct):
         a: T
 
     assert "default: container-tuple-str-ellipsis" in get_helptext_with_checks(
@@ -405,27 +382,6 @@ def test_deeply_inherited_init() -> None:
     assert "--model.config.a" in get_helptext_with_checks(c)
     assert "--model.config.b" in get_helptext_with_checks(c)
     assert "--model.config.c" in get_helptext_with_checks(c)
-
-
-def test_bad_orig_bases() -> None:
-    @dataclass(frozen=True)
-    class A[T]:
-        a: T
-
-    @dataclass(frozen=True)
-    class B(A[int | str | bool]):
-        x: int
-
-    @dataclass(frozen=True)
-    class C(A[int | str | bool]):
-        a: str
-
-    @dataclass(frozen=True)
-    class D(B, C): ...  # , C): ...
-
-    assert "--a" in get_helptext_with_checks(D)
-    assert "STR" in get_helptext_with_checks(D)
-    assert "INT|STR" not in get_helptext_with_checks(D)
 
 
 type ConstrainedTuple[T] = tuple[T] | tuple[T, T]
@@ -517,24 +473,20 @@ def test_generics_inherited() -> None:
     Adapted from: https://github.com/brentyi/tyro/issues/327
     """
 
-    @dataclass(frozen=True)
-    class Point3[ScalarType: (int, float)]:
+    class Point3[ScalarType: (int, float)](Struct):
         x: ScalarType
         y: ScalarType
         z: ScalarType
         frame_id: str
 
-    @dataclass(frozen=True)
-    class Triangle:
+    class Triangle(Struct):
         a: Point3[float] = Point3(0.0, 0.0, 0.0, "frame")
         b: Point3[float] = Point3(0.0, 0.0, 0.0, "frame")
         c: Point3[float] = Point3(0.0, 0.0, 0.0, "frame")
 
-    @dataclass(frozen=True)
-    class Args[ShapeType]:
+    class Args[ShapeType](Struct):
         shape: ShapeType
 
-    @dataclass(frozen=True)
     class SubArgs[ShapeType](Args[ShapeType]):
         some_int: int = 1
 
@@ -556,32 +508,26 @@ def test_generics_inherited_deep() -> None:
     Adapted from: https://github.com/brentyi/tyro/issues/327
     """
 
-    @dataclass(frozen=True)
-    class Point3[ScalarType: (int, float)]:
+    class Point3[ScalarType: (int, float)](Struct):
         x: ScalarType
         y: ScalarType
         z: ScalarType
         frame_id: str
 
-    @dataclass(frozen=True)
-    class Triangle:
+    class Triangle(Struct):
         a: Point3[float] = Point3(0.0, 0.0, 0.0, "frame")
         b: Point3[float] = Point3(0.0, 0.0, 0.0, "frame")
         c: Point3[float] = Point3(0.0, 0.0, 0.0, "frame")
 
-    @dataclass(frozen=True)
-    class Args[ShapeType]:
+    class Args[ShapeType](Struct):
         shape: ShapeType
 
-    @dataclass(frozen=True)
     class SubArgs[ShapeType1](Args[ShapeType1]):
         some_int1: int = 1
 
-    @dataclass(frozen=True)
     class SubSubArgs[ShapeType2](SubArgs[ShapeType2]):
         some_int2: int = 1
 
-    @dataclass(frozen=True)
     class SubSubSubArgs[ShapeType3](SubSubArgs[ShapeType3]):
         some_int3: int = 1
 

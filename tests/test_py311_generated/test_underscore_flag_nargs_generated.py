@@ -4,10 +4,10 @@ Covers underscore/hyphen normalization (https://github.com/brentyi/tyro/issues/4
 and counter-style short flags (-vvv) terminating variable-length argument consumption.
 """
 
-import dataclasses
 from typing import Annotated, List, Tuple
 
 import pytest
+from salix import Struct
 
 import tyro
 
@@ -15,9 +15,8 @@ import tyro
 def test_underscore_flag_terminates_nargs() -> None:
     """Original reproducer from the issue."""
 
-    @dataclasses.dataclass
-    class Config:
-        steps: List[int] = dataclasses.field(default_factory=lambda: [10, 20, 30])
+    class Config(Struct, frozen=False):
+        steps: List[int] = [10, 20, 30]
         flag_with_underscore: bool = False
         flag: bool = False
 
@@ -34,8 +33,7 @@ def test_underscore_flag_terminates_nargs() -> None:
 def test_underscore_flag_terminates_nargs_plus() -> None:
     """Test underscore flags terminate nargs='+' consumption."""
 
-    @dataclasses.dataclass
-    class Config:
+    class Config(Struct, frozen=False):
         values: Tuple[int, ...] = (1,)
         learning_rate: float = 0.01
 
@@ -49,9 +47,8 @@ def test_underscore_flag_terminates_nargs_plus() -> None:
 def test_underscore_no_flag_terminates_nargs() -> None:
     """Test that --no-flag_with_underscore terminates nargs consumption."""
 
-    @dataclasses.dataclass
-    class Config:
-        steps: List[int] = dataclasses.field(default_factory=lambda: [10, 20, 30])
+    class Config(Struct, frozen=False):
+        steps: List[int] = [10, 20, 30]
         use_feature: bool = True
 
     # --no-use_feature (underscore) should terminate --steps consumption.
@@ -68,8 +65,7 @@ def test_underscore_no_flag_terminates_nargs() -> None:
 def test_underscore_flag_with_negative_numbers() -> None:
     """Test underscore flags work correctly alongside negative numbers."""
 
-    @dataclasses.dataclass
-    class Config:
+    class Config(Struct, frozen=False):
         values: Tuple[int, ...] = ()
         my_flag: int = 0
 
@@ -87,8 +83,7 @@ def test_underscore_flag_with_negative_numbers() -> None:
 def test_underscore_flag_equals_syntax_terminates_nargs() -> None:
     """Test that --flag_name=value with underscores terminates nargs."""
 
-    @dataclasses.dataclass
-    class Config:
+    class Config(Struct, frozen=False):
         values: Tuple[int, ...] = ()
         my_param: int = 0
 
@@ -100,8 +95,7 @@ def test_underscore_flag_equals_syntax_terminates_nargs() -> None:
 def test_underscore_flag_multiple_underscores() -> None:
     """Test flags with many underscores in the name."""
 
-    @dataclasses.dataclass
-    class Config:
+    class Config(Struct, frozen=False):
         items: Tuple[str, ...] = ()
         a_b_c_d: int = 0
 
@@ -113,8 +107,7 @@ def test_underscore_flag_multiple_underscores() -> None:
 def test_underscore_flag_with_return_unknown_args() -> None:
     """Test underscore flag normalization with return_unknown_args=True."""
 
-    @dataclasses.dataclass
-    class Config:
+    class Config(Struct, frozen=False):
         values: Tuple[int, ...] = ()
         my_flag: bool = False
 
@@ -132,9 +125,8 @@ def test_underscore_flag_nargs_star_empty() -> None:
     """Test that an underscore flag immediately after a nargs='*' flag works
     even when zero values are consumed."""
 
-    @dataclasses.dataclass
-    class Config:
-        items: List[int] = dataclasses.field(default_factory=list)
+    class Config(Struct, frozen=False):
+        items: List[int] = []
         my_option: int = 5
 
     result = tyro.cli(Config, args=["--items", "--my_option", "10"])
@@ -145,8 +137,7 @@ def test_underscore_flag_nargs_star_empty() -> None:
 def test_underscore_multiple_flags_terminate_nargs() -> None:
     """Test multiple underscore flags interleaved with variable-length args."""
 
-    @dataclasses.dataclass
-    class Config:
+    class Config(Struct, frozen=False):
         list_a: Tuple[int, ...] = ()
         list_b: Tuple[int, ...] = ()
         some_flag: bool = False

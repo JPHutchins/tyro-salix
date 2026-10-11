@@ -8,10 +8,10 @@ when typing_extensions is installed.
 from __future__ import annotations
 
 import warnings
-from dataclasses import dataclass
 from typing import Generic
 
 import pytest
+from salix import Struct
 from typing_extensions import TypeVar
 
 import tyro
@@ -27,22 +27,19 @@ T_no_default = TypeVar("T_no_default")
 T_with_bound = TypeVar("T_with_bound", bound=int)
 
 
-@dataclass
-class GenericWithDefault(Generic[T_with_default]):
+class GenericWithDefault(Struct, Generic[T_with_default], frozen=False):
     """Generic class with TypeVar that has a default."""
 
     value: T_with_default
 
 
-@dataclass
-class GenericNoDefault(Generic[T_no_default]):
+class GenericNoDefault(Struct, Generic[T_no_default], frozen=False):
     """Generic class with TypeVar that has no default."""
 
     value: T_no_default
 
 
-@dataclass
-class GenericWithBound(Generic[T_with_bound]):
+class GenericWithBound(Struct, Generic[T_with_bound], frozen=False):
     """Generic class with TypeVar that has a bound."""
 
     value: T_with_bound
@@ -53,8 +50,7 @@ def test_typevar_with_default_no_warning():
     with warnings.catch_warnings(record=True) as w:
         warnings.simplefilter("always")
 
-        @dataclass
-        class Config(Generic[T_with_default]):
+        class Config(Struct, Generic[T_with_default], frozen=False):
             value: T_with_default = "default"  # type: ignore
 
         # This should not produce a warning.
@@ -76,8 +72,7 @@ def test_typevar_no_default_produces_warning():
     with warnings.catch_warnings(record=True) as w:
         warnings.simplefilter("always")
 
-        @dataclass
-        class Config(Generic[T_no_default]):
+        class Config(Struct, Generic[T_no_default], frozen=False):
             value: T_no_default = "default"  # type: ignore
 
         # This should produce a warning.
@@ -99,8 +94,7 @@ def test_typevar_with_bound_produces_warning():
     with warnings.catch_warnings(record=True) as w:
         warnings.simplefilter("always")
 
-        @dataclass
-        class Config(Generic[T_with_bound]):
+        class Config(Struct, Generic[T_with_bound], frozen=False):
             value: T_with_bound = 42  # type: ignore
 
         # This should produce a warning but use the bound type.
@@ -123,8 +117,7 @@ def test_tyro_warning_can_be_filtered():
         # Filter out TyroWarning.
         warnings.filterwarnings("ignore", category=TyroWarning)
 
-        @dataclass
-        class Config(Generic[T_no_default]):
+        class Config(Struct, Generic[T_no_default], frozen=False):
             value: T_no_default = "default"  # type: ignore
 
         # This would normally produce a warning, but it should be filtered.
@@ -141,8 +134,7 @@ def test_union_type_mismatch_uses_tyro_warning():
     with warnings.catch_warnings(record=True) as w:
         warnings.simplefilter("always")
 
-        @dataclass
-        class Config:
+        class Config(Struct, frozen=False):
             # This default doesn't match the union type.
             value: int | float = "not_a_number"  # type: ignore
 

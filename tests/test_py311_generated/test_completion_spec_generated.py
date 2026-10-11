@@ -1,12 +1,12 @@
 """Tests for completion spec generation and get_completions logic."""
 
 import contextlib
-import dataclasses
 import io
 import pathlib
 from typing import Annotated, List, Literal
 
 import pytest
+from salix import Struct
 
 import tyro
 
@@ -82,16 +82,13 @@ def test_completion_output_parity() -> None:
 def test_completion_parity_with_subcommands() -> None:
     """Test completion parity for simple subcommands (no CascadeSubcommandArgs)."""
 
-    @dataclasses.dataclass
-    class SubA:
+    class SubA(Struct, frozen=False):
         value_a: int = 1
 
-    @dataclasses.dataclass
-    class SubB:
+    class SubB(Struct, frozen=False):
         value_b: str = "hello"
 
-    @dataclasses.dataclass
-    class Config:
+    class Config(Struct, frozen=False):
         sub: SubA | SubB
 
     # Generate completion with argparse backend.
@@ -181,18 +178,15 @@ def test_cascaded_subcommand_completion(backend: str) -> None:
     options at each level.
     """
 
-    @dataclasses.dataclass
-    class SubA:
+    class SubA(Struct, frozen=False):
         sub_value: int = 1
 
-    @dataclasses.dataclass
-    class SubB:
+    class SubB(Struct, frozen=False):
         sub_value: int = 2
 
-    @dataclasses.dataclass
-    class Config:
+    class Config(Struct, frozen=False):
         parent_arg: str = "default"
-        sub: SubA | SubB = dataclasses.field(default_factory=SubA)
+        sub: SubA | SubB = SubA()
 
     target = io.StringIO()
     with pytest.raises(SystemExit), contextlib.redirect_stdout(target):
@@ -215,8 +209,7 @@ def test_cascade_marker_detection(backend: str) -> None:
     if backend != "tyro":
         pytest.skip("Cascade marker detection is tyro-specific")
 
-    @dataclasses.dataclass
-    class Config:
+    class Config(Struct, frozen=False):
         regular_field: int = 5
         cascade_field: tyro.conf.CascadeSubcommandArgs[str] = "default"
 
@@ -242,14 +235,11 @@ def test_nargs_with_choices_completion(backend: str) -> None:
     if backend != "tyro":
         pytest.skip("Choice nargs tracking is tyro-specific")
 
-    @dataclasses.dataclass
-    class Config:
+    class Config(Struct, frozen=False):
         # Single choice.
         mode: Literal["train", "eval"] = "train"
         # Multiple choices.
-        modes: List[Literal["train", "eval", "test"]] = dataclasses.field(
-            default_factory=lambda: ["train"]
-        )
+        modes: List[Literal["train", "eval", "test"]] = ["train"]
 
     # Generate completion script.
     target = io.StringIO()
@@ -273,8 +263,7 @@ def test_metavar_in_description(backend: str) -> None:
     if backend != "tyro":
         pytest.skip("Metavar formatting is tyro-specific")
 
-    @dataclasses.dataclass
-    class Config:
+    class Config(Struct, frozen=False):
         count: int = 5
         name: str = "default"
 
@@ -291,8 +280,7 @@ def test_metavar_in_description(backend: str) -> None:
     assert "STR" in completion_script or "str" in completion_script
 
 
-@dataclasses.dataclass
-class _ConfigForBulletTest:
+class _ConfigForBulletTest(Struct, frozen=False):
     # No custom helptext, just default.
     simple: int = 5
     # Custom helptext.
@@ -318,48 +306,40 @@ def test_smart_bullet_separator(backend: str) -> None:
     assert "\u2022" in completion_script
 
 
-@dataclasses.dataclass
-class _PreprocessingA:
+class _PreprocessingA(Struct, frozen=False):
     scale: float = 1.0
 
 
-@dataclasses.dataclass
-class _PreprocessingB:
+class _PreprocessingB(Struct, frozen=False):
     normalize: bool = True
 
 
-@dataclasses.dataclass
-class _AugmentationA:
+class _AugmentationA(Struct, frozen=False):
     rotate: bool = True
 
 
-@dataclasses.dataclass
-class _AugmentationB:
+class _AugmentationB(Struct, frozen=False):
     flip: bool = False
 
 
-@dataclasses.dataclass
-class _DatasetMNIST:
+class _DatasetMNIST(Struct, frozen=False):
     """Dataset with its own frontier groups."""
 
     preprocessing: _PreprocessingA | _PreprocessingB
     augmentation: _AugmentationA | _AugmentationB
 
 
-@dataclasses.dataclass
-class _DatasetImageNet:
+class _DatasetImageNet(Struct, frozen=False):
     resolution: int = 224
 
 
-@dataclasses.dataclass
-class _SubcommandWithFrontier:
+class _SubcommandWithFrontier(Struct, frozen=False):
     """A subcommand that has subcommands, one of which has frontier groups."""
 
     dataset: _DatasetMNIST | _DatasetImageNet
 
 
-@dataclasses.dataclass
-class _NestedMainCommand:
+class _NestedMainCommand(Struct, frozen=False):
     # This creates a subcommand that has frontier groups.
     config: _SubcommandWithFrontier
 
@@ -472,13 +452,11 @@ def test_nested_dataclass_completion(backend: str) -> None:
     which creates child parsers via child_from_prefix rather than subcommands.
     """
 
-    @dataclasses.dataclass
-    class OptimizerConfig:
+    class OptimizerConfig(Struct, frozen=False):
         learning_rate: float = 3e-4
         weight_decay: float = 1e-2
 
-    @dataclasses.dataclass
-    class Config:
+    class Config(Struct, frozen=False):
         opt: OptimizerConfig
         seed: int = 0
 
@@ -642,8 +620,7 @@ def test_get_completions_path_marker() -> None:
     from tyro._parsers import ParserSpecification
     from tyro._singleton import MISSING_NONPROP
 
-    @dataclasses.dataclass
-    class Config:
+    class Config(Struct, frozen=False):
         input_file: pathlib.Path = pathlib.Path("input.txt")
         name: str = "default"
         count: int = 0

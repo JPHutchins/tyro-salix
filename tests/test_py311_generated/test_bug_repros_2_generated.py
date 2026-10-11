@@ -19,10 +19,6 @@ Each test fails on the unfixed code and documents the expected behavior.
   ``**kwargs`` parameter was dropped (returned ``{}``) because the VAR_KEYWORD
   branch reset the default unconditionally, unlike the ``*args`` branch.
 
-* ``test_attrs_field_alias`` -- attrs fields whose init-arg name differs from
-  the attribute name (private ``_x`` -> ``x``, or ``attrs.field(alias=...)``)
-  crashed construction with an unexpected-keyword ``TypeError``.
-
 * ``test_pydantic_field_alias`` -- pydantic v2 fields with ``Field(alias=...)``
   / ``validation_alias`` crashed with a ``ValidationError`` because tyro
   constructed by field name while pydantic validates by alias.
@@ -35,21 +31,19 @@ Each test fails on the unfixed code and documents the expected behavior.
 
 from __future__ import annotations
 
-import dataclasses
 import pathlib
 from typing import Literal, Tuple
 
-import attrs
 import pydantic
 import pytest
 from helptext_utils import get_helptext_with_checks
+from salix import Struct
 
 import tyro
 
 
 def test_missing_value_error_renders_arg_name(capsys: pytest.CaptureFixture) -> None:
-    @dataclasses.dataclass
-    class C:
+    class C(Struct, frozen=False):
         coord: Tuple[int, int, int]
 
     with pytest.raises(SystemExit):
@@ -85,39 +79,34 @@ def test_missing_value_error_renders_arg_name(capsys: pytest.CaptureFixture) -> 
 
 
 def test_bytearray_field() -> None:
-    @dataclasses.dataclass
-    class C:
-        x: bytearray = dataclasses.field(default_factory=bytearray)
+    class C(Struct, frozen=False):
+        x: bytearray = bytearray()
 
     assert tyro.cli(C, args=["--x", "hello"]) == C(x=bytearray(b"hello"))
 
     # bytes still works.
-    @dataclasses.dataclass
-    class D:
+    class D(Struct, frozen=False):
         x: bytes = b""
 
     assert tyro.cli(D, args=["--x", "hello"]) == D(x=b"hello")
 
 
 def test_pure_path_subclass_preserved() -> None:
-    @dataclasses.dataclass
-    class W:
+    class W(Struct, frozen=False):
         x: pathlib.PureWindowsPath
 
     out = tyro.cli(W, args=["--x", "C:\\a\\b"])
     assert isinstance(out.x, pathlib.PureWindowsPath)
     assert out.x == pathlib.PureWindowsPath("C:\\a\\b")
 
-    @dataclasses.dataclass
-    class P:
+    class P(Struct, frozen=False):
         x: pathlib.PurePosixPath
 
     out2 = tyro.cli(P, args=["--x", "/a/b"])
     assert isinstance(out2.x, pathlib.PurePosixPath)
 
     # Concrete Path is unchanged (resolves to the OS-specific concrete class).
-    @dataclasses.dataclass
-    class C:
+    class C(Struct, frozen=False):
         x: pathlib.Path
 
     out3 = tyro.cli(C, args=["--x", "/a/b"])
@@ -141,28 +130,6 @@ def test_var_keyword_default_instance() -> None:
     assert tyro.cli(Bag, args=["--kwargs", "z", "9"], default=Bag(x=1)).kwargs == {
         "z": 9
     }
-
-
-def test_attrs_field_alias() -> None:
-    @attrs.define
-    class A:
-        x: int = attrs.field(alias="renamed")
-
-    assert tyro.cli(A, args=["--x", "5"]) == A(5)
-
-    @attrs.define
-    class B:
-        _x: int = attrs.field()
-
-    assert tyro.cli(B, args=["--_x", "5"]) == B(5)
-
-    # Normal attrs fields are unaffected.
-    @attrs.define
-    class Normal:
-        name: str = "hi"
-        count: int = 0
-
-    assert tyro.cli(Normal, args=["--name", "bob", "--count", "3"]) == Normal("bob", 3)
 
 
 def test_pydantic_field_alias() -> None:

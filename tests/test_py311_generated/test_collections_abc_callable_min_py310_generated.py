@@ -1,10 +1,10 @@
 # mypy: ignore-errors
 
-import dataclasses
 from collections.abc import Callable
 from typing import ClassVar
 
 import pytest
+from salix import Struct
 
 import tyro
 
@@ -37,8 +37,7 @@ def test_collections_abc_callable_fixed_dataclass_type() -> None:
 def test_collections_abc_callable_ellipsis() -> None:
     """Test collections.abc.Callable with ellipsis in dataclass."""
 
-    @dataclasses.dataclass
-    class SimpleCallable:
+    class SimpleCallable(Struct, frozen=False):
         x: Callable[..., None] = lambda: None
 
     assert tyro.cli(SimpleCallable, args=[]) == SimpleCallable()
@@ -47,8 +46,7 @@ def test_collections_abc_callable_ellipsis() -> None:
 def test_collections_abc_callable_classvar() -> None:
     """Test ClassVar[collections.abc.Callable[...]] within dataclass (issue #314)."""
 
-    @dataclasses.dataclass
-    class Cmd:
+    class Cmd(Struct, frozen=False):
         x: int
         FUNC: ClassVar[Callable[[int], str]] = str
 
@@ -61,8 +59,7 @@ def test_collections_abc_callable_classvar() -> None:
 def test_collections_abc_callable_classvar_complex() -> None:
     """Test more complex ClassVar[collections.abc.Callable] scenarios."""
 
-    @dataclasses.dataclass
-    class ComplexCmd:
+    class ComplexCmd(Struct, frozen=False):
         x: int = 1
         y: float = 2.0
 
@@ -81,8 +78,7 @@ def test_collections_abc_callable_classvar_complex() -> None:
 def test_collections_abc_callable_classvar_zero_params() -> None:
     """Test ClassVar[collections.abc.Callable[[], ReturnType]] with zero parameters."""
 
-    @dataclasses.dataclass
-    class ZeroParamCmd:
+    class ZeroParamCmd(Struct, frozen=False):
         x: int
         FUNC: ClassVar[Callable[[], str]] = lambda: "hello"
 
@@ -93,8 +89,7 @@ def test_collections_abc_callable_classvar_zero_params() -> None:
 def test_collections_abc_callable_instance_var() -> None:
     """Test instance variable with collections.abc.Callable type should fail with proper error."""
 
-    @dataclasses.dataclass
-    class BadCmd:
+    class BadCmd(Struct, frozen=False):
         x: int
         # This should fail with UnsupportedTypeAnnotationError, not the cryptic TypeError
         y: Callable[[int], str]
@@ -114,8 +109,7 @@ def test_collections_abc_callable_with_generic_resolution() -> None:
 
     T = TypeVar("T")
 
-    @dataclasses.dataclass
-    class GenericContainer(Generic[T]):
+    class GenericContainer(Struct, Generic[T], frozen=False):
         x: int
         # ClassVar with Callable that has a type parameter.
         FUNC: ClassVar[Callable[[T], str]] = str  # pyright: ignore[reportGeneralTypeIssues]  # ty: ignore[invalid-type-form]
