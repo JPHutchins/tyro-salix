@@ -1,7 +1,6 @@
 from __future__ import annotations
 from salix import Struct
 
-import dataclasses
 from typing import Any, Callable, Dict, Sequence, TypeVar, Union, overload
 
 from typing_extensions import Annotated

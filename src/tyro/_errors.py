@@ -85,7 +85,6 @@ from __future__ import annotations
 from salix import Struct
 
 import contextlib
-import dataclasses
 from contextvars import ContextVar
 from typing import (
     TYPE_CHECKING,

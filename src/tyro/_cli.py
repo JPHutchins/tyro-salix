@@ -212,7 +212,7 @@ def cli(  # pyright: ignore[reportInconsistentOverload]
 
        .. code-block:: python
 
-          from dataclasses import dataclass
+          from salix import Struct
           from pathlib import Path
 
           import tyro

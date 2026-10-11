@@ -3,7 +3,6 @@
 from __future__ import annotations
 from salix import Struct
 
-import dataclasses
 import difflib
 import shlex
 import shutil

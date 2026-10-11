@@ -369,7 +369,7 @@ With :data:`EnumChoicesFromValues`, the enum values are used as choices instead.
 Example::
 
     import enum
-    from dataclasses import dataclass
+    from salix import Struct
     import tyro
 
     class OutputFormat(enum.StrEnum):
@@ -399,7 +399,7 @@ help group description.
 
 This is useful for quickly locating where configs are defined in code, for
 example to update default values. The location points to where the struct
-(dataclass, attrs class, etc.) is defined.
+(a salix Struct, etc.) is defined.
 
 Example::
 

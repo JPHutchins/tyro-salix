@@ -3,7 +3,6 @@ from salix import Struct
 
 import builtins
 import collections.abc
-import dataclasses
 import functools
 import inspect
 import io
@@ -257,10 +256,10 @@ def get_class_tokenization_with_field(
             found_field = True
             break
 
-    if dataclasses.is_dataclass(cls) or _struct_compat.is_struct(cls):
+    if _struct_compat.is_struct(cls):
         assert found_field, (
             "Docstring parsing error -- this usually means that there are multiple"
-            " dataclasses in the same file with the same name but different scopes."
+            " structs in the same file with the same name but different scopes."
         )
 
     return tokenization
@@ -327,9 +326,8 @@ _callable_description_blocklist: Set[Hashable] = set(
 def get_callable_description(f: Callable) -> str:
     """Get description associated with a callable via docstring parsing.
 
-    `dataclasses.dataclass` will automatically populate __doc__ based on the
-    fields of the class if a docstring is not specified; this helper will
-    ignore these docstrings."""
+    Structs have no __doc__ unless written, and their constructor is not
+    introspected."""
 
     f, _ = _resolver.resolve_generic_types(f)
     f = _resolver.unwrap_origin_strip_extras(f)
@@ -355,21 +353,15 @@ def get_callable_description(f: Callable) -> str:
     if (
         docstring is None
         and inspect.isclass(f)
+        and not _struct_compat.is_struct(f)
         # Ignore TypedDict's __init__ docstring, because it will just be `dict`
         and not is_typeddict(f)
-        # Ignore NamedTuple __init__ docstring.
-        and not _resolver.is_namedtuple(f)
         # Ignore pydantic base model constructor docstring.
         and not (pydantic is not None and f.__init__ is pydantic.BaseModel.__init__)  # type: ignore
     ):
         docstring = f.__init__.__doc__  # type: ignore
     if docstring is None:
         return ""
-
-    if dataclasses.is_dataclass(f) or _struct_compat.is_struct(f):
-        default_doc = f.__name__ + str(inspect.signature(f)).replace(" -> None", "")  # type: ignore
-        if docstring == default_doc:
-            return ""
 
     import docstring_parser
 

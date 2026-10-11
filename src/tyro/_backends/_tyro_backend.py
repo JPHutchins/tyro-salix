@@ -17,7 +17,6 @@ import itertools
 import sys
 import warnings
 from collections import deque
-from dataclasses import dataclass
 from typing import Any, Iterable, Literal, NoReturn, Sequence, cast
 
 from typing_extensions import assert_never

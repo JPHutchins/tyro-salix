@@ -3,7 +3,6 @@
 from __future__ import annotations
 import salix
 from salix import Struct
-import dataclasses
 import numbers
 import warnings
 from typing import Any, Callable, Dict, List, Set, Tuple, Type, TypeVar, Union, cast

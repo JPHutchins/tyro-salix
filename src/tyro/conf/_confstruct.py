@@ -1,7 +1,6 @@
 from __future__ import annotations
 from salix import Struct
 
-import dataclasses
 from typing import Any, Callable, TypeVar, overload
 
 from .._singleton import MISSING_NONPROP
@@ -69,7 +68,7 @@ def subcommand(
 
     Example::
 
-        from dataclasses import dataclass
+        from salix import Struct
         from typing import Annotated, Union
         import tyro
 
@@ -195,7 +194,7 @@ def arg(
 
     Example::
 
-        from dataclasses import dataclass
+        from salix import Struct
         from typing import Annotated
         import tyro
 

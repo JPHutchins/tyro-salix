@@ -38,7 +38,7 @@ def overridable_config_cli(
 
     .. code-block:: python
 
-        import dataclasses
+        from salix import Struct
 
         import tyro
 

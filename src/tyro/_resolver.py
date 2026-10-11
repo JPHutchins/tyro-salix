@@ -4,9 +4,8 @@ from __future__ import annotations
 from salix import Struct
 
 import collections.abc
-import copy
-import dataclasses
 import inspect
+import salix
 import sys
 import types
 import warnings
@@ -86,54 +85,54 @@ def unwrap_origin_strip_extras(typ: TypeOrCallable) -> TypeOrCallable:
     return typ
 
 
-def is_dataclass(cls: Union[Type, Callable]) -> bool:
-    """Same as `dataclasses.is_dataclass`, but also handles generic aliases."""
-    unwrapped = unwrap_origin_strip_extras(cls)
-    return dataclasses.is_dataclass(unwrapped) or _struct_compat.is_struct(unwrapped)  # type: ignore
+def is_salix_struct(cls: Union[Type, Callable]) -> bool:
+    return _struct_compat.is_struct(unwrap_origin_strip_extras(cls))
 
 
-# @_unsafe_cache.unsafe_cache(maxsize=1024)
-def resolved_fields(cls: Type) -> List[dataclasses.Field]:
-    """Similar to dataclasses.fields(), but includes dataclasses.InitVar types and
-    resolves forward references."""
+class ResolvedField(Struct, frozen=True):
+    name: str
+    type: Any
+    default: Any
 
-    assert is_dataclass(cls)
-    fields = []
+
+def _init_var_inner_type(annotation: Any) -> Any:
+    annotation_type = type(annotation)
+    if (
+        annotation_type.__name__ == "InitVar"
+        and annotation_type.__module__ == "dataclasses"
+    ):
+        return annotation.type
+    return None
+
+
+def resolved_fields(cls: Type) -> List[ResolvedField]:
+    """Fields of a Struct with forward references resolved, including InitVar
+    pseudo-fields."""
+
+    assert is_salix_struct(cls)
     annotations = get_type_hints_resolve_type_params(
         cast(Callable, cls), include_extras=True
     )
-    if _struct_compat.is_struct(cls):
-        raw_fields = _struct_compat.struct_fields(cls)
-    else:
-        raw_fields = list(getattr(cls, "__dataclass_fields__").values())
-    for field in raw_fields:
-        # Avoid mutating original field.
-        field = copy.copy(field)
-
-        # Resolve forward references.
-        field.type = annotations[field.name]
-
-        # Skip ClassVars. We check both the origin (for ClassVar[T]) and the
-        # type itself (for bare ClassVar without a type parameter).
-        if is_typing_classvar(get_origin(field.type)) or is_typing_classvar(field.type):
+    struct_fields = {field.name: field for field in salix.fields(cls)}
+    fields = []
+    for name, annotation in annotations.items():
+        if is_typing_classvar(get_origin(annotation)) or is_typing_classvar(annotation):
             continue
-
-        # Unwrap InitVar types.
-        if isinstance(field.type, dataclasses.InitVar):
-            field.type = field.type.type
-
-        fields.append(field)
-
+        if name in struct_fields:
+            fields.append(
+                ResolvedField(name=name, type=annotation, default=struct_fields[name].default)
+            )
+            continue
+        init_var_type = _init_var_inner_type(annotation)
+        if init_var_type is not None:
+            fields.append(
+                ResolvedField(
+                    name=name,
+                    type=init_var_type,
+                    default=getattr(cls, name, salix.MISSING),
+                )
+            )
     return fields
-
-
-def is_namedtuple(cls: Type) -> bool:
-    return (
-        isinstance(cls, type)
-        and issubclass(cls, tuple)
-        and hasattr(cls, "_fields")
-        and hasattr(cls, "_asdict")
-    )
 
 
 TypeOrCallableOrNone = TypeVar("TypeOrCallableOrNone", Callable, Type[Any], None)

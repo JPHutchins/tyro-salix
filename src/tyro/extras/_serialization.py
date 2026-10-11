@@ -2,9 +2,6 @@
 
 from __future__ import annotations
 
-import dataclasses
-
-from .. import _struct_compat
 import enum
 import functools
 from typing import IO, TYPE_CHECKING, Any, Optional, Set, Type, TypeVar, Union
@@ -15,7 +12,9 @@ if TYPE_CHECKING:
 
 from typing_extensions import get_args, get_origin
 
-from .. import _resolver
+import salix
+
+from .. import _resolver, _struct_compat
 from ..constructors._struct_spec import MISSING
 
 ENUM_YAML_TAG_PREFIX = "!enum:"
@@ -31,7 +30,7 @@ def _get_contained_special_types_from_type(
 ) -> Set[Type[Any]]:
     """Takes a dataclass type, and recursively searches its fields for dataclass or enum
     types."""
-    assert _resolver.is_dataclass(cls)
+    assert _resolver.is_salix_struct(cls)
     parent_contained_dataclasses = (
         set()
         if _parent_contained_dataclasses is None
@@ -45,7 +44,7 @@ def _get_contained_special_types_from_type(
 
     def handle_type(typ: Type[Any]) -> Set[Type[Any]]:
         # Handle dataclasses.
-        if _resolver.is_dataclass(typ) and typ not in parent_contained_dataclasses:
+        if _resolver.is_salix_struct(typ) and typ not in parent_contained_dataclasses:
             return _get_contained_special_types_from_type(
                 typ,
                 _parent_contained_dataclasses=contained_special_types
@@ -106,7 +105,7 @@ def _make_loader(cls: Type[Any]) -> Type[yaml.Loader]:
         return lambda loader, node: typ[loader.construct_python_str(node)]
 
     for typ, name in zip(contained_types, contained_type_names):
-        if dataclasses.is_dataclass(typ):
+        if _struct_compat.is_struct(typ):
             DataclassLoader.add_constructor(
                 tag=DATACLASS_YAML_TAG_PREFIX + name,
                 constructor=make_dataclass_constructor(typ),
@@ -145,13 +144,12 @@ def _make_dumper(instance: Any) -> Type[yaml.Dumper]:
 
     def make_representer(name: str):
         def representer(dumper: DataclassDumper, data: Any) -> yaml.Node:
-            if dataclasses.is_dataclass(data) or _struct_compat.is_struct(data):
+            if _struct_compat.is_struct(data):
                 return dumper.represent_mapping(
                     tag=DATACLASS_YAML_TAG_PREFIX + name,
                     mapping={
                         field.name: getattr(data, field.name)
-                        for field in _struct_compat.fields_of(data)
-                        if field.init
+                        for field in salix.fields(data)
                     },
                 )
             elif isinstance(data, enum.Enum):

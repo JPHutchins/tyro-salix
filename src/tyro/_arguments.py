@@ -6,7 +6,6 @@ import salix
 from salix import Struct
 
 import collections.abc
-import dataclasses
 import json
 import shlex
 from typing import (

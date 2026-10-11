@@ -9,7 +9,6 @@ from __future__ import annotations
 from salix import Struct
 
 import logging
-from dataclasses import dataclass
 
 from typing_extensions import Annotated
 
@@ -34,7 +33,7 @@ class Verbosity(Struct, frozen=True):
 
         import logging
         import tyro
-        from dataclasses import dataclass, field
+        from salix import Struct
         from tyro.extras import Verbosity
 
         class Args(Struct):

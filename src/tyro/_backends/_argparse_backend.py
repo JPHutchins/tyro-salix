@@ -5,7 +5,6 @@ import salix
 from salix import Struct
 
 
-import dataclasses
 from typing import Any, Container, Dict, List, Sequence, Tuple, cast
 
 from .. import _fmtlib as fmt

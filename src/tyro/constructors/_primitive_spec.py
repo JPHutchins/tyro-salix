@@ -3,7 +3,6 @@ from salix import Struct
 
 import collections
 import collections.abc
-import dataclasses
 import datetime
 import enum
 import inspect

@@ -6,7 +6,6 @@ import salix
 from salix import Struct
 
 import contextlib
-import dataclasses
 import functools
 import inspect
 import sys
@@ -25,7 +24,7 @@ from typing_extensions import (
 from tyro.conf._mutex_group import _MutexGroupConfig
 from tyro.constructors._primitive_spec import PrimitiveConstructorSpec
 
-from . import _struct_compat, _docstrings, _resolver, _strings, _unsafe_cache
+from . import _docstrings, _resolver, _strings, _unsafe_cache
 from . import _fmtlib as fmt
 from ._singleton import MISSING_NONPROP, is_missing
 from ._typing_compat import is_typing_annotated, is_typing_unpack
@@ -128,7 +127,7 @@ class FieldDefinition(Struct, frozen=True):
         for overwrite_argconf in argconfs:
             # Apply any annotated argument configuration values.
             update_values = {}
-            for field in _struct_compat.fields_of(overwrite_argconf):
+            for field in salix.fields(overwrite_argconf):
                 value = getattr(overwrite_argconf, field.name)
                 # Handle default specially; we only want to apply it if it's
                 # explicitly set (i.e., not MISSING_NONPROP).
