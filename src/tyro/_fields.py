@@ -2,6 +2,7 @@
 defaults, from general callables."""
 
 from __future__ import annotations
+import salix
 from salix import Struct
 
 import contextlib
@@ -137,7 +138,7 @@ class FieldDefinition(Struct, frozen=True, weakref=True):
                 elif value is not None:
                     update_values[field.name] = value
 
-            argconf = _struct_compat.replace_instance(argconf, **update_values)
+            argconf = salix.replace(argconf, **update_values)
             if argconf.help is not None:
                 helptext = argconf.help
 
@@ -192,7 +193,7 @@ class FieldDefinition(Struct, frozen=True, weakref=True):
             new_type = Annotated[(new_type_stripped, *get_args(self.type)[1:])]  # type: ignore
         else:
             new_type = new_type_stripped  # type: ignore
-        return _struct_compat.replace_instance(
+        return salix.replace(
             self,
             type=new_type,  # type: ignore
             type_stripped=new_type_stripped,

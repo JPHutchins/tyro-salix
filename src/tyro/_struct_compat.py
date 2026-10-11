@@ -80,12 +80,3 @@ class struct_cached_property:
         value = self.func(obj)
         self._cache[key] = (obj, value)
         return value
-
-
-def replace_instance(instance: Any, **changes: Any) -> Any:
-    cls = type(instance)
-    if is_struct(cls):
-        values = {name: getattr(instance, name) for name in cls.__struct_fields__}
-        values.update(changes)
-        return cls(**values)
-    return dataclasses.replace(instance, **changes)

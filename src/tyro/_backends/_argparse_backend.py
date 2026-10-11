@@ -1,9 +1,9 @@
 """Legacy, argparse-based backend for parsing command-line arguments."""
 
 from __future__ import annotations
+import salix
 from salix import Struct
 
-from .. import _struct_compat
 
 import dataclasses
 from typing import Any, Container, Dict, List, Sequence, Tuple, cast
@@ -588,7 +588,7 @@ def add_subparsers_to_leaves(
             subparsers=add_subparsers_to_leaves(parser_tree.subparsers, leaf),
         )
     return MaterializedSubparsersTree(
-        subparser_spec=_struct_compat.replace_instance(
+        subparser_spec=salix.replace(
             root.subparser_spec,
             required=root.subparser_spec.required or leaf.required,
         ),
@@ -673,7 +673,7 @@ def apply_materialized_subparsers(
         if force_consolidate_args or (
             _markers.CascadeSubcommandArgs in parser_spec.markers
         ):
-            subparser_def = _struct_compat.replace_instance(
+            subparser_def = salix.replace(
                 subparser_def, subparser_parent=parser_spec
             )
 

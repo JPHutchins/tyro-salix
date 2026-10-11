@@ -1,6 +1,7 @@
 """Interface for generating `argparse.ArgumentParser()` definitions from callables."""
 
 from __future__ import annotations
+import salix
 from salix import Struct
 import dataclasses
 import numbers
@@ -16,7 +17,6 @@ from tyro.constructors._struct_spec import (
 )
 
 from . import (
-    _struct_compat,
     _arguments,
     _docstrings,
     _fields,
@@ -756,7 +756,7 @@ class SubparsersSpecification(Struct, frozen=True, weakref=True):
             if default_name == subcommand_name and not _singleton.is_missing(
                 field.default
             ):
-                subcommand_config = _struct_compat.replace_instance(
+                subcommand_config = salix.replace(
                     subcommand_config, default=field.default
                 )
 
@@ -821,7 +821,7 @@ class SubparsersSpecification(Struct, frozen=True, weakref=True):
                         else prog_suffix_captured + " " + subcommand_name_captured,
                     )
                 # Apply prefix to helptext in nested classes in subparsers.
-                subparser = _struct_compat.replace_instance(
+                subparser = salix.replace(
                     subparser,
                     helptext_from_intern_prefixed_field_name={
                         _strings.make_field_name([intern_prefix_captured, k]): v
