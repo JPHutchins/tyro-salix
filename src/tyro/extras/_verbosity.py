@@ -23,7 +23,7 @@ _verbosity_mutex: object = conf.create_mutex_group(
 )
 
 
-class Verbosity(Struct, frozen=True, weakref=True):
+class Verbosity(Struct, frozen=True):
     """Parsed verbosity counters from ``-v``/``-q`` CLI flags.
 
     Drop into any tyro CLI struct to get standard ``--verbose``/``-v`` and
@@ -37,7 +37,7 @@ class Verbosity(Struct, frozen=True, weakref=True):
         from dataclasses import dataclass, field
         from tyro.extras import Verbosity
 
-        class Args(Struct, weakref=True):
+        class Args(Struct):
             verbosity: Verbosity = Verbosity()
 
         args = tyro.cli(Args)

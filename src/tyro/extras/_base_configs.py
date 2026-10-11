@@ -43,7 +43,7 @@ def overridable_config_cli(
         import tyro
 
 
-        class Config(Struct, weakref=True):
+        class Config(Struct):
             a: int
             b: str
 

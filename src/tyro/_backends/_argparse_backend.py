@@ -519,7 +519,7 @@ def apply_parser_args(
         )
 
 
-class MaterializedParserTree(Struct, frozen=True, weakref=True):
+class MaterializedParserTree(Struct, frozen=True):
     """Argparse-specific materialized tree structure.
 
     This wraps a ParserSpecification and adds the materialized subparser tree
@@ -530,7 +530,7 @@ class MaterializedParserTree(Struct, frozen=True, weakref=True):
     subparsers: MaterializedSubparsersTree | None
 
 
-class MaterializedSubparsersTree(Struct, frozen=True, weakref=True):
+class MaterializedSubparsersTree(Struct, frozen=True):
     """Argparse-specific materialized subparser tree structure.
 
     This wraps a SubparsersSpecification and contains the fully materialized

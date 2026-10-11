@@ -41,7 +41,7 @@ from .constructors._struct_spec import (
 global_context_markers: list[tuple[_markers.Marker, ...]] = []
 
 
-class FieldDefinition(Struct, frozen=True, weakref=True):
+class FieldDefinition(Struct, frozen=True):
     intern_name: str
     extern_name: str
     type: Type[Any] | Callable

@@ -36,7 +36,7 @@ from .constructors._primitive_spec import (
 T = TypeVar("T")
 
 
-class LazyParserSpecification(Struct, frozen=False, weakref=True):
+class LazyParserSpecification(Struct, frozen=False):
     """Lazy wrapper that defers full ParserSpecification creation until needed.
 
     Stores lightweight metadata (description) for fast help text generation,
@@ -57,7 +57,7 @@ class LazyParserSpecification(Struct, frozen=False, weakref=True):
         return self._cached
 
 
-class ArgWithContext(Struct, frozen=True, weakref=True):
+class ArgWithContext(Struct, frozen=True):
     arg: _arguments.ArgumentDefinition
     source_parser: ParserSpecification
     """ParserSpecification that directly contains this argument."""
@@ -65,7 +65,7 @@ class ArgWithContext(Struct, frozen=True, weakref=True):
     """Furthest ancestor of `source_parser` within the same (sub)command."""
 
 
-class ParserSpecification(Struct, frozen=True, weakref=True):
+class ParserSpecification(Struct, frozen=True):
     """Each parser contains a list of arguments and optionally some subparsers."""
 
     f: Callable
@@ -475,7 +475,7 @@ def _validated_aliases(
     return out
 
 
-class SubparsersSpecification(Struct, frozen=True, weakref=True):
+class SubparsersSpecification(Struct, frozen=True):
     """Structure for defining subparsers. Each subparser is a parser with a name."""
 
     description: str | Callable[[], str | None] | None

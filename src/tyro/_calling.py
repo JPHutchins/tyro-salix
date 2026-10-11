@@ -4,7 +4,6 @@ namespaces."""
 from __future__ import annotations
 from salix import Struct
 
-import dataclasses
 import inspect
 import itertools
 from functools import partial
@@ -19,12 +18,11 @@ from .constructors._primitive_spec import UnsupportedTypeAnnotationError
 T = TypeVar("T")
 
 
-class DummyWrapper(Generic[T], Struct, frozen=True, weakref=True):
+class DummyWrapper(Generic[T], Struct, frozen=True):
     __tyro_dummy_inner__: Annotated[T, _confstruct.arg(name="")]
 
 
-@dataclasses.dataclass(frozen=True)
-class InstantiationError(Exception):
+class InstantiationError(Struct, Exception):
     """Exception raised when instantiation fail; this typically means that values from
     the CLI are invalid."""
 
