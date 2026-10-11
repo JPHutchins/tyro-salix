@@ -10,9 +10,8 @@ if TYPE_CHECKING:
     # Since serialization functionality is deprecated, the yaml dependency is optional.
     import yaml
 
-from typing_extensions import get_args, get_origin
-
 import salix
+from typing_extensions import get_args, get_origin
 
 from .. import _resolver, _struct_compat
 from ..constructors._struct_spec import MISSING
@@ -144,7 +143,7 @@ def _make_dumper(instance: Any) -> Type[yaml.Dumper]:
 
     def make_representer(name: str):
         def representer(dumper: DataclassDumper, data: Any) -> yaml.Node:
-            if _struct_compat.is_struct(data):
+            if _struct_compat.is_struct_instance(data):
                 return dumper.represent_mapping(
                     tag=DATACLASS_YAML_TAG_PREFIX + name,
                     mapping={

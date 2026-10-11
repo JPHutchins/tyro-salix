@@ -13,3 +13,7 @@ def is_struct(cls: Any) -> bool:
 
 def is_salix_base(cls: Any) -> bool:
     return getattr(cls, "__module__", None) == "salix"
+
+
+def is_struct_instance(obj: Any) -> bool:
+    return isinstance(obj, Struct)
