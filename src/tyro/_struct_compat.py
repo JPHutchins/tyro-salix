@@ -6,16 +6,15 @@ from typing import Any, Dict, List, Type
 try:
     import salix
     from salix import Struct as SalixStruct  # type: ignore
+
+    _SalixStructMeta: Any = type(SalixStruct)
 except ImportError:
     SalixStruct = None  # type: ignore
+    _SalixStructMeta = ()
 
 
 def is_struct(cls: Any) -> bool:
-    return (
-        SalixStruct is not None
-        and isinstance(cls, type)
-        and issubclass(cls, SalixStruct)
-    )
+    return isinstance(cls, _SalixStructMeta)
 
 
 def _as_dataclass_field(field: Any) -> dataclasses.Field:

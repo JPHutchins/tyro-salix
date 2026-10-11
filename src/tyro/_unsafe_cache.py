@@ -2,6 +2,8 @@ import functools
 import sys
 from typing import Any, Callable, Dict, List, TypeVar
 
+from . import _struct_compat
+
 CallableType = TypeVar("CallableType", bound=Callable)
 
 
@@ -44,8 +46,6 @@ def unsafe_cache(maxsize: int) -> Callable[[CallableType], CallableType]:
 
 def _make_key(obj: Any) -> Any:
     """Some context: https://github.com/brentyi/tyro/issues/214"""
-    from . import _struct_compat
-
     if _struct_compat.is_struct(obj):
         # Structs hash by content even when mutable; stock mutable dataclasses
         # are unhashable, so keep the identity-key semantics the cache relies on.
