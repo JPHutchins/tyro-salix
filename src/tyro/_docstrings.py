@@ -225,6 +225,8 @@ def get_class_tokenization_with_field(
     classes_to_search = cls.__mro__
     tokenization = None
     for search_cls in classes_to_search:
+        if _struct_compat.is_salix_base(search_cls):
+            continue
         # Inherited generics seem challenging for now.
         # https://github.com/python/typing/issues/777
         assert is_typing_generic(search_cls) or get_origin(search_cls) is None
@@ -289,6 +291,8 @@ def get_field_docstring(
     for cls_search in cls.__mro__:
         if cls_search.__module__ == "builtins":
             continue  # Skip `object`, `Callable`, `tuple`, etc.
+        if _struct_compat.is_salix_base(cls_search):
+            continue
         docstring = parse_docstring_from_object(cls_search).get(field_name, None)
         if docstring is not None:
             return _strings.dedent(

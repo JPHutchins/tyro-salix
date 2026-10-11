@@ -60,3 +60,28 @@ def test_struct_union_subparser() -> None:
 def test_struct_field_names_preserved() -> None:
     config = tyro.cli(train, args=["--config.name", "custom"])
     assert config.name == "custom"
+
+
+class DocumentedBase(Struct):
+    """Base.
+
+    Args:
+        inherited: help from the base class docstring.
+    """
+
+    inherited: int = 1
+
+
+class DocumentedChild(DocumentedBase):
+    own: int = 2
+    """Help from an attribute docstring."""
+
+
+def test_struct_field_help_resolves_through_user_bases(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    with pytest.raises(SystemExit):
+        tyro.cli(DocumentedChild, args=["--help"])
+    output = capsys.readouterr().out
+    assert "help from the base class docstring." in output
+    assert "Help from an attribute docstring." in output

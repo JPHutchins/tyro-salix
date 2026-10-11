@@ -935,6 +935,8 @@ def get_type_hints_resolve_type_params(
     for origin_type in reversed(obj.mro()):
         if origin_type not in context_from_origin_type:
             continue
+        if _struct_compat.is_salix_base(origin_type):
+            continue
 
         raw_hints = _get_type_hints_backported_syntax(
             origin_type, include_extras=include_extras

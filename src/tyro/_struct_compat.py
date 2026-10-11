@@ -18,6 +18,10 @@ def is_struct(cls: Any) -> bool:
     return isinstance(cls, _SalixStructMeta)
 
 
+def is_salix_base(cls: Any) -> bool:
+    return getattr(cls, "__module__", None) == "salix"
+
+
 def _as_dataclass_field(field: Any) -> dataclasses.Field:
     synthesized = dataclasses.Field(
         default=(
