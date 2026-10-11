@@ -1,6 +1,6 @@
 """Tests for features that are not officially features, but should work.
 
-Includes things like omegaconf.MISSING, attrs, etc, which mostly work but either likely
+Includes things like omegaconf.MISSING, etc, which mostly work but either likely
 have corner cases or just seem sketchy.
 """
 

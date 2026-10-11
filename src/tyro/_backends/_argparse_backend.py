@@ -1,8 +1,10 @@
 """Legacy, argparse-based backend for parsing command-line arguments."""
 
 from __future__ import annotations
+import salix
+from salix import Struct
 
-import dataclasses
+
 from typing import Any, Container, Dict, List, Sequence, Tuple, cast
 
 from .. import _fmtlib as fmt
@@ -105,7 +107,7 @@ def _inject_is_default_subcommands(
         otherwise a default in one branch's nested subparser is dropped when a
         later sibling subcommand is also present at this level. See BUG 1."""
         for subparser_spec in spec.subparsers_from_intern_prefix.values():
-            canonical_lookup = subparser_spec.canonical_from_alias()
+            canonical_lookup = subparser_spec.canonical_from_alias
             chosen_idx = _find_subcommand_token(args, cursor, canonical_lookup)
 
             if (
@@ -516,8 +518,7 @@ def apply_parser_args(
         )
 
 
-@dataclasses.dataclass(frozen=True)
-class MaterializedParserTree:
+class MaterializedParserTree(Struct, frozen=True):
     """Argparse-specific materialized tree structure.
 
     This wraps a ParserSpecification and adds the materialized subparser tree
@@ -528,8 +529,7 @@ class MaterializedParserTree:
     subparsers: MaterializedSubparsersTree | None
 
 
-@dataclasses.dataclass(frozen=True)
-class MaterializedSubparsersTree:
+class MaterializedSubparsersTree(Struct, frozen=True):
     """Argparse-specific materialized subparser tree structure.
 
     This wraps a SubparsersSpecification and contains the fully materialized
@@ -587,7 +587,7 @@ def add_subparsers_to_leaves(
             subparsers=add_subparsers_to_leaves(parser_tree.subparsers, leaf),
         )
     return MaterializedSubparsersTree(
-        subparser_spec=dataclasses.replace(
+        subparser_spec=salix.replace(
             root.subparser_spec,
             required=root.subparser_spec.required or leaf.required,
         ),
@@ -672,7 +672,7 @@ def apply_materialized_subparsers(
         if force_consolidate_args or (
             _markers.CascadeSubcommandArgs in parser_spec.markers
         ):
-            subparser_def = dataclasses.replace(
+            subparser_def = salix.replace(
                 subparser_def, subparser_parent=parser_spec
             )
 

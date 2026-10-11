@@ -1,14 +1,15 @@
 """Adapted from: https://github.com/brentyi/tyro/issues/183"""
 
-from typing import Annotated, NamedTuple, Set
+from typing import Annotated, Set
 
 from helptext_utils import get_helptext_with_checks
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
+from salix import Struct
 
 import tyro
 
 
-class MyRange(NamedTuple):
+class MyRange(Struct):
     low: int
     high: int
 
@@ -41,6 +42,8 @@ class MyRange(NamedTuple):
 
 
 class MySpec(BaseModel):
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
     some_set: Set[int] = Field(
         default={1, 2, 3},
         description="Some set of integers",

@@ -4,15 +4,13 @@ https://github.com/brentyi/tyro/issues/340"""
 
 from __future__ import annotations
 
-from dataclasses import dataclass
-
 from helptext_utils import get_helptext_with_checks
+from salix import Struct
 
 import tyro
 
 
-@dataclass(frozen=True)
-class HFSFTDatasetConfig:
+class HFSFTDatasetConfig(Struct):
     name: str
     split: str | None = None
     data_files: str | None = None
@@ -26,8 +24,7 @@ class HFSFTDatasetConfig:
     """instruction, completion, input, system"""
 
 
-@dataclass
-class Config:
+class Config(Struct, frozen=False):
     train_data: HFSFTDatasetConfig = HFSFTDatasetConfig(
         name="yahma/alpaca-cleaned",
         completions_only=True,

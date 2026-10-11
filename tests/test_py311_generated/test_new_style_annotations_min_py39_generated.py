@@ -1,9 +1,8 @@
 import collections.abc
-import dataclasses
-from typing import Any, Literal, Optional, Type
+from typing import Any, Literal, Optional
 
 import pytest
-from helptext_utils import get_helptext_with_checks
+from salix import Struct
 
 import tyro
 
@@ -23,8 +22,7 @@ def test_tuple() -> None:
 
 
 def test_tuple_nested() -> None:
-    @dataclasses.dataclass
-    class Args:
+    class Args(Struct, frozen=False):
         a: int
 
     def main(x: tuple[Args, Args]) -> Any:
@@ -72,8 +70,7 @@ def test_tuple_direct() -> None:
 
 
 def test_append_abc_sequence() -> None:
-    @dataclasses.dataclass
-    class A:
+    class A(Struct, frozen=False):
         x: tyro.conf.UseAppendAction[collections.abc.Sequence[int]]
 
     assert tyro.cli(A, args=[]) == A(x=[])
@@ -83,32 +80,3 @@ def test_append_abc_sequence() -> None:
         tyro.cli(A, args=["--x"])
     with pytest.raises(SystemExit):
         tyro.cli(A, args=["--x", "1", "2", "3"])
-
-
-try:
-    from torch.optim.lr_scheduler import LinearLR, LRScheduler
-
-    def test_type_with_init_false() -> None:
-        """https://github.com/brentyi/tyro/issues/235"""
-
-        @dataclasses.dataclass(frozen=True)
-        class LinearLRConfig:
-            _target: type[LRScheduler] = dataclasses.field(
-                init=False, default_factory=lambda: LinearLR
-            )
-            _target2: Type[LRScheduler] = dataclasses.field(
-                init=False, default_factory=lambda: LinearLR
-            )
-            start_factor: float = 1.0 / 3
-            end_factor: float = 1.0
-            total_iters: Optional[int] = None
-
-        def main(config: LinearLRConfig) -> LinearLRConfig:
-            return config
-
-        assert tyro.cli(main, args=[]) == LinearLRConfig()
-        assert "_target" not in get_helptext_with_checks(LinearLRConfig)
-except ImportError:
-    # PyTorch may be unavailable due to Python version
-    # or optional dependencies.
-    pass

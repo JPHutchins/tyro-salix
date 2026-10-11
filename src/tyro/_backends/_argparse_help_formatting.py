@@ -1,8 +1,8 @@
 """Help formatting utils used for argparse backend."""
 
 from __future__ import annotations
+from salix import Struct
 
-import dataclasses
 import difflib
 import inspect
 import os
@@ -791,8 +791,7 @@ def error_and_exit(
     sys.exit(2)
 
 
-@dataclasses.dataclass(frozen=True)
-class _ArgumentInfo:
+class _ArgumentInfo(Struct, frozen=True):
     arg: ArgumentDefinition
     option_strings: tuple[str, ...]
     metavar: str | None

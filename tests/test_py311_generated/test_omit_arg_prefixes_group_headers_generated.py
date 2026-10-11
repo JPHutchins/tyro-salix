@@ -2,31 +2,28 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
 from typing import Annotated
 
 from helptext_utils import get_helptext_with_checks
+from salix import Struct
 
 from tyro.conf import OmitArgPrefixes, OmitSubcommandPrefixes, subcommand
 
 
-@dataclass
-class Nested:
+class Nested(Struct, frozen=False):
     """nested options"""
 
     option: str = "value"
 
 
-@dataclass
-class RunConfig:
+class RunConfig(Struct, frozen=False):
     """run tests"""
 
     num: int = 5
-    nested: Nested = field(default_factory=Nested)
+    nested: Nested = Nested()
 
 
-@dataclass
-class CompareConfig:
+class CompareConfig(Struct, frozen=False):
     """compare runs"""
 
     a: str = "x"
@@ -37,14 +34,13 @@ def test_omit_arg_prefixes_strips_group_headers():
     """OmitArgPrefixes on a subcommand union field should strip the parent
     field name from section headers in help text."""
 
-    @dataclass
-    class Config:
+    class Config(Struct, frozen=False):
         command: OmitArgPrefixes[
             OmitSubcommandPrefixes[
                 Annotated[RunConfig, subcommand("run", prefix_name=False)]
                 | Annotated[CompareConfig, subcommand("compare", prefix_name=False)]
             ]
-        ] = field(default_factory=RunConfig)
+        ] = RunConfig()
 
     helptext = get_helptext_with_checks(Config, args=["run", "--help"])
 
@@ -59,12 +55,11 @@ def test_omit_arg_prefixes_strips_group_headers():
 def test_without_omit_arg_prefixes_keeps_group_headers():
     """Without OmitArgPrefixes, section headers should include the field name."""
 
-    @dataclass
-    class Config:
+    class Config(Struct, frozen=False):
         command: OmitSubcommandPrefixes[
             Annotated[RunConfig, subcommand("run", prefix_name=False)]
             | Annotated[CompareConfig, subcommand("compare", prefix_name=False)]
-        ] = field(default_factory=RunConfig)
+        ] = RunConfig()
 
     helptext = get_helptext_with_checks(Config, args=["run", "--help"])
 

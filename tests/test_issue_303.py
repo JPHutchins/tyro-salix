@@ -1,10 +1,10 @@
 from __future__ import annotations
 
 from abc import ABC
-from dataclasses import dataclass, field
 from typing import Generic, TypeVar
 
 from helptext_utils import get_helptext_with_checks
+from salix import Struct
 from typing_extensions import Annotated
 
 import tyro
@@ -22,26 +22,22 @@ OutT = TypeVar("OutT")
 class BuilderConfig(Generic[OutT]): ...
 
 
-@dataclass
-class GeneratorConfig(BuilderConfig[Generator]): ...
+class GeneratorConfig(Struct, BuilderConfig[Generator], frozen=False): ...
 
 
-@dataclass
-class VLLMSamplingConfig:
+class VLLMSamplingConfig(Struct, frozen=False):
     n: int = 1
 
     temperature: float = 1.0
 
 
-@dataclass
-class VLLMGeneratorConfig(GeneratorConfig):
-    _target: type[Generator] = field(init=False, default_factory=lambda: VLLMGenerator)
+class VLLMGeneratorConfig(GeneratorConfig, frozen=False):
+    _target: type[Generator] = VLLMGenerator
 
-    sample: VLLMSamplingConfig = field(default_factory=VLLMSamplingConfig)
+    sample: VLLMSamplingConfig = VLLMSamplingConfig()
 
 
-@dataclass
-class TorchProfilerConfig:
+class TorchProfilerConfig(Struct, frozen=False):
     skip_n_steps: int = 4
 
     wait_n_steps: int = 0
@@ -56,9 +52,8 @@ class TorchProfilerConfig:
 CLITorchProfilerConfig = Annotated[TorchProfilerConfig, tyro.conf.subcommand(name="on")]
 
 
-@dataclass
-class EvalConfig:
-    generator: VLLMGeneratorConfig = field(default_factory=VLLMGeneratorConfig)
+class EvalConfig(Struct, frozen=False):
+    generator: VLLMGeneratorConfig = VLLMGeneratorConfig()
 
     profiler: CLITorchProfilerConfig | None = None
 

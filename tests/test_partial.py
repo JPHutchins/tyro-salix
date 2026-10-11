@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-import dataclasses
 import functools
 
 from helptext_utils import get_helptext_with_checks
+from salix import Struct
 
 import tyro
 
@@ -46,8 +46,7 @@ def test_partial_helptext_class() -> None:
 
 
 def test_partial_helptext_dataclass() -> None:
-    @dataclasses.dataclass
-    class Config:
+    class Config(Struct, frozen=False):
         a: int
         b: int
         """Hello!"""

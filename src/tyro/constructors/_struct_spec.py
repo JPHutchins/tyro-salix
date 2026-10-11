@@ -1,7 +1,7 @@
 from __future__ import annotations
+from salix import Struct
 
 import collections.abc
-import dataclasses
 import enum
 import functools
 from typing import TYPE_CHECKING, Any, Callable, Dict, Iterable, Sequence, Sized, Type
@@ -28,22 +28,19 @@ if TYPE_CHECKING:
     from ._registry import ConstructorRegistry
 
 
-@dataclasses.dataclass(frozen=True)
-class UnsupportedStructTypeMessage:
+class UnsupportedStructTypeMessage(Struct, frozen=True):
     """Reason why a callable cannot be treated as a struct type."""
 
     message: str
 
 
-@dataclasses.dataclass(frozen=True)
-class InvalidDefaultInstanceError:
+class InvalidDefaultInstanceError(Struct, frozen=True):
     """Return value when a default instance is not applicable to an annotated struct type."""
 
     message: tuple[fmt._Text, ...]
 
 
-@dataclasses.dataclass(frozen=True)
-class StructFieldSpec:
+class StructFieldSpec(Struct, frozen=True):
     """Behavior specification for a single field in our callable."""
 
     name: str
@@ -63,8 +60,7 @@ class StructFieldSpec:
     """Deprecated. No longer used."""
 
 
-@dataclasses.dataclass(frozen=True)
-class StructConstructorSpec:
+class StructConstructorSpec(Struct, frozen=True):
     """Specification for a struct type, which is broken down into multiple
     fields.
 
@@ -82,8 +78,7 @@ class StructConstructorSpec:
     argument for the ``instantiate(**kwargs)`` function."""
 
 
-@dataclasses.dataclass(frozen=True)
-class StructTypeInfo:
+class StructTypeInfo(Struct, frozen=True):
     """Information used to generate constructors for struct types."""
 
     type: Type
@@ -151,25 +146,21 @@ def apply_default_struct_rules(registry: ConstructorRegistry) -> None:
     """Apply default struct rules to the registry.
 
     This function registers all the struct rules for different types:
-    - Dataclasses
+    - Salix structs
     - TypedDict
-    - Attrs classes
     - Dict
-    - NamedTuple
     - Sequences
     - Tuples
     - Pydantic models
     """
     from .._fields import is_struct_type
-    from ._struct_spec_attrs import attrs_rule
-    from ._struct_spec_dataclass import dataclass_rule
+    from ._struct_spec_salix import salix_struct_rule
     from ._struct_spec_ml_collections import ml_collections_rule
     from ._struct_spec_msgspec import msgspec_rule
     from ._struct_spec_pydantic import pydantic_rule
 
     # Register imported rules.
-    registry.struct_rule(attrs_rule)
-    registry.struct_rule(dataclass_rule)
+    registry.struct_rule(salix_struct_rule)
     registry.struct_rule(ml_collections_rule)
     registry.struct_rule(msgspec_rule)
     registry.struct_rule(pydantic_rule)
@@ -314,41 +305,6 @@ def apply_default_struct_rules(registry: ConstructorRegistry) -> None:
                 )
             )
         return StructConstructorSpec(instantiate=dict, fields=tuple(field_list))
-
-    @registry.struct_rule
-    def namedtuple_rule(info: StructTypeInfo) -> StructConstructorSpec | None:
-        if not _resolver.is_namedtuple(info.type):
-            return None
-
-        field_list = []
-        field_defaults = getattr(info.type, "_field_defaults", {})
-        field_names = getattr(info.type, "_fields", [])
-
-        # Handle collections.namedtuple which doesn't have type annotations.
-        type_hints = {field: Any for field in field_names}
-        type_hints.update(
-            _resolver.get_type_hints_resolve_type_params(info.type, include_extras=True)
-        )
-        for name, typ in type_hints.items():
-            default = field_defaults.get(name, MISSING_NONPROP)
-
-            if not is_missing(info.default) and hasattr(info.default, name):
-                default = getattr(info.default, name)
-            elif info.default is MISSING:
-                default = MISSING
-
-            field_list.append(
-                StructFieldSpec(
-                    name=name,
-                    type=typ,  # type: ignore
-                    default=default,
-                    helptext=functools.partial(
-                        _docstrings.get_field_docstring, info.type, name, info.markers
-                    ),
-                )
-            )
-
-        return StructConstructorSpec(instantiate=info.type, fields=tuple(field_list))
 
     @registry.struct_rule
     def variable_length_sequence_rule(

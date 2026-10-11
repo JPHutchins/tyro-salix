@@ -1,6 +1,7 @@
-import dataclasses
 import pathlib
 from typing import Any, Dict, List, Tuple
+
+from salix import Struct
 
 from tyro._fields import is_struct_type
 from tyro._singleton import MISSING_NONPROP
@@ -22,8 +23,7 @@ def test_is_struct_type_containers():
     )
 
 
-@dataclasses.dataclass
-class Color:
+class Color(Struct, frozen=False):
     r: int
     g: int
     b: int

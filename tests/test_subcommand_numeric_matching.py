@@ -7,21 +7,19 @@ Regression tests for:
 
 from __future__ import annotations
 
-import dataclasses
 from typing import Tuple
 
 import pytest
+from salix import Struct
 
 import tyro
 
 
-@dataclasses.dataclass
-class Optimizer:
+class Optimizer(Struct, frozen=False):
     lr: float = 1.0
 
 
-@dataclasses.dataclass
-class Config:
+class Config(Struct, frozen=False):
     optimizers: dict[str, Optimizer]
 
 
@@ -57,8 +55,7 @@ def test_subcommand_int_matching_float_select_a() -> None:
     assert result.optimizers["embeddings"].lr == 3
 
 
-@dataclasses.dataclass
-class TupleConfig:
+class TupleConfig(Struct, frozen=False):
     point: Tuple[float, float] = (0.0, 0.0)
 
 
@@ -112,8 +109,7 @@ def test_subcommand_tuple_float_with_int_defaults_override() -> None:
     assert result.point == (5.0, 6.0)
 
 
-@dataclasses.dataclass
-class NestedTupleConfig:
+class NestedTupleConfig(Struct, frozen=False):
     params: dict[str, TupleConfig]
 
 
@@ -132,8 +128,7 @@ def test_subcommand_nested_tuple_float_with_int_defaults() -> None:
     assert isinstance(result, NestedTupleConfig)
 
 
-@dataclasses.dataclass
-class StrictConfig:
+class StrictConfig(Struct, frozen=False):
     """Config where passing wrong-typed defaults causes structural mismatch."""
 
     name: str = "hello"

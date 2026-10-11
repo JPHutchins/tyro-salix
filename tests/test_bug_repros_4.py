@@ -33,11 +33,11 @@ subcommand-alias changes.
 
 from __future__ import annotations
 
-import dataclasses
 import math
 from typing import Any, Dict, List, Literal, Optional, Tuple, Union
 
 import pytest
+from salix import Struct
 from typing_extensions import Annotated
 
 import tyro
@@ -45,8 +45,7 @@ from tyro.constructors import PrimitiveConstructorSpec
 
 
 def test_negative_special_floats_are_values(backend: str) -> None:
-    @dataclasses.dataclass
-    class A:
+    class A(Struct, frozen=False):
         x: float = 0.0
 
     # Ordinary negative numbers are values on both backends.
@@ -62,9 +61,8 @@ def test_negative_special_floats_are_values(backend: str) -> None:
         assert math.isinf(tyro.cli(A, args=["--x", "-Infinity"]).x)
 
         # They are also accepted mid-stream by a variable-length argument.
-        @dataclasses.dataclass
-        class B:
-            xs: List[float] = dataclasses.field(default_factory=list)
+        class B(Struct, frozen=False):
+            xs: List[float] = []
 
         out = tyro.cli(B, args=["--xs", "1.0", "-inf"]).xs
         assert out[0] == 1.0 and math.isinf(out[1])
@@ -75,8 +73,7 @@ def test_negative_special_floats_are_values(backend: str) -> None:
             tyro.cli(A, args=["--x", "-inf"])
 
     # A genuinely flag-like value is still NOT swallowed (regression guard).
-    @dataclasses.dataclass
-    class C:
+    class C(Struct, frozen=False):
         x: float = 0.0
         verbose: bool = False
 
@@ -85,8 +82,7 @@ def test_negative_special_floats_are_values(backend: str) -> None:
 
 
 def test_dash_prefixed_literal_choices_are_values(backend: str) -> None:
-    @dataclasses.dataclass
-    class A:
+    class A(Struct, frozen=False):
         x: Literal["-a", "-b"] = "-a"
 
     if backend == "tyro":
@@ -94,9 +90,8 @@ def test_dash_prefixed_literal_choices_are_values(backend: str) -> None:
         assert tyro.cli(A, args=["--x", "-a"]).x == "-a"
 
         # In a variable-length argument too.
-        @dataclasses.dataclass
-        class B:
-            xs: List[Literal["-a", "-b"]] = dataclasses.field(default_factory=list)
+        class B(Struct, frozen=False):
+            xs: List[Literal["-a", "-b"]] = []
 
         assert tyro.cli(B, args=["--xs", "-a", "-b"]).xs == ["-a", "-b"]
     else:
@@ -117,21 +112,17 @@ def test_dash_prefixed_literal_values_in_fixed_arity_containers(backend: str) ->
     # `-a`/`-b` as flags and raised a spurious "Expected N values" error. The
     # values must instead be recognized via the per-position choice values,
     # collected from the type at lowering time.
-    @dataclasses.dataclass
-    class Pair:
+    class Pair(Struct, frozen=False):
         xy: Tuple[Literal["-a", "-b"], Literal["-a", "-b"]]
 
-    @dataclasses.dataclass
-    class Mixed:
+    class Mixed(Struct, frozen=False):
         # First element is an int (not a choice); second is a dash-Literal.
         xy: Tuple[int, Literal["-a", "-b"]]
 
-    @dataclasses.dataclass
-    class Mapping:
+    class Mapping(Struct, frozen=False):
         m: Dict[Literal["-a"], Literal["-b"]]
 
-    @dataclasses.dataclass
-    class OptionalPair:
+    class OptionalPair(Struct, frozen=False):
         xy: Optional[Tuple[Literal["-a"], Literal["-b"]]] = None
 
     if backend == "tyro":
@@ -166,13 +157,11 @@ _DASH_SPEC: Any = PrimitiveConstructorSpec(
 )
 
 
-@dataclasses.dataclass
-class _CustomDashList:
-    xs: List[Annotated[str, _DASH_SPEC]] = dataclasses.field(default_factory=list)
+class _CustomDashList(Struct, frozen=False):
+    xs: List[Annotated[str, _DASH_SPEC]] = []
 
 
-@dataclasses.dataclass
-class _CustomDashPair:
+class _CustomDashPair(Struct, frozen=False):
     xy: Tuple[Annotated[str, _DASH_SPEC], Annotated[str, _DASH_SPEC]] = ("-x", "-y")
 
 
@@ -194,12 +183,10 @@ def test_subcommand_alias_with_swapped_delimiter_form() -> None:
     # (a) A subcommand offering the underscore form of its OWN hyphenated
     # canonical name. `run_server` swaps to `run-server` (its own canonical) but
     # must still be allowed -- both spellings select RunServer.
-    @dataclasses.dataclass
-    class RunServer:
+    class RunServer(Struct, frozen=False):
         port: int = 80
 
-    @dataclasses.dataclass
-    class Stop:
+    class Stop(Struct, frozen=False):
         v: int = 0
 
     M: Any = Union[
@@ -211,12 +198,10 @@ def test_subcommand_alias_with_swapped_delimiter_form() -> None:
 
     # (b) Two subcommands: canonical `a-b` and another whose alias `a_b` swaps to
     # `a-b`. Both remain distinctly reachable by their exact spellings.
-    @dataclasses.dataclass
-    class AB:
+    class AB(Struct, frozen=False):
         v: int = 1
 
-    @dataclasses.dataclass
-    class Other:
+    class Other(Struct, frozen=False):
         v: int = 2
 
     M2: Any = Union[
@@ -230,12 +215,10 @@ def test_subcommand_alias_with_swapped_delimiter_form() -> None:
 def test_subcommand_alias_exact_collision_still_rejected() -> None:
     # An alias that EXACTLY equals another subcommand's canonical name is a
     # genuine ambiguity and must still be rejected.
-    @dataclasses.dataclass
-    class P:
+    class P(Struct, frozen=False):
         v: int = 1
 
-    @dataclasses.dataclass
-    class Q:
+    class Q(Struct, frozen=False):
         v: int = 2
 
     M: Any = Union[

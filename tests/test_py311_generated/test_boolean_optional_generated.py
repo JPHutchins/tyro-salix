@@ -1,7 +1,6 @@
-import dataclasses
-
 import pytest
 from helptext_utils import get_helptext_with_checks
+from salix import Struct
 
 import tyro
 
@@ -9,8 +8,7 @@ import tyro
 def test_flag_default_false() -> None:
     """Test for argparse.BooleanOptionalAction-style usage."""
 
-    @dataclasses.dataclass
-    class A:
+    class A(Struct, frozen=False):
         x: bool
 
     assert tyro.cli(
@@ -43,8 +41,7 @@ def test_flag_default_false() -> None:
 def test_flag_default_true() -> None:
     """Test for argparse.BooleanOptionalAction-style usage."""
 
-    @dataclasses.dataclass
-    class A:
+    class A(Struct, frozen=False):
         x: bool
 
     assert tyro.cli(
@@ -77,8 +74,7 @@ def test_flag_default_true() -> None:
 def test_flag_default_true_helptext() -> None:
     """Test for argparse.BooleanOptionalAction-style usage."""
 
-    @dataclasses.dataclass
-    class A:
+    class A(Struct, frozen=False):
         x: bool = True
 
     assert "(default: True)" in get_helptext_with_checks(A)
@@ -89,8 +85,7 @@ def test_flag_default_true_helptext() -> None:
 def test_flag_no_pairs() -> None:
     """Test for tyro.conf.FlagPairOff."""
 
-    @dataclasses.dataclass
-    class A:
+    class A(Struct, frozen=False):
         x: tyro.conf.FlagCreatePairsOff[bool]
         y: tyro.conf.FlagCreatePairsOff[bool] = False
         z: tyro.conf.FlagCreatePairsOff[bool] = True
@@ -138,8 +133,7 @@ def test_flag_no_pairs() -> None:
 def test_disallow_none_bool_flag() -> None:
     """Test for DisallowNone[bool | None] flag syntax (issue #381)."""
 
-    @dataclasses.dataclass
-    class A:
+    class A(Struct, frozen=False):
         x: tyro.conf.DisallowNone[bool | None] = None
 
     # Test that flag syntax works.
@@ -148,16 +142,14 @@ def test_disallow_none_bool_flag() -> None:
     assert tyro.cli(A, args=[]) == A(None)
 
     # Test with different default values.
-    @dataclasses.dataclass
-    class B:
+    class B(Struct, frozen=False):
         x: tyro.conf.DisallowNone[bool | None] = False
 
     assert tyro.cli(B, args=["--x"]) == B(True)
     assert tyro.cli(B, args=["--no-x"]) == B(False)
     assert tyro.cli(B, args=[]) == B(False)
 
-    @dataclasses.dataclass
-    class C:
+    class C(Struct, frozen=False):
         x: tyro.conf.DisallowNone[bool | None] = True
 
     assert tyro.cli(C, args=["--x"]) == C(True)
@@ -168,8 +160,7 @@ def test_disallow_none_bool_flag() -> None:
 def test_disallow_none_bool_helptext() -> None:
     """Test that DisallowNone[bool | None] shows flag-style helptext."""
 
-    @dataclasses.dataclass
-    class A:
+    class A(Struct, frozen=False):
         x: tyro.conf.DisallowNone[bool | None] = None
 
     helptext = get_helptext_with_checks(A)
@@ -183,8 +174,7 @@ def test_disallow_none_bool_helptext() -> None:
 def test_disallow_none_non_union_bool() -> None:
     """Test that DisallowNone on a plain bool (not a union) still works normally."""
 
-    @dataclasses.dataclass
-    class A:
+    class A(Struct, frozen=False):
         x: tyro.conf.DisallowNone[bool] = False
 
     # Should still create flag syntax.
@@ -196,8 +186,7 @@ def test_disallow_none_non_union_bool() -> None:
 def test_disallow_none_non_union_int() -> None:
     """Test that DisallowNone on a plain int (not a union) doesn't get flag treatment."""
 
-    @dataclasses.dataclass
-    class A:
+    class A(Struct, frozen=False):
         x: tyro.conf.DisallowNone[int] = 5
 
     # Should not create flag syntax, just regular int argument.
@@ -212,8 +201,7 @@ def test_disallow_none_non_union_int() -> None:
 def test_disallow_none_multi_type_union() -> None:
     """Test that DisallowNone[int | str | None] doesn't get treated as a bool."""
 
-    @dataclasses.dataclass
-    class A:
+    class A(Struct, frozen=False):
         x: tyro.conf.DisallowNone[int | str | None] = None
 
     # Should not create flag syntax, should use choice-based syntax.

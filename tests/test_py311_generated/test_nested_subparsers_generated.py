@@ -2,39 +2,34 @@
 
 from __future__ import annotations
 
-import dataclasses
 from typing import Annotated, Any, Union
 
 import pytest
+from salix import Struct
 
 import tyro
 
 
-@dataclasses.dataclass
-class CommandA:
+class CommandA(Struct, frozen=False):
     x: int
     y: str
 
 
-@dataclasses.dataclass
-class CommandB:
+class CommandB(Struct, frozen=False):
     a: float
     b: bool
 
 
-@dataclasses.dataclass
-class CommandC:
+class CommandC(Struct, frozen=False):
     p: list[int]
     q: dict[str, int]
 
 
-@dataclasses.dataclass
-class CommandD:
+class CommandD(Struct, frozen=False):
     value: str
 
 
-@dataclasses.dataclass
-class CommandE:
+class CommandE(Struct, frozen=False):
     count: int
 
 

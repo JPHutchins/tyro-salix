@@ -1,4 +1,5 @@
 from __future__ import annotations
+from salix import Struct
 
 from typing import Any, Mapping, Sequence, Tuple, Type, TypeVar, Union
 
@@ -37,13 +38,12 @@ def overridable_config_cli(
 
     .. code-block:: python
 
-        import dataclasses
+        from salix import Struct
 
         import tyro
 
 
-        @dataclasses.dataclass
-        class Config:
+        class Config(Struct):
             a: int
             b: str
 

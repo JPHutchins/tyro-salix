@@ -2,8 +2,8 @@
 namespaces."""
 
 from __future__ import annotations
+from salix import Struct
 
-import dataclasses
 import inspect
 import itertools
 from functools import partial
@@ -18,13 +18,11 @@ from .constructors._primitive_spec import UnsupportedTypeAnnotationError
 T = TypeVar("T")
 
 
-@dataclasses.dataclass(frozen=True)
-class DummyWrapper(Generic[T]):
+class DummyWrapper(Generic[T], Struct, frozen=True):
     __tyro_dummy_inner__: Annotated[T, _confstruct.arg(name="")]
 
 
-@dataclasses.dataclass(frozen=True)
-class InstantiationError(Exception):
+class InstantiationError(Struct, Exception):
     """Exception raised when instantiation fail; this typically means that values from
     the CLI are invalid."""
 
@@ -205,7 +203,7 @@ def callable_with_args(
                 value = subparser_def.default_instance
             else:
                 if subparser_def.aliases_from_name:
-                    subparser_name = subparser_def.canonical_from_alias().get(
+                    subparser_name = subparser_def.canonical_from_alias.get(
                         subparser_name, subparser_name
                     )
                 chosen_f = subparser_def.options[

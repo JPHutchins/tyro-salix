@@ -1,5 +1,4 @@
 import contextlib
-import dataclasses
 import enum
 import io
 from typing import Callable, Generic, List, NewType, Tuple, Type, TypeVar, Union
@@ -7,6 +6,7 @@ from typing import Callable, Generic, List, NewType, Tuple, Type, TypeVar, Union
 import pytest
 import yaml
 from helptext_utils import get_helptext_with_checks
+from salix import Struct
 from typing_extensions import Annotated
 
 import tyro
@@ -21,8 +21,7 @@ def _check_serialization_identity(cls: Type[T], instance: T) -> None:
 ScalarType = TypeVar("ScalarType")
 
 
-@dataclasses.dataclass
-class AGenericCallable(Generic[T]):
+class AGenericCallable(Struct, Generic[T], frozen=False):
     x: Callable[..., T] = lambda: None  # type: ignore
 
 
@@ -30,8 +29,7 @@ def test_generic_callable() -> None:
     assert tyro.cli(AGenericCallable, args=[]) == AGenericCallable()
 
 
-@dataclasses.dataclass
-class AGenericCallableWithParam(Generic[T]):
+class AGenericCallableWithParam(Struct, Generic[T], frozen=False):
     """Test typing.Callable with generic type parameter."""
 
     x: Callable[[T], str] = str  # type: ignore
@@ -47,8 +45,7 @@ def test_generic_callable_with_param() -> None:
 
 
 def test_tuple_generic_variable() -> None:
-    @dataclasses.dataclass
-    class TupleGenericVariable(Generic[ScalarType]):
+    class TupleGenericVariable(Struct, Generic[ScalarType], frozen=False):
         xyz: Tuple[ScalarType, ...]
 
     assert tyro.cli(
@@ -57,8 +54,7 @@ def test_tuple_generic_variable() -> None:
 
 
 def test_tuple_generic_variable_newtype() -> None:
-    @dataclasses.dataclass
-    class TupleGenericVariable(Generic[ScalarType]):
+    class TupleGenericVariable(Struct, Generic[ScalarType], frozen=False):
         xyz: Tuple[ScalarType, ...]
 
     SpecialInt = NewType("SpecialInt", int)
@@ -68,8 +64,7 @@ def test_tuple_generic_variable_newtype() -> None:
 
 
 def test_tuple_generic_variable_newtype_container() -> None:
-    @dataclasses.dataclass
-    class TupleGenericVariable(Generic[ScalarType]):
+    class TupleGenericVariable(Struct, Generic[ScalarType], frozen=False):
         xyz: Tuple[ScalarType, ...]
 
     SpecialInt = NewType("SpecialInt", Tuple[int])
@@ -79,8 +74,7 @@ def test_tuple_generic_variable_newtype_container() -> None:
 
 
 def test_tuple_generic_variable_more_newtype() -> None:
-    @dataclasses.dataclass
-    class TupleGenericVariable(Generic[ScalarType]):
+    class TupleGenericVariable(Struct, Generic[ScalarType], frozen=False):
         xyz: Tuple[ScalarType, ...]
 
     SpecialInt = NewType("SpecialInt", int)
@@ -91,8 +85,7 @@ def test_tuple_generic_variable_more_newtype() -> None:
 
 
 def test_tuple_generic_helptext() -> None:
-    @dataclasses.dataclass
-    class TupleGenericVariableHelptext(Generic[ScalarType]):
+    class TupleGenericVariableHelptext(Struct, Generic[ScalarType], frozen=False):
         """Helptext!"""
 
         xyz: Tuple[ScalarType, ...]
@@ -106,8 +99,7 @@ def test_tuple_generic_helptext() -> None:
 
 
 def test_tuple_generic_no_helptext() -> None:
-    @dataclasses.dataclass
-    class TupleGenericVariableNoHelptext(Generic[ScalarType]):
+    class TupleGenericVariableNoHelptext(Struct, Generic[ScalarType], frozen=False):
         xyz: Tuple[ScalarType, ...]
 
     f = io.StringIO()
@@ -122,8 +114,7 @@ def test_tuple_generic_no_helptext() -> None:
 
 
 def test_tuple_generic_fixed() -> None:
-    @dataclasses.dataclass
-    class TupleGenericFixed(Generic[ScalarType]):
+    class TupleGenericFixed(Struct, Generic[ScalarType], frozen=False):
         xyz: Tuple[ScalarType, ScalarType, ScalarType]
 
     assert tyro.cli(
@@ -136,8 +127,7 @@ class CoordinateFrame(enum.Enum):
     CAMERA = enum.auto()
 
 
-@dataclasses.dataclass
-class Point3(Generic[ScalarType]):
+class Point3(Struct, Generic[ScalarType], frozen=False):
     x: ScalarType
     y: ScalarType
     z: ScalarType
@@ -145,8 +135,7 @@ class Point3(Generic[ScalarType]):
 
 
 def test_simple_generic() -> None:
-    @dataclasses.dataclass
-    class SimpleGeneric:
+    class SimpleGeneric(Struct, frozen=False):
         point_continuous: Point3[float]
         point_discrete: Point3[int]
 
@@ -203,8 +192,7 @@ def test_simple_generic() -> None:
 
 
 def test_multilevel_generic() -> None:
-    @dataclasses.dataclass
-    class Triangle(Generic[ScalarType]):
+    class Triangle(Struct, Generic[ScalarType], frozen=False):
         a: Point3[ScalarType]
         b: Point3[ScalarType]
         c: Point3[ScalarType]
@@ -247,8 +235,7 @@ def test_multilevel_generic() -> None:
 
 
 def test_multilevel_generic_no_helptext() -> None:
-    @dataclasses.dataclass
-    class LineSegment(Generic[ScalarType]):
+    class LineSegment(Struct, Generic[ScalarType], frozen=False):
         a: Point3[ScalarType]
         b: Point3[ScalarType]
 
@@ -263,15 +250,13 @@ def test_multilevel_generic_no_helptext() -> None:
 
 
 def test_generic_nested_dataclass() -> None:
-    @dataclasses.dataclass
-    class Child:
+    class Child(Struct, frozen=False):
         a: int
         b: int
 
     T = TypeVar("T")
 
-    @dataclasses.dataclass
-    class DataclassGeneric(Generic[T]):
+    class DataclassGeneric(Struct, Generic[T], frozen=False):
         child: T
 
     parsed_instance = tyro.cli(
@@ -285,15 +270,13 @@ def test_generic_nested_dataclass() -> None:
 
 
 def test_generic_nested_dataclass_helptext() -> None:
-    @dataclasses.dataclass
-    class Child:
+    class Child(Struct, frozen=False):
         a: int
         b: int
 
     T = TypeVar("T")
 
-    @dataclasses.dataclass
-    class DataclassGeneric(Generic[T]):
+    class DataclassGeneric(Struct, Generic[T], frozen=False):
         child: T
 
     f = io.StringIO()
@@ -307,19 +290,16 @@ def test_generic_nested_dataclass_helptext() -> None:
 
 
 def test_generic_subparsers() -> None:
-    @dataclasses.dataclass
-    class CommandOne:
+    class CommandOne(Struct, frozen=False):
         a: int
 
-    @dataclasses.dataclass
-    class CommandTwo:
+    class CommandTwo(Struct, frozen=False):
         b: int
 
     T1 = TypeVar("T1")
     T2 = TypeVar("T2")
 
-    @dataclasses.dataclass
-    class Subparser(Generic[T1, T2]):
+    class Subparser(Struct, Generic[T1, T2], frozen=False):
         command: Union[T1, T2]
 
     parsed_instance = tyro.cli(
@@ -350,15 +330,13 @@ def test_generic_subparsers() -> None:
 def test_generic_subparsers_in_container() -> None:
     T = TypeVar("T")
 
-    @dataclasses.dataclass
-    class Command(Generic[T]):
+    class Command(Struct, Generic[T], frozen=False):
         a: List[T]
 
     T1 = TypeVar("T1")
     T2 = TypeVar("T2")
 
-    @dataclasses.dataclass
-    class Subparser(Generic[T1, T2]):
+    class Subparser(Struct, Generic[T1, T2], frozen=False):
         command: Union[T1, T2]
 
     parsed_instance = tyro.cli(
@@ -391,8 +369,7 @@ def test_generic_subparsers_in_container() -> None:
 
 
 def test_serialize_missing() -> None:
-    @dataclasses.dataclass
-    class TupleGenericVariableMissing(Generic[ScalarType]):
+    class TupleGenericVariableMissing(Struct, Generic[ScalarType], frozen=False):
         xyz: Tuple[ScalarType, ...]
 
     x = TupleGenericVariableMissing[int](xyz=(tyro.MISSING, tyro.MISSING))
@@ -409,8 +386,7 @@ def test_serialize_missing() -> None:
 def test_generic_inherited_type_narrowing() -> None:
     T = TypeVar("T")
 
-    @dataclasses.dataclass
-    class ActualParentClass(Generic[T]):
+    class ActualParentClass(Struct, Generic[T], frozen=False):
         x: T  # Documentation 1
 
         # Documentation 2
@@ -419,8 +395,7 @@ def test_generic_inherited_type_narrowing() -> None:
         z: T = 3  # type: ignore
         """Documentation 3"""
 
-    @dataclasses.dataclass
-    class ChildClass(ActualParentClass[int]):
+    class ChildClass(ActualParentClass[int], frozen=False):
         a: int = 7
 
     def main(x: ActualParentClass[int] = ChildClass(5, 5)) -> ActualParentClass:
@@ -433,16 +408,13 @@ def test_pculbertson() -> None:
     # https://github.com/brentyi/tyro/issues/7
     from typing import Union
 
-    @dataclasses.dataclass(frozen=True)
-    class TypeA:
+    class TypeA(Struct, frozen=False):
         data: int
 
-    @dataclasses.dataclass
-    class TypeB:
+    class TypeB(Struct, frozen=False):
         data: int
 
-    @dataclasses.dataclass
-    class Wrapper:
+    class Wrapper(Struct, frozen=False):
         subclass: Union[TypeA, TypeB] = TypeA(1)
 
     wrapper1 = Wrapper()  # Create Wrapper object.
@@ -452,30 +424,25 @@ def test_pculbertson() -> None:
 def test_annotated() -> None:
     # https://github.com/brentyi/tyro/issues/7
 
-    @dataclasses.dataclass(frozen=True)
-    class TypeA:
+    class TypeA(Struct, frozen=False):
         data: int
 
-    @dataclasses.dataclass
-    class Wrapper:
+    class Wrapper(Struct, frozen=False):
         subclass: Annotated[TypeA, int] = TypeA(1)
 
     wrapper1 = Wrapper()  # Create Wrapper object.
     assert wrapper1 == tyro.extras.from_yaml(Wrapper, tyro.extras.to_yaml(wrapper1))
 
 
-@dataclasses.dataclass
-class TypeA:
+class TypeA(Struct, frozen=False):
     data: int
 
 
-@dataclasses.dataclass
-class TypeASubclass(TypeA):
+class TypeASubclass(TypeA, frozen=False):
     pass
 
 
-@dataclasses.dataclass
-class Wrapper:
+class Wrapper(Struct, frozen=False):
     subclass: TypeA
 
 
@@ -486,12 +453,10 @@ def test_superclass() -> None:
     assert wrapper1 == tyro.extras.from_yaml(Wrapper, tyro.extras.to_yaml(wrapper1))
 
 
-@dataclasses.dataclass(frozen=True)
-class A(Generic[T]):
+class A(Struct, Generic[T]):
     x: T
 
 
-@dataclasses.dataclass(frozen=True)
 class B(A[int], Generic[T]):
     y: T
 
@@ -508,8 +473,7 @@ def test_inheritance_with_same_typevar() -> None:
 
 
 def test_deeply_inherited_init() -> None:
-    @dataclasses.dataclass
-    class AConfig:
+    class AConfig(Struct, frozen=False):
         a: int
 
     TContainsAConfig = TypeVar("TContainsAConfig", bound=AConfig)
@@ -518,8 +482,7 @@ def test_deeply_inherited_init() -> None:
         def __init__(self, config: TContainsAConfig):
             self.config = config
 
-    @dataclasses.dataclass
-    class ABConfig(AConfig):
+    class ABConfig(AConfig, frozen=False):
         b: int
 
     TContainsABConfig = TypeVar("TContainsABConfig", bound=ABConfig)
@@ -527,8 +490,7 @@ def test_deeply_inherited_init() -> None:
     class ABModel(AModel[TContainsABConfig], Generic[TContainsABConfig]):
         pass
 
-    @dataclasses.dataclass
-    class ABCConfig(ABConfig):
+    class ABCConfig(ABConfig, frozen=False):
         c: int
 
     class Dummy: ...
@@ -576,8 +538,7 @@ def test_simple_bound_method() -> None:
 def test_inherited_bound_method() -> None:
     """From @deeptoaster: https://github.com/brentyi/tyro/issues/233"""
 
-    @dataclasses.dataclass
-    class AConfig:
+    class AConfig(Struct, frozen=False):
         a: int
 
     TContainsAConfig = TypeVar("TContainsAConfig", bound=AConfig)
@@ -588,8 +549,7 @@ def test_inherited_bound_method() -> None:
 
     TContainsAModel = TypeVar("TContainsAModel", bound=AModel)
 
-    @dataclasses.dataclass
-    class ABConfig(AConfig):
+    class ABConfig(AConfig, frozen=False):
         b: int
 
     class ABModel(AModel[ABConfig]):
@@ -610,8 +570,7 @@ def test_inherited_bound_method() -> None:
 
 
 def test_inherited_class_method() -> None:
-    @dataclasses.dataclass
-    class AConfig:
+    class AConfig(Struct, frozen=False):
         a: int
 
     TContainsAConfig = TypeVar("TContainsAConfig", bound=AConfig)
@@ -622,8 +581,7 @@ def test_inherited_class_method() -> None:
 
     TContainsAModel = TypeVar("TContainsAModel", bound=AModel)
 
-    @dataclasses.dataclass
-    class ABConfig(AConfig):
+    class ABConfig(AConfig, frozen=False):
         b: int
 
     class ABModel(AModel[ABConfig]):

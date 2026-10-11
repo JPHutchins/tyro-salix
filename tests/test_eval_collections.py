@@ -10,10 +10,10 @@ pathlib.Path by making common types available in a secure eval() context.
 This is particularly useful for wandb sweeps integration.
 """
 
-from dataclasses import dataclass
 from typing import Dict, List, Literal, Optional, Set, Tuple, Union
 
 import pytest
+from salix import Struct
 
 import tyro
 
@@ -21,8 +21,7 @@ import tyro
 def test_tuple_python_syntax() -> None:
     """Test that Python literal syntax works for tuples."""
 
-    @dataclass
-    class Config:
+    class Config(Struct, frozen=False):
         dims: Tuple[int, int, int]
 
     # Normal usage without marker.
@@ -39,8 +38,7 @@ def test_tuple_python_syntax() -> None:
 def test_tuple_strings() -> None:
     """Test Python syntax for tuples with string elements."""
 
-    @dataclass
-    class Config:
+    class Config(Struct, frozen=False):
         names: Tuple[str, str]
 
     assert tyro.cli(
@@ -53,8 +51,7 @@ def test_tuple_strings() -> None:
 def test_list_python_syntax() -> None:
     """Test Python syntax for lists."""
 
-    @dataclass
-    class Config:
+    class Config(Struct, frozen=False):
         values: List[int]
 
     # Normal usage without marker.
@@ -73,8 +70,7 @@ def test_list_python_syntax() -> None:
 def test_dict_python_syntax() -> None:
     """Test Python syntax for dicts."""
 
-    @dataclass
-    class Config:
+    class Config(Struct, frozen=False):
         mapping: Dict[str, int]
 
     # Normal usage without marker.
@@ -93,8 +89,7 @@ def test_dict_python_syntax() -> None:
 def test_set_python_syntax() -> None:
     """Test Python syntax for sets."""
 
-    @dataclass
-    class Config:
+    class Config(Struct, frozen=False):
         values: Set[int]
 
     result = tyro.cli(
@@ -108,12 +103,10 @@ def test_set_python_syntax() -> None:
 def test_nested_structure() -> None:
     """Test nested structures with Python syntax."""
 
-    @dataclass
-    class Inner:
+    class Inner(Struct, frozen=False):
         size: Tuple[int, int]
 
-    @dataclass
-    class Outer:
+    class Outer(Struct, frozen=False):
         inner: Inner
 
     result = tyro.cli(
@@ -127,8 +120,7 @@ def test_nested_structure() -> None:
 def test_mixed_types() -> None:
     """Test tuple with mixed numeric types."""
 
-    @dataclass
-    class Config:
+    class Config(Struct, frozen=False):
         mixed: Tuple[int, float, int]
 
     result = tyro.cli(
@@ -142,8 +134,7 @@ def test_mixed_types() -> None:
 def test_invalid_python_syntax() -> None:
     """Test that invalid Python syntax raises an error."""
 
-    @dataclass
-    class Config:
+    class Config(Struct, frozen=False):
         values: List[int]
 
     with pytest.raises(SystemExit):
@@ -157,8 +148,7 @@ def test_invalid_python_syntax() -> None:
 def test_type_mismatch() -> None:
     """Test that type mismatches raise an error."""
 
-    @dataclass
-    class Config:
+    class Config(Struct, frozen=False):
         values: Tuple[int, int]
 
     # Passing a list when expecting a tuple.
@@ -173,14 +163,10 @@ def test_type_mismatch() -> None:
 def test_helptext_coverage() -> None:
     """Test helptext generation to cover str_from_instance."""
     import sys
-    from dataclasses import field
 
-    @dataclass
-    class Config:
-        simple: List[int] = field(default_factory=lambda: [1, 2, 3])
-        nested: List[Tuple[int, str]] = field(
-            default_factory=lambda: [(1, "a"), (2, "b")]
-        )
+    class Config(Struct, frozen=False):
+        simple: List[int] = [1, 2, 3]
+        nested: List[Tuple[int, str]] = [(1, "a"), (2, "b")]
 
     # Getting helptext will call str_from_instance for defaults.
     sys.argv = ["test", "--help"]
@@ -192,8 +178,7 @@ def test_union_with_default() -> None:
     """Test union types with defaults to cover is_instance_fn."""
     import sys
 
-    @dataclass
-    class Config:
+    class Config(Struct, frozen=False):
         value: Union[Tuple[int, ...], int] = 3
 
     # Getting helptext with a union default exercises is_instance.
@@ -205,8 +190,7 @@ def test_union_with_default() -> None:
 def test_variable_length_tuple() -> None:
     """Test variable-length tuples."""
 
-    @dataclass
-    class Config:
+    class Config(Struct, frozen=False):
         values: Tuple[int, ...]
 
     result = tyro.cli(
@@ -222,8 +206,7 @@ def test_nested_union_metavar() -> None:
     import sys
     from typing import Union
 
-    @dataclass
-    class Config:
+    class Config(Struct, frozen=False):
         # This will exercise the metavar generation with Union types.
         values: List[Union[int, str]]
 
@@ -237,8 +220,7 @@ def test_nested_literal_metavar() -> None:
     """Test metavar generation for Literal types (which lack __name__)."""
     import sys
 
-    @dataclass
-    class Config:
+    class Config(Struct, frozen=False):
         # Literal types don't have __name__, testing edge case in metavar generation.
         values: List[Literal["a", "b"]]
 
@@ -252,8 +234,7 @@ def test_pathlib_fallback() -> None:
     """Test that Path types fall back to normal handling (not literal-eval compatible)."""
     from pathlib import Path
 
-    @dataclass
-    class Config:
+    class Config(Struct, frozen=False):
         paths: List[Path]
 
     # Path is not compatible with ast.literal_eval, so this should use normal
@@ -273,8 +254,7 @@ def test_unparameterized_generic_fallback() -> None:
     # but no args, which triggers this early return path.
     from typing import List
 
-    @dataclass
-    class Config:
+    class Config(Struct, frozen=False):
         # Using unparameterized typing.List triggers the early return.
         # It will be handled by other rules as a list with inferred type.
         values: List = None  # type: ignore
@@ -291,18 +271,14 @@ def test_unparameterized_generic_fallback() -> None:
 def test_incompatible_type_fallback() -> None:
     """Test that incompatible types are properly validated and marker is ignored."""
     # When collection contains non-eval-compatible types, the marker is ignored.
-    from dataclasses import dataclass as inner_dataclass
-    from dataclasses import field
 
-    @inner_dataclass
-    class Inner:
+    class Inner(Struct, frozen=False):
         value: int
 
-    @dataclass
-    class Config:
+    class Config(Struct, frozen=False):
         # Inner is a struct type (dataclass), so marker is ignored.
         # Tyro falls back to normal handling (requires explicit default).
-        items: List[Inner] = field(default_factory=list)
+        items: List[Inner] = []
 
     # With empty list default, tyro should use it.
     result = tyro.cli(
@@ -316,8 +292,7 @@ def test_incompatible_type_fallback() -> None:
 def test_literal_type_support() -> None:
     """Test that Literal types work with the marker."""
 
-    @dataclass
-    class Config:
+    class Config(Struct, frozen=False):
         values: List[Literal["a", "b", "c"]]
 
     # With marker, should accept Python literal syntax.
@@ -332,8 +307,7 @@ def test_literal_type_support() -> None:
 def test_literal_int_support() -> None:
     """Test that Literal with int values works."""
 
-    @dataclass
-    class Config:
+    class Config(Struct, frozen=False):
         values: Tuple[Literal[1, 2, 3], Literal[1, 2, 3]]
 
     result = tyro.cli(
@@ -347,8 +321,7 @@ def test_literal_int_support() -> None:
 def test_optional_with_literal() -> None:
     """Test Optional[Literal[...]] works."""
 
-    @dataclass
-    class Config:
+    class Config(Struct, frozen=False):
         value: Optional[List[Literal["x", "y", "z"]]] = None
 
     result = tyro.cli(
@@ -368,17 +341,15 @@ def test_optional_with_literal() -> None:
 
 def test_custom_class_fallback() -> None:
     """Test that custom classes fall back to normal handling."""
-    from dataclasses import field
 
     class CustomClass:
         def __init__(self, value: int):
             self.value = value
 
-    @dataclass
-    class Config:
+    class Config(Struct, frozen=False):
         # CustomClass is not a built-in, so marker should be ignored.
         # Tyro falls back to normal handling (treating as struct with default).
-        items: List[CustomClass] = field(default_factory=list)
+        items: List[CustomClass] = []
 
     # With an empty list default, tyro should use it.
     result = tyro.cli(
@@ -391,13 +362,11 @@ def test_custom_class_fallback() -> None:
 
 def test_unsupported_builtins_fallback() -> None:
     """Test that unsupported built-in types (frozenset, range, slice) fall back."""
-    from dataclasses import field
 
-    @dataclass
-    class Config:
+    class Config(Struct, frozen=False):
         # frozenset is a built-in type but not supported by ast.literal_eval().
         # Tyro falls back to normal handling (treating as struct with default).
-        values: List[frozenset] = field(default_factory=list)
+        values: List[frozenset] = []
 
     # With an empty list default, tyro should use it.
     result = tyro.cli(
@@ -411,8 +380,7 @@ def test_unsupported_builtins_fallback() -> None:
 def test_complex_number_support() -> None:
     """Test that complex numbers work with the marker."""
 
-    @dataclass
-    class Config:
+    class Config(Struct, frozen=False):
         values: List[complex]
 
     result = tyro.cli(
@@ -427,8 +395,7 @@ def test_literal_metavar_formatting() -> None:
     """Test that Literal types are formatted correctly in metavar."""
     import sys
 
-    @dataclass
-    class Config:
+    class Config(Struct, frozen=False):
         # String literals.
         str_literals: List[Literal["a", "b", "c"]]
         # Int literals.
@@ -445,8 +412,7 @@ def test_literal_metavar_formatting() -> None:
 def test_bytes_support() -> None:
     """Test that bytes work with the marker."""
 
-    @dataclass
-    class Config:
+    class Config(Struct, frozen=False):
         values: List[bytes]
 
     result = tyro.cli(
@@ -460,8 +426,7 @@ def test_bytes_support() -> None:
 def test_mixed_literal_and_regular_types() -> None:
     """Test mixing Literal types with regular types in collections."""
 
-    @dataclass
-    class Config:
+    class Config(Struct, frozen=False):
         # Tuple with Literal and regular types.
         mixed: Tuple[Literal["a", "b"], int, str]
 
@@ -476,8 +441,7 @@ def test_mixed_literal_and_regular_types() -> None:
 def test_none_in_tuple() -> None:
     """Test that None works correctly in tuples."""
 
-    @dataclass
-    class Config:
+    class Config(Struct, frozen=False):
         # Tuple with None.
         value: Tuple[int, None]
         # List of tuples with None.
@@ -501,8 +465,7 @@ def test_none_metavar() -> None:
     """Test that None is formatted as 'None' in metavar (not 'NONETYPE')."""
     import sys
 
-    @dataclass
-    class Config:
+    class Config(Struct, frozen=False):
         value: Tuple[int, None]
 
     # Getting helptext will show the metavar.

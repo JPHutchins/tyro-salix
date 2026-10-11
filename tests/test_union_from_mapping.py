@@ -1,13 +1,12 @@
-import dataclasses
 from typing import TYPE_CHECKING, Optional, Union
 
+from salix import Struct
 from typing_extensions import Annotated
 
 import tyro
 
 
-@dataclasses.dataclass
-class A:
+class A(Struct, frozen=False):
     x: int
 
 
@@ -58,8 +57,7 @@ def test_union_from_mapping_with_none_default() -> None:
     match any value against None when None was the first option in the union.
     """
 
-    @dataclasses.dataclass
-    class Config:
+    class Config(Struct, frozen=False):
         x: Annotated[
             Union[A, None],
             tyro.conf.arg(

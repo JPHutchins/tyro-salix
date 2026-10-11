@@ -1,9 +1,9 @@
 # mypy: ignore-errors
-import dataclasses
 import logging
 from pathlib import Path
 
 import pytest
+from salix import Struct
 from typing_extensions import Annotated
 
 import tyro
@@ -46,7 +46,7 @@ def test_verbosity_default_is_warning() -> None:
 
 
 def test_verbosity_is_frozen() -> None:
-    with pytest.raises((AttributeError, dataclasses.FrozenInstanceError)):
+    with pytest.raises(AttributeError):
         # Use setattr to bypass static frozen-attribute check; we are
         # asserting the runtime FrozenInstanceError is raised.
         setattr(Verbosity(verbose=0, quiet=0), "verbose", 1)
@@ -85,18 +85,16 @@ def test_cli_mutually_exclusive() -> None:
 
 
 def test_nested_defaults() -> None:
-    @dataclasses.dataclass
-    class App:
-        path: Path = dataclasses.field(default_factory=Path.cwd)
-        verbosity: Verbosity = dataclasses.field(default_factory=Verbosity)
+    class App(Struct, frozen=False):
+        path: Path = Path.cwd()
+        verbosity: Verbosity = Verbosity()
 
     assert tyro.cli(App, args=[]) == App()
 
 
 def test_nested_short_alias() -> None:
-    @dataclasses.dataclass
-    class App:
-        verbosity: Verbosity = dataclasses.field(default_factory=Verbosity)
+    class App(Struct, frozen=False):
+        verbosity: Verbosity = Verbosity()
 
     assert tyro.cli(App, args=["-vv"]).verbosity == Verbosity(verbose=2, quiet=0)
 
@@ -104,61 +102,45 @@ def test_nested_short_alias() -> None:
 def test_nested_prefixed_long_flag() -> None:
     """Without OmitArgPrefixes, long flags carry the field-name prefix."""
 
-    @dataclasses.dataclass
-    class App:
-        verbosity: Verbosity = dataclasses.field(default_factory=Verbosity)
+    class App(Struct, frozen=False):
+        verbosity: Verbosity = Verbosity()
 
     result = tyro.cli(App, args=["--verbosity.verbose", "--verbosity.verbose"])
     assert result.verbosity == Verbosity(verbose=2, quiet=0)
 
 
 def test_omit_prefixes_long_verbose() -> None:
-    @dataclasses.dataclass
-    class App:
-        verbosity: Annotated[Verbosity, tyro.conf.OmitArgPrefixes] = dataclasses.field(
-            default_factory=Verbosity
-        )
+    class App(Struct, frozen=False):
+        verbosity: Annotated[Verbosity, tyro.conf.OmitArgPrefixes] = Verbosity()
 
     result = tyro.cli(App, args=["--verbose", "--verbose"])
     assert result.verbosity == Verbosity(verbose=2, quiet=0)
 
 
 def test_omit_prefixes_long_quiet() -> None:
-    @dataclasses.dataclass
-    class App:
-        verbosity: Annotated[Verbosity, tyro.conf.OmitArgPrefixes] = dataclasses.field(
-            default_factory=Verbosity
-        )
+    class App(Struct, frozen=False):
+        verbosity: Annotated[Verbosity, tyro.conf.OmitArgPrefixes] = Verbosity()
 
     assert tyro.cli(App, args=["--quiet"]).verbosity == Verbosity(verbose=0, quiet=1)
 
 
 def test_omit_prefixes_short_aliases_still_work() -> None:
-    @dataclasses.dataclass
-    class App:
-        verbosity: Annotated[Verbosity, tyro.conf.OmitArgPrefixes] = dataclasses.field(
-            default_factory=Verbosity
-        )
+    class App(Struct, frozen=False):
+        verbosity: Annotated[Verbosity, tyro.conf.OmitArgPrefixes] = Verbosity()
 
     assert tyro.cli(App, args=["-vvv"]).verbosity == Verbosity(verbose=3, quiet=0)
 
 
 def test_omit_prefixes_mutually_exclusive() -> None:
-    @dataclasses.dataclass
-    class App:
-        verbosity: Annotated[Verbosity, tyro.conf.OmitArgPrefixes] = dataclasses.field(
-            default_factory=Verbosity
-        )
+    class App(Struct, frozen=False):
+        verbosity: Annotated[Verbosity, tyro.conf.OmitArgPrefixes] = Verbosity()
 
     with pytest.raises(SystemExit):
         tyro.cli(App, args=["--verbose", "--quiet"])
 
 
 def test_omit_prefixes_log_level_roundtrip() -> None:
-    @dataclasses.dataclass
-    class App:
-        verbosity: Annotated[Verbosity, tyro.conf.OmitArgPrefixes] = dataclasses.field(
-            default_factory=Verbosity
-        )
+    class App(Struct, frozen=False):
+        verbosity: Annotated[Verbosity, tyro.conf.OmitArgPrefixes] = Verbosity()
 
     assert tyro.cli(App, args=["-vv"]).verbosity.log_level() == logging.DEBUG

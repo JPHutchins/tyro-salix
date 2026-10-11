@@ -10,12 +10,11 @@ nested apps)."""
 from __future__ import annotations
 
 import contextlib
-import dataclasses
 import io
-from dataclasses import dataclass
 from typing import Annotated, Any, cast
 
 import pytest
+from salix import Struct
 
 import tyro
 from tyro.extras import SubcommandApp
@@ -25,41 +24,34 @@ from tyro.extras import SubcommandApp
 # --------------------------------------------------------------------------- #
 
 
-@dataclass
-class _A:
+class _A(Struct, frozen=False):
     x: int = 1
 
 
-@dataclass
-class _B:
+class _B(Struct, frozen=False):
     y: int = 2
 
 
-@dataclass
-class _Leaf1:
+class _Leaf1(Struct, frozen=False):
     z: int = 0
 
 
-@dataclass
-class _Leaf2:
+class _Leaf2(Struct, frozen=False):
     z: int = 0
 
 
-@dataclass
-class _Inner1:
+class _Inner1(Struct, frozen=False):
     leaf: (
         Annotated[_Leaf1, tyro.conf.subcommand("alpha", aliases=["a"])]
         | Annotated[_Leaf2, tyro.conf.subcommand("beta", aliases=["b"])]
     )
 
 
-@dataclass
-class _Inner2:
+class _Inner2(Struct, frozen=False):
     z: int = 0
 
 
-@dataclass
-class _OuterWithNestedAliases:
+class _OuterWithNestedAliases(Struct, frozen=False):
     inner: (
         Annotated[_Inner1, tyro.conf.subcommand("one", aliases=["1"])]
         | Annotated[_Inner2, tyro.conf.subcommand("two", aliases=["2"])]
@@ -173,15 +165,13 @@ def test_is_default_inner_subparser_without_default_breaks():
     shim should walk in, fail to find/inject for the inner level, and
     stop walking — argparse then reports the missing subcommand."""
 
-    @dataclass
-    class Outer1:
+    class Outer1(Struct, frozen=False):
         inner: (
             Annotated[_Leaf1, tyro.conf.subcommand("leaf1")]
             | Annotated[_Leaf2, tyro.conf.subcommand("leaf2")]
         )
 
-    @dataclass
-    class Outer2:
+    class Outer2(Struct, frozen=False):
         z: int = 0
 
     with pytest.raises(SystemExit):
@@ -433,12 +423,11 @@ def test_is_default_inconsistent_with_field_default_raises():
     """If is_default=True is set on one branch but the field default
     matches another, we should error rather than silently picking one."""
 
-    @dataclass
-    class Wrap:
+    class Wrap(Struct, frozen=False):
         cmd: (
             Annotated[_A, tyro.conf.subcommand("aa")]
             | Annotated[_B, tyro.conf.subcommand("bb", is_default=True)]
-        ) = dataclasses.field(default_factory=lambda: _A(x=3))
+        ) = _A(x=3)
 
     with pytest.raises(AssertionError):
         tyro.cli(Wrap, args=[])
@@ -448,13 +437,11 @@ def test_inject_default_skips_flag_values():
     """A flag value that happens to equal a subcommand name must not be
     mistaken for an explicit subcommand selection."""
 
-    @dataclass
-    class A2:
+    class A2(Struct, frozen=False):
         # Required arg whose value `bb` collides with subcommand name `bb`.
         msg: str
 
-    @dataclass
-    class B2:
+    class B2(Struct, frozen=False):
         y: int = 0
 
     # is_default selects A2; user passes --msg bb. The "bb" should be
@@ -609,8 +596,7 @@ def test_is_default_with_omit_subcommand_prefixes():
     """OmitSubcommandPrefixes only strips parent prefixes from subcommand
     names; orthogonal to is_default. Confirm both still work together."""
 
-    @dataclass
-    class Outer:
+    class Outer(Struct, frozen=False):
         cmd: (
             Annotated[_A, tyro.conf.subcommand("aa", is_default=True)]
             | Annotated[_B, tyro.conf.subcommand("bb")]

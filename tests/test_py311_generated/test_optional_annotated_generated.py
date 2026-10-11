@@ -1,7 +1,8 @@
 """Test adapted from @KolinGuo: https://github.com/brentyi/tyro/issues/156"""
 
-import dataclasses
 from typing import Annotated, Optional, Tuple
+
+from salix import Struct
 
 import tyro
 
@@ -33,8 +34,7 @@ def test_detect_usb_device() -> None:
     assert tyro.cli(detect_usb_device, args=[]) == (None, "")
 
 
-@dataclasses.dataclass
-class DeviceStruct:
+class DeviceStruct(Struct, frozen=False):
     vendor_id: Annotated[Optional[str], tyro.conf.arg(aliases=["--vid"])] = None
     product_id: Annotated[Optional[str], tyro.conf.arg(aliases=["--pid"])] = ""
 

@@ -6,9 +6,9 @@ same pattern for Rust CLIs.
 """
 
 from __future__ import annotations
+from salix import Struct
 
 import logging
-from dataclasses import dataclass
 
 from typing_extensions import Annotated
 
@@ -22,8 +22,7 @@ _verbosity_mutex: object = conf.create_mutex_group(
 )
 
 
-@dataclass(frozen=True)
-class Verbosity:
+class Verbosity(Struct, frozen=True):
     """Parsed verbosity counters from ``-v``/``-q`` CLI flags.
 
     Drop into any tyro CLI struct to get standard ``--verbose``/``-v`` and
@@ -34,11 +33,10 @@ class Verbosity:
 
         import logging
         import tyro
-        from dataclasses import dataclass, field
+        from salix import Struct
         from tyro.extras import Verbosity
 
-        @dataclass
-        class Args:
+        class Args(Struct):
             verbosity: Verbosity = Verbosity()
 
         args = tyro.cli(Args)

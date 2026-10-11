@@ -4,23 +4,21 @@
 from __future__ import annotations
 
 import contextlib
-import dataclasses
 import io
 
 import pytest
+from salix import Struct
 
 import tyro
 import tyro._strings
 
 
-@dataclasses.dataclass(frozen=True)
-class InferenceConfig:
+class InferenceConfig(Struct):
     name: str = "Hello"
     secondary: InferenceConfig | None = None
 
 
-@dataclasses.dataclass(frozen=True)
-class Node:
+class Node(Struct):
     value: int = 0
     left: Node | None = None
     right: Node | None = None

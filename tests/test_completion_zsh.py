@@ -5,34 +5,30 @@ completion scripts in a zsh shell.
 """
 
 import contextlib
-import dataclasses
 import io
 import shutil
 from typing import Union
 
 import pytest
+from salix import Struct
 from typing_extensions import Annotated, Literal, Optional
 
 import tyro
 
 
-@dataclasses.dataclass(frozen=True)
-class Subtype:
+class Subtype(Struct):
     data: int = 1
 
 
-@dataclasses.dataclass(frozen=True)
-class TypeA:
+class TypeA(Struct):
     subtype: Subtype = Subtype(1)
 
 
-@dataclasses.dataclass(frozen=True)
-class TypeB:
+class TypeB(Struct):
     subtype: Subtype = Subtype(2)
 
 
-@dataclasses.dataclass(frozen=True)
-class Wrapper:
+class Wrapper(Struct):
     supertype: Union[TypeA, TypeB] = TypeA()
 
 
@@ -119,8 +115,7 @@ def test_zsh_functional_completion_simple(backend: str) -> None:
     if shutil.which("zsh") is None:
         pytest.skip("zsh not available")
 
-    @dataclasses.dataclass
-    class Config:
+    class Config(Struct, frozen=False):
         mode: Literal["train", "eval", "test"] = "train"
         verbose: bool = False
 

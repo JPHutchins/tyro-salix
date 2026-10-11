@@ -1,12 +1,12 @@
 from __future__ import annotations
 
 import json
-from dataclasses import dataclass, field
 from typing import Annotated, Any, Dict, List, Literal, Tuple, get_args
 
 import numpy as np
 import pytest
 from helptext_utils import get_helptext_with_checks
+from salix import Struct
 
 import tyro
 
@@ -263,8 +263,7 @@ def test_registry_parameter_subcommand_cli_from_dict() -> None:
 
 
 # Define a custom dataclass
-@dataclass
-class CustomDataWithPrefix:
+class CustomDataWithPrefix(Struct, frozen=False):
     value: str
 
 
@@ -348,9 +347,8 @@ def test_numpy_array_default() -> None:
             str_from_instance=lambda arr: [repr(arr.tolist()).replace(" ", "")],
         )
 
-    @dataclass
-    class Config:
-        array: np.ndarray = field(default_factory=lambda: np.array([1, 2, 3]))
+    class Config(Struct, frozen=False):
+        array: np.ndarray = np.array([1, 2, 3])
 
     # Test with default.
     result = tyro.cli(Config, args=[], registry=registry)
@@ -361,8 +359,7 @@ def test_numpy_array_default() -> None:
     assert np.array_equal(result.array, np.array([5, 6, 7, 8]))
 
 
-@dataclass
-class _ConfigWithArray:
+class _ConfigWithArray(Struct, frozen=False):
     """Config class with numpy array field for subcommand matching test."""
 
     array: np.ndarray
@@ -394,8 +391,7 @@ def test_numpy_array_subcommand_matching() -> None:
         )
 
     # Two subcommands with same type but different numpy array defaults.
-    @dataclass
-    class Container:
+    class Container(Struct, frozen=False):
         config: (
             Annotated[
                 _ConfigWithArray,

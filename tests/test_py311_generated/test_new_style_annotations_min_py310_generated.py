@@ -2,10 +2,10 @@
 #
 # We can remove this ignore after: https://peps.python.org/pep-0747/
 
-import dataclasses
 from typing import Any, Literal, Type
 
 import pytest
+from salix import Struct
 
 import tyro
 
@@ -78,11 +78,10 @@ def test_type() -> None:
 
     class SubThing(Thing): ...
 
-    @dataclasses.dataclass
-    class Config:
+    class Config(Struct, frozen=False):
         foo: int
-        barr: type[Thing] = dataclasses.field(default=SubThing)
-        bar: type[Thing] = dataclasses.field(default=SubThing)
+        barr: type[Thing] = SubThing
+        bar: type[Thing] = SubThing
 
     assert tyro.cli(Config, args=["--foo", "5"]) == Config(5, SubThing, SubThing)
 
@@ -90,11 +89,10 @@ def test_type() -> None:
 def test_type_default_factory() -> None:
     """Test adapted from mirceamironenco: https://github.com/brentyi/tyro/issues/164"""
 
-    @dataclasses.dataclass
-    class Config:
+    class Config(Struct, frozen=False):
         foo: int
         # ty doesn't model `dataclasses.field(default_factory=...)` as
         # producing the field's declared type the way mypy/pyright do.
-        bar: type[Type] = dataclasses.field(default_factory=lambda: Type)  # ty: ignore[invalid-assignment]
+        bar: type[Type] = Type  # ty: ignore[invalid-assignment]
 
     assert tyro.cli(Config, args=["--foo", "5"]) == Config(5)

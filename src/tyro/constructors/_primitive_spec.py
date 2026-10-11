@@ -1,8 +1,8 @@
 from __future__ import annotations
+from salix import Struct
 
 import collections
 import collections.abc
-import dataclasses
 import datetime
 import enum
 import inspect
@@ -124,8 +124,7 @@ def _format_timedelta(td: datetime.timedelta) -> str:
 T = TypeVar("T")
 
 
-@dataclasses.dataclass(frozen=True)
-class PrimitiveTypeInfo:
+class PrimitiveTypeInfo(Struct, frozen=True):
     """Information used to generate constructors for primitive types."""
 
     type: Type
@@ -164,8 +163,7 @@ class PrimitiveTypeInfo:
         )
 
 
-@dataclasses.dataclass(frozen=True)
-class PrimitiveConstructorSpec(Generic[T]):
+class PrimitiveConstructorSpec(Generic[T], Struct, frozen=True):
     """Specification for constructing a primitive type from a string.
 
     There are two ways to use this class:

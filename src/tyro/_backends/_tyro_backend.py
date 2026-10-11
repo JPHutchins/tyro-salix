@@ -6,12 +6,17 @@ with many subcommands.
 """
 
 from __future__ import annotations
+import abc
+
+import salix
+from salix import Struct
+
+_TyroBackendMeta = type("TyroBackendMeta", (type(Struct), abc.ABCMeta), {})
 
 import itertools
 import sys
 import warnings
 from collections import deque
-from dataclasses import dataclass
 from typing import Any, Iterable, Literal, NoReturn, Sequence, cast
 
 from typing_extensions import assert_never
@@ -214,8 +219,7 @@ class KwargMap:
         return arg
 
 
-@dataclass
-class TyroBackend(ParserBackend):
+class TyroBackend(ParserBackend, Struct, metaclass=_TyroBackendMeta):
     """Backend that parses arguments directly from ParserSpecification.
 
     This implementation avoids the overhead of constructing an argparse parser,
@@ -546,7 +550,7 @@ class TyroBackend(ParserBackend):
                     # If the actual subcommand is `subcommand_name` (via manual
                     # override) and the delimiter is `-`, we don't currently
                     # support `subcommand-name`.
-                    canonical_lookup = subparser_spec.canonical_from_alias()
+                    canonical_lookup = subparser_spec.canonical_from_alias
                     for arg_value_shim in (
                         (arg_value, _strings.swap_delimiters(arg_value))
                         if not arg_value.endswith("None")

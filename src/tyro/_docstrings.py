@@ -1,8 +1,8 @@
+from salix import Struct
 """Helpers for parsing docstrings. Used for helptext generation."""
 
 import builtins
 import collections.abc
-import dataclasses
 import functools
 import inspect
 import io
@@ -15,30 +15,27 @@ from typing_extensions import get_origin, is_typeddict
 
 from tyro._typing_compat import is_typing_generic
 
-from . import _resolver, _strings, _unsafe_cache
+from . import _resolver, _strings, _struct_compat, _unsafe_cache
 from .conf import _markers
 
 T = TypeVar("T", bound=Callable)
 
 
-@dataclasses.dataclass(frozen=True)
-class _Token:
+class _Token(Struct, frozen=True):
     token_type: int
     content: str
     logical_line: int
     actual_line: int
 
 
-@dataclasses.dataclass(frozen=True)
-class _FieldData:
+class _FieldData(Struct, frozen=True):
     index: int
     logical_line: int
     actual_line: int
     prev_field_logical_line: int
 
 
-@dataclasses.dataclass(frozen=True)
-class _ClassTokenization:
+class _ClassTokenization(Struct, frozen=True):
     tokens: List[_Token]
     tokens_from_logical_line: Dict[int, List[_Token]]
     tokens_from_actual_line: Dict[int, List[_Token]]
@@ -227,6 +224,8 @@ def get_class_tokenization_with_field(
     classes_to_search = cls.__mro__
     tokenization = None
     for search_cls in classes_to_search:
+        if _struct_compat.is_salix_base(search_cls):
+            continue
         # Inherited generics seem challenging for now.
         # https://github.com/python/typing/issues/777
         assert is_typing_generic(search_cls) or get_origin(search_cls) is None
@@ -257,10 +256,10 @@ def get_class_tokenization_with_field(
             found_field = True
             break
 
-    if dataclasses.is_dataclass(cls):
+    if _struct_compat.is_struct(cls):
         assert found_field, (
             "Docstring parsing error -- this usually means that there are multiple"
-            " dataclasses in the same file with the same name but different scopes."
+            " structs in the same file with the same name but different scopes."
         )
 
     return tokenization
@@ -291,6 +290,8 @@ def get_field_docstring(
     for cls_search in cls.__mro__:
         if cls_search.__module__ == "builtins":
             continue  # Skip `object`, `Callable`, `tuple`, etc.
+        if _struct_compat.is_salix_base(cls_search):
+            continue
         docstring = parse_docstring_from_object(cls_search).get(field_name, None)
         if docstring is not None:
             return _strings.dedent(
@@ -325,9 +326,8 @@ _callable_description_blocklist: Set[Hashable] = set(
 def get_callable_description(f: Callable) -> str:
     """Get description associated with a callable via docstring parsing.
 
-    `dataclasses.dataclass` will automatically populate __doc__ based on the
-    fields of the class if a docstring is not specified; this helper will
-    ignore these docstrings."""
+    Structs have no __doc__ unless written, and their constructor is not
+    introspected."""
 
     f, _ = _resolver.resolve_generic_types(f)
     f = _resolver.unwrap_origin_strip_extras(f)
@@ -353,21 +353,15 @@ def get_callable_description(f: Callable) -> str:
     if (
         docstring is None
         and inspect.isclass(f)
+        and not _struct_compat.is_struct(f)
         # Ignore TypedDict's __init__ docstring, because it will just be `dict`
         and not is_typeddict(f)
-        # Ignore NamedTuple __init__ docstring.
-        and not _resolver.is_namedtuple(f)
         # Ignore pydantic base model constructor docstring.
         and not (pydantic is not None and f.__init__ is pydantic.BaseModel.__init__)  # type: ignore
     ):
         docstring = f.__init__.__doc__  # type: ignore
     if docstring is None:
         return ""
-
-    if dataclasses.is_dataclass(f):
-        default_doc = f.__name__ + str(inspect.signature(f)).replace(" -> None", "")  # type: ignore
-        if docstring == default_doc:
-            return ""
 
     import docstring_parser
 

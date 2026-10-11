@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-import dataclasses
 import functools
 
 import pytest
 from helptext_utils import get_helptext_with_checks
+from salix import Struct
 
 import tyro
 
@@ -100,8 +100,7 @@ def test_wraps_partial_class_helptext() -> None:
     assert "Hello!" in helptext
 
 
-@dataclasses.dataclass
-class WrappedDataclass:
+class WrappedDataclass(Struct, frozen=False):
     """Hello!"""
 
     a: int

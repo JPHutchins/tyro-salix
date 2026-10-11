@@ -33,10 +33,10 @@ correct behavior.
 
 from __future__ import annotations
 
-import dataclasses
 from typing import Annotated, Any, Dict, List, Optional, Tuple, cast
 
 import pytest
+from salix import Struct
 
 import tyro
 from tyro.conf import arg
@@ -48,8 +48,7 @@ def test_optional_fixed_length_tuple_accepts_none() -> None:
     assert tyro.cli(Optional[Tuple[int, int]], args=["1", "2"]) == (1, 2)
 
     # Dataclass field form.
-    @dataclasses.dataclass
-    class A:
+    class A(Struct, frozen=False):
         x: Optional[Tuple[int, int]] = None
 
     assert tyro.cli(A, args=[]) == A(x=None)
@@ -62,8 +61,7 @@ def test_optional_fixed_length_tuple_accepts_none() -> None:
 
 
 def test_clustered_value_short_with_equals() -> None:
-    @dataclasses.dataclass
-    class C:
+    class C(Struct, frozen=False):
         name: Annotated[str, arg(aliases=["-n"])] = "default"
 
     # `=` not immediately after the flag char -> part of the value.
@@ -75,8 +73,7 @@ def test_clustered_value_short_with_equals() -> None:
     # Multiple `=` after a cluster char.
     assert tyro.cli(C, args=["-nx=y"]).name == "x=y"
 
-    @dataclasses.dataclass
-    class D:
+    class D(Struct, frozen=False):
         a: Annotated[bool, arg(aliases=["-a"])] = False
         b: Annotated[bool, arg(aliases=["-b"])] = False
         n: Annotated[str, arg(aliases=["-n"])] = "default"
@@ -89,12 +86,10 @@ def test_clustered_value_short_with_equals() -> None:
 
 
 def test_subcommand_alias_delimiter_collision() -> None:
-    @dataclasses.dataclass
-    class A:
+    class A(Struct, frozen=False):
         x: int = 1
 
-    @dataclasses.dataclass
-    class B:
+    class B(Struct, frozen=False):
         y: int = 2
 
     # Canonical `a-b` plus an `a_b` alias on a *different* subcommand: the alias

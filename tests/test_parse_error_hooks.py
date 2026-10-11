@@ -8,11 +8,11 @@ and its ParseErrorEvent subclasses, one per parse-failure category."""
 # runtime via get_type_hints; stringized annotations would fail to resolve them.
 
 import contextlib
-import dataclasses
 import io
 from typing import TYPE_CHECKING, List, Tuple, Union
 
 import pytest
+from salix import Struct
 from typing_extensions import Annotated
 
 import tyro
@@ -22,20 +22,17 @@ if TYPE_CHECKING:
     from tyro._arguments import ArgumentDefinition
 
 
-@dataclasses.dataclass
-class Config:
+class Config(Struct, frozen=False):
     token: str
     number: int
     name: str = "default"
 
 
-@dataclasses.dataclass
-class CommandA:
+class CommandA(Struct, frozen=False):
     a: int = 0
 
 
-@dataclasses.dataclass
-class CommandB:
+class CommandB(Struct, frozen=False):
     b: str
     flag: bool = False
 
@@ -130,8 +127,7 @@ def test_mutex_conflict() -> None:
 
 def test_bad_value_too_few() -> None:
     # A fixed-arity argument given too few values fires BadValue.
-    @dataclasses.dataclass
-    class WithPair:
+    class WithPair(Struct, frozen=False):
         xy: Tuple[int, int]
 
     seen: List[_errors.BadValue] = []
@@ -159,8 +155,7 @@ def _capture_one_argument() -> "ArgumentDefinition":
     fabricated None (argument is non-Optional and always populated at runtime)."""
     captured: List[_errors.BadValue] = []
 
-    @dataclasses.dataclass
-    class WithPair:
+    class WithPair(Struct, frozen=False):
         xy: Tuple[int, int]
 
     with _capture(captured.append):
@@ -199,8 +194,7 @@ def test_structural_event_construction() -> None:
 def test_invalid_choice() -> None:
     from typing import Literal
 
-    @dataclasses.dataclass
-    class WithChoice:
+    class WithChoice(Struct, frozen=False):
         mode: Literal["a", "b", "c"] = "a"
 
     seen: List[_errors.InvalidChoice] = []
@@ -225,8 +219,7 @@ def test_instantiation_failure() -> None:
     # A value that parses as a token but fails type conversion (int("x")
     # raises ValueError) goes through the per-argument cast path, which tyro
     # wraps as an InstantiationError -> InstantiationFailure event.
-    @dataclasses.dataclass
-    class Config2:
+    class Config2(Struct, frozen=False):
         value: int
 
     seen: List[_errors.InstantiationFailure] = []
@@ -243,8 +236,7 @@ def test_instantiation_failure_without_add_help() -> None:
     "For full helptext" footer (covers the add_help branch of
     _errors.fire_and_exit_instantiation_failure)."""
 
-    @dataclasses.dataclass
-    class Config3:
+    class Config3(Struct, frozen=False):
         value: int
 
     stderr = io.StringIO()

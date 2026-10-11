@@ -2,9 +2,10 @@
 defaults, from general callables."""
 
 from __future__ import annotations
+import salix
+from salix import Struct
 
 import contextlib
-import dataclasses
 import functools
 import inspect
 import sys
@@ -39,8 +40,7 @@ from .constructors._struct_spec import (
 global_context_markers: list[tuple[_markers.Marker, ...]] = []
 
 
-@dataclasses.dataclass
-class FieldDefinition:
+class FieldDefinition(Struct, frozen=True):
     intern_name: str
     extern_name: str
     type: Type[Any] | Callable
@@ -127,7 +127,7 @@ class FieldDefinition:
         for overwrite_argconf in argconfs:
             # Apply any annotated argument configuration values.
             update_values = {}
-            for field in dataclasses.fields(overwrite_argconf):
+            for field in salix.fields(overwrite_argconf):
                 value = getattr(overwrite_argconf, field.name)
                 # Handle default specially; we only want to apply it if it's
                 # explicitly set (i.e., not MISSING_NONPROP).
@@ -137,7 +137,7 @@ class FieldDefinition:
                 elif value is not None:
                     update_values[field.name] = value
 
-            argconf = dataclasses.replace(argconf, **update_values)
+            argconf = salix.replace(argconf, **update_values)
             if argconf.help is not None:
                 helptext = argconf.help
 
@@ -192,7 +192,7 @@ class FieldDefinition:
             new_type = Annotated[(new_type_stripped, *get_args(self.type)[1:])]  # type: ignore
         else:
             new_type = new_type_stripped  # type: ignore
-        return dataclasses.replace(
+        return salix.replace(
             self,
             type=new_type,  # type: ignore
             type_stripped=new_type_stripped,

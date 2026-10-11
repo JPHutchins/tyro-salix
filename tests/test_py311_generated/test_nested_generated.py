@@ -1,5 +1,4 @@
 import contextlib
-import dataclasses
 import io
 import sys
 from typing import (
@@ -18,17 +17,16 @@ from typing import (
 
 import pytest
 from helptext_utils import get_helptext_with_checks
+from salix import Struct
 
 import tyro
 
 
 def test_nested() -> None:
-    @dataclasses.dataclass
-    class B:
+    class B(Struct, frozen=False):
         y: int
 
-    @dataclasses.dataclass
-    class Nested:
+    class Nested(Struct, frozen=False):
         x: int
         b: B
         """Helptext for b"""
@@ -45,12 +43,10 @@ def test_nested() -> None:
 
 
 def test_nested_annotated() -> None:
-    @dataclasses.dataclass
-    class B:
+    class B(Struct, frozen=False):
         y: int
 
-    @dataclasses.dataclass
-    class Nested:
+    class Nested(Struct, frozen=False):
         x: int
         b: Annotated[B, "this should be ignored"]
 
@@ -60,12 +56,10 @@ def test_nested_annotated() -> None:
 
 
 def test_nested_final() -> None:
-    @dataclasses.dataclass
-    class B:
+    class B(Struct, frozen=False):
         y: int
 
-    @dataclasses.dataclass
-    class Nested:
+    class Nested(Struct, frozen=False):
         x: int
         b: Final[B]  # type: ignore
 
@@ -75,12 +69,10 @@ def test_nested_final() -> None:
 
 
 def test_nested_accidental_underscores() -> None:
-    @dataclasses.dataclass
-    class B:
+    class B(Struct, frozen=False):
         arg_name: str
 
-    @dataclasses.dataclass
-    class Nested:
+    class Nested(Struct, frozen=False):
         x: int
         child_struct: B
 
@@ -96,12 +88,10 @@ def test_nested_accidental_underscores() -> None:
 
 
 def test_nested_default() -> None:
-    @dataclasses.dataclass(frozen=True)
-    class B:
+    class B(Struct, frozen=False):
         y: int = 1
 
-    @dataclasses.dataclass
-    class Nested:
+    class Nested(Struct, frozen=False):
         x: int = 2
         b: B = B()
 
@@ -111,12 +101,10 @@ def test_nested_default() -> None:
 
 
 def test_nested_default_alternate() -> None:
-    @dataclasses.dataclass
-    class B:
+    class B(Struct, frozen=False):
         y: int = 3
 
-    @dataclasses.dataclass
-    class Nested:
+    class Nested(Struct, frozen=False):
         x: int
         b: B
 
@@ -129,12 +117,10 @@ def test_nested_default_alternate() -> None:
 
 
 def test_default_nested() -> None:
-    @dataclasses.dataclass(frozen=True)
-    class B:
+    class B(Struct, frozen=False):
         y: int = 3
 
-    @dataclasses.dataclass(frozen=True)
-    class Nested:
+    class Nested(Struct, frozen=False):
         x: int
         b: B = B(y=5)
 
@@ -143,16 +129,13 @@ def test_default_nested() -> None:
 
 
 def test_double_default_nested() -> None:
-    @dataclasses.dataclass(frozen=True)
-    class Child:
+    class Child(Struct):
         y: int
 
-    @dataclasses.dataclass(frozen=True)
-    class Parent:
+    class Parent(Struct, frozen=False):
         c: Child
 
-    @dataclasses.dataclass(frozen=True)
-    class Grandparent:
+    class Grandparent(Struct):
         x: int
         b: Parent = Parent(Child(y=5))
 
@@ -165,27 +148,23 @@ def test_double_default_nested() -> None:
 
 
 def test_default_factory_nested() -> None:
-    @dataclasses.dataclass
-    class B:
+    class B(Struct, frozen=False):
         y: int = 3
 
-    @dataclasses.dataclass
-    class Nested:
+    class Nested(Struct, frozen=False):
         x: int
-        b: B = dataclasses.field(default_factory=lambda: B(y=5))
+        b: B = B(y=5)
 
     assert tyro.cli(Nested, args=["--x", "1", "--b.y", "3"]) == Nested(x=1, b=B(y=3))
     assert tyro.cli(Nested, args=["--x", "1"]) == Nested(x=1, b=B(y=5))
 
 
 def test_optional_nested() -> None:
-    @dataclasses.dataclass
-    class OptionalNestedChild:
+    class OptionalNestedChild(Struct, frozen=False):
         y: int
         z: int
 
-    @dataclasses.dataclass
-    class OptionalNested:
+    class OptionalNested(Struct, frozen=False):
         x: int
         b: Optional[OptionalNestedChild] = None
 
@@ -206,8 +185,7 @@ def test_optional_nested() -> None:
 
 
 def test_optional_nested_newtype() -> None:
-    @dataclasses.dataclass
-    class OptionalNestedChild:
+    class OptionalNestedChild(Struct, frozen=False):
         y: int
         z: int
 
@@ -215,8 +193,7 @@ def test_optional_nested_newtype() -> None:
         "SpecialOptionalNestedChild", OptionalNestedChild
     )
 
-    @dataclasses.dataclass
-    class OptionalNested:
+    class OptionalNested(Struct, frozen=False):
         x: int
         b: Optional[SpecialOptionalNestedChild] = None
 
@@ -251,16 +228,13 @@ def test_optional_nested_newtype() -> None:
 def test_optional_nested_multiple() -> None:
     """Adapted from: https://github.com/brentyi/tyro/issues/60"""
 
-    @dataclasses.dataclass(frozen=True)
-    class OutputHeadSettings:
+    class OutputHeadSettings(Struct):
         number_of_outputs: int = 1
 
-    @dataclasses.dataclass(frozen=True)
-    class OptimizerSettings:
+    class OptimizerSettings(Struct):
         name: str = "adam"
 
-    @dataclasses.dataclass(frozen=True)
-    class ModelSettings:
+    class ModelSettings(Struct):
         output_head_settings: Optional[OutputHeadSettings] = None
         optimizer_settings: Optional[OptimizerSettings] = None
 
@@ -337,16 +311,13 @@ def test_optional_nested_multiple() -> None:
 
 
 def test_subparser() -> None:
-    @dataclasses.dataclass
-    class HTTPServer:
+    class HTTPServer(Struct, frozen=False):
         y: int
 
-    @dataclasses.dataclass
-    class SMTPServer:
+    class SMTPServer(Struct, frozen=False):
         z: int
 
-    @dataclasses.dataclass
-    class Subparser:
+    class Subparser(Struct, frozen=False):
         x: int
         bc: HTTPServer | SMTPServer
 
@@ -369,19 +340,16 @@ def test_subparser() -> None:
 
 
 def test_subparser_newtype() -> None:
-    @dataclasses.dataclass
-    class HTTPServer:
+    class HTTPServer(Struct, frozen=False):
         y: int
 
-    @dataclasses.dataclass
-    class SMTPServer:
+    class SMTPServer(Struct, frozen=False):
         z: int
 
     HTTPServer1 = NewType("HTTPServer1", HTTPServer)
     HTTPServer2 = NewType("HTTPServer2", HTTPServer)
 
-    @dataclasses.dataclass
-    class Subparser:
+    class Subparser(Struct, frozen=False):
         x: int
         bc: HTTPServer1 | HTTPServer2 | SMTPServer
 
@@ -407,16 +375,13 @@ def test_subparser_newtype() -> None:
 
 
 def test_subparser_root() -> None:
-    @dataclasses.dataclass
-    class HTTPServer:
+    class HTTPServer(Struct, frozen=False):
         y: int
 
-    @dataclasses.dataclass
-    class SMTPServer:
+    class SMTPServer(Struct, frozen=False):
         z: int
 
-    @dataclasses.dataclass
-    class Subparser:
+    class Subparser(Struct, frozen=False):
         x: int
         bc: HTTPServer | SMTPServer
 
@@ -427,20 +392,15 @@ def test_subparser_root() -> None:
 
 
 def test_subparser_with_default() -> None:
-    @dataclasses.dataclass
-    class DefaultHTTPServer:
+    class DefaultHTTPServer(Struct, frozen=False):
         y: int
 
-    @dataclasses.dataclass
-    class DefaultSMTPServer:
+    class DefaultSMTPServer(Struct, frozen=False):
         z: int
 
-    @dataclasses.dataclass
-    class DefaultSubparser:
+    class DefaultSubparser(Struct, frozen=False):
         x: int
-        bc: DefaultHTTPServer | DefaultSMTPServer = dataclasses.field(
-            default_factory=lambda: DefaultHTTPServer(5)
-        )
+        bc: DefaultHTTPServer | DefaultSMTPServer = DefaultHTTPServer(5)
 
     assert (
         tyro.cli(
@@ -471,8 +431,7 @@ def test_subparser_with_default() -> None:
 
 
 def test_subparser_with_default_and_newtype() -> None:
-    @dataclasses.dataclass
-    class DefaultHTTPServer_:
+    class DefaultHTTPServer_(Struct, frozen=False):
         y: int
 
     DefaultHTTPServer__ = NewType("DefaultHTTPServer__", DefaultHTTPServer_)
@@ -483,16 +442,12 @@ def test_subparser_with_default_and_newtype() -> None:
     def make_http_server(y: int) -> DefaultHTTPServer:
         return DefaultHTTPServer(DefaultHTTPServer__(DefaultHTTPServer_(y)))
 
-    @dataclasses.dataclass
-    class DefaultSMTPServer:
+    class DefaultSMTPServer(Struct, frozen=False):
         z: int
 
-    @dataclasses.dataclass
-    class DefaultSubparser:
+    class DefaultSubparser(Struct, frozen=False):
         x: int
-        bc: DefaultHTTPServer | DefaultSMTPServer = dataclasses.field(
-            default_factory=lambda: make_http_server(5)
-        )
+        bc: DefaultHTTPServer | DefaultSMTPServer = make_http_server(5)
 
     assert (
         tyro.cli(
@@ -523,16 +478,13 @@ def test_subparser_with_default_and_newtype() -> None:
 
 
 def test_subparser_with_default_alternate() -> None:
-    @dataclasses.dataclass
-    class DefaultInstanceHTTPServer:
+    class DefaultInstanceHTTPServer(Struct, frozen=False):
         y: int = 0
 
-    @dataclasses.dataclass
-    class DefaultInstanceSMTPServer:
+    class DefaultInstanceSMTPServer(Struct, frozen=False):
         z: int = 0
 
-    @dataclasses.dataclass
-    class DefaultInstanceSubparser:
+    class DefaultInstanceSubparser(Struct, frozen=False):
         x: int
         bc: DefaultInstanceHTTPServer | DefaultInstanceSMTPServer
 
@@ -578,20 +530,15 @@ def test_subparser_with_default_alternate() -> None:
 
 
 def test_subparser_with_default_bad() -> None:
-    @dataclasses.dataclass
-    class DefaultHTTPServer:
+    class DefaultHTTPServer(Struct, frozen=False):
         y: int
 
-    @dataclasses.dataclass
-    class DefaultSMTPServer:
+    class DefaultSMTPServer(Struct, frozen=False):
         z: int
 
-    @dataclasses.dataclass
-    class DefaultSubparser:
+    class DefaultSubparser(Struct, frozen=False):
         x: int
-        bc: DefaultHTTPServer | DefaultSMTPServer = dataclasses.field(  # ty: ignore[invalid-assignment]
-            default_factory=lambda: 5  # type: ignore
-        )
+        bc: DefaultHTTPServer | DefaultSMTPServer = 5
 
     # Tolerate bad static types: https://github.com/brentyi/tyro/issues/20
     # Should give us a bunch of warnings!
@@ -603,17 +550,14 @@ def test_subparser_with_default_bad() -> None:
 
 
 def test_subparser_with_default_bad_alt() -> None:
-    @dataclasses.dataclass
-    class A:
+    class A(Struct, frozen=False):
         a: int
 
     @tyro.conf.configure(tyro.conf.subcommand(name="bbbb"))
-    @dataclasses.dataclass
-    class B:
+    class B(Struct, frozen=False):
         b: int
 
-    @dataclasses.dataclass
-    class C:
+    class C(Struct, frozen=False):
         c: int
 
     with pytest.warns(UserWarning):
@@ -625,16 +569,13 @@ def test_subparser_with_default_bad_alt() -> None:
 
 
 def test_optional_subparser() -> None:
-    @dataclasses.dataclass
-    class OptionalHTTPServer:
+    class OptionalHTTPServer(Struct, frozen=False):
         y: int
 
-    @dataclasses.dataclass
-    class OptionalSMTPServer:
+    class OptionalSMTPServer(Struct, frozen=False):
         z: int
 
-    @dataclasses.dataclass
-    class OptionalSubparser:
+    class OptionalSubparser(Struct, frozen=False):
         x: int
         bc: Optional[OptionalHTTPServer | OptionalSMTPServer]
 
@@ -663,8 +604,7 @@ def test_optional_subparser() -> None:
 
 
 def test_post_init_default() -> None:
-    @dataclasses.dataclass
-    class DataclassWithDynamicDefault:
+    class DataclassWithDynamicDefault(Struct, frozen=False):
         x: int = 3
         y: Optional[int] = None
 
@@ -673,38 +613,25 @@ def test_post_init_default() -> None:
             if self.y is None:
                 self.y = self.x
 
-    @dataclasses.dataclass
-    class NoDefaultPostInitArgs:
+    class NoDefaultPostInitArgs(Struct, frozen=False):
         inner: DataclassWithDynamicDefault
 
-    @dataclasses.dataclass
-    class DefaultFactoryPostInitArgs:
-        inner: DataclassWithDynamicDefault = dataclasses.field(
-            default_factory=DataclassWithDynamicDefault
-        )
-
-    assert (
-        tyro.cli(NoDefaultPostInitArgs, args=["--inner.x", "5"]).inner
-        == tyro.cli(DefaultFactoryPostInitArgs, args=["--inner.x", "5"]).inner
-        == DataclassWithDynamicDefault(x=5, y=5)
-    )
+    assert tyro.cli(
+        NoDefaultPostInitArgs, args=["--inner.x", "5"]
+    ).inner == DataclassWithDynamicDefault(x=5, y=5)
 
 
 def test_multiple_subparsers() -> None:
-    @dataclasses.dataclass
-    class Subcommand1:
+    class Subcommand1(Struct):
         x: int = 0
 
-    @dataclasses.dataclass
-    class Subcommand2:
+    class Subcommand2(Struct):
         y: int = 1
 
-    @dataclasses.dataclass
-    class Subcommand3:
+    class Subcommand3(Struct):
         z: int = 2
 
-    @dataclasses.dataclass
-    class MultipleSubparsers:
+    class MultipleSubparsers(Struct):
         a: Subcommand1 | Subcommand2 | Subcommand3
         b: Subcommand1 | Subcommand2 | Subcommand3
         c: Subcommand1 | Subcommand2 | Subcommand3
@@ -739,20 +666,16 @@ def test_multiple_subparsers() -> None:
 
 
 def test_multiple_subparsers_with_default() -> None:
-    @dataclasses.dataclass(frozen=True)
-    class Subcommand1:
+    class Subcommand1(Struct):
         x: int = 0
 
-    @dataclasses.dataclass(frozen=True)
-    class Subcommand2:
+    class Subcommand2(Struct):
         y: int = 1
 
-    @dataclasses.dataclass(frozen=True)
-    class Subcommand3:
+    class Subcommand3(Struct):
         z: int = 2
 
-    @dataclasses.dataclass
-    class MultipleSubparsers:
+    class MultipleSubparsers(Struct):
         a: Subcommand1 | Subcommand2 | Subcommand3 = Subcommand1(tyro.MISSING)
         b: Subcommand1 | Subcommand2 | Subcommand3 = Subcommand2(7)
         c: Subcommand1 | Subcommand2 | Subcommand3 = Subcommand3(3)
@@ -836,20 +759,16 @@ def test_multiple_subparsers_with_default() -> None:
 
 
 def test_nested_subparsers_with_default() -> None:
-    @dataclasses.dataclass(frozen=True)
-    class Subcommand1:
+    class Subcommand1(Struct):
         x: int = 0
 
-    @dataclasses.dataclass(frozen=True)
-    class Subcommand3:
+    class Subcommand3(Struct):
         z: int = 2
 
-    @dataclasses.dataclass(frozen=True)
-    class Subcommand2:
+    class Subcommand2(Struct):
         y: Subcommand1 | Subcommand3
 
-    @dataclasses.dataclass(frozen=True)
-    class MultipleSubparsers:
+    class MultipleSubparsers(Struct):
         a: Subcommand1 | Subcommand2 = Subcommand2(Subcommand1(tyro.MISSING))
 
     with pytest.raises(SystemExit):
@@ -872,20 +791,16 @@ def test_nested_subparsers_with_default() -> None:
 
 
 def test_nested_subparsers_multiple() -> None:
-    @dataclasses.dataclass(frozen=True)
-    class Subcommand1:
+    class Subcommand1(Struct):
         x: int = 0
 
-    @dataclasses.dataclass(frozen=True)
-    class Subcommand3:
+    class Subcommand3(Struct):
         z: int = 2
 
-    @dataclasses.dataclass(frozen=True)
-    class Subcommand2:
+    class Subcommand2(Struct):
         y: Subcommand1 | Subcommand3
 
-    @dataclasses.dataclass(frozen=True)
-    class MultipleSubparsers:
+    class MultipleSubparsers(Struct):
         a: Subcommand1 | Subcommand2
         b: Subcommand1 | Subcommand2
 
@@ -912,25 +827,20 @@ def test_nested_subparsers_multiple() -> None:
 
 
 def test_nested_subparsers_multiple_in_container() -> None:
-    @dataclasses.dataclass(frozen=True)
-    class Subcommand1:
+    class Subcommand1(Struct):
         x: int = 0
 
-    @dataclasses.dataclass(frozen=True)
-    class Subcommand3:
+    class Subcommand3(Struct):
         z: int = 2
 
-    @dataclasses.dataclass(frozen=True)
-    class Subcommand2:
+    class Subcommand2(Struct):
         y: Subcommand1 | Subcommand3
 
-    @dataclasses.dataclass(frozen=True)
-    class MultipleSubparsers:
+    class MultipleSubparsers(Struct):
         a: Subcommand1 | Subcommand2
         b: Subcommand1 | Subcommand2
 
-    @dataclasses.dataclass(frozen=True)
-    class Root:
+    class Root(Struct):
         inner: MultipleSubparsers
 
     with pytest.raises(SystemExit):
@@ -963,14 +873,12 @@ def test_nested_subparsers_multiple_in_container() -> None:
 
 
 def test_tuple_nesting() -> None:
-    @dataclasses.dataclass(frozen=True)
-    class Color:
+    class Color(Struct):
         r: int
         g: int
         b: int
 
-    @dataclasses.dataclass(frozen=True)
-    class Location:
+    class Location(Struct):
         x: float
         y: float
         z: float
@@ -988,14 +896,12 @@ def test_tuple_nesting() -> None:
 
 
 def test_tuple_nesting_union() -> None:
-    @dataclasses.dataclass(frozen=True)
-    class Color:
+    class Color(Struct):
         r: int
         g: int
         b: int
 
-    @dataclasses.dataclass(frozen=True)
-    class Location:
+    class Location(Struct):
         x: float
         y: float
         z: float
@@ -1015,8 +921,7 @@ def test_tuple_nesting_union() -> None:
 def test_generic_subparsers() -> None:
     T = TypeVar("T")
 
-    @dataclasses.dataclass
-    class A(Generic[T]):
+    class A(Struct, Generic[T], frozen=False):
         x: T
 
     def main(x: A[int] | A[float]) -> Any:
@@ -1038,8 +943,7 @@ def test_generic_inherited() -> None:
 
     T = TypeVar("T")
 
-    @dataclasses.dataclass
-    class ActualParentClass(Generic[T]):
+    class ActualParentClass(Struct, Generic[T], frozen=False):
         x: T  # Documentation 1
 
         # Documentation 2
@@ -1048,8 +952,7 @@ def test_generic_inherited() -> None:
         z: T = 3  # type: ignore
         """Documentation 3"""
 
-    @dataclasses.dataclass
-    class ChildClass(UnrelatedParentClass, ActualParentClass[int]):
+    class ChildClass(UnrelatedParentClass, ActualParentClass[int], frozen=False):
         pass
 
     assert tyro.cli(
@@ -1058,24 +961,19 @@ def test_generic_inherited() -> None:
 
 
 def test_subparser_in_nested() -> None:
-    @dataclasses.dataclass
-    class A:
+    class A(Struct, frozen=False):
         a: int
 
-    @dataclasses.dataclass
-    class B:
+    class B(Struct, frozen=False):
         b: int
 
-    @dataclasses.dataclass
-    class Nested2:
+    class Nested2(Struct, frozen=False):
         subcommand: A | B
 
-    @dataclasses.dataclass
-    class Nested1:
+    class Nested1(Struct, frozen=False):
         nested2: Nested2
 
-    @dataclasses.dataclass
-    class Parent:
+    class Parent(Struct, frozen=False):
         nested1: Nested1
 
     assert tyro.cli(
@@ -1106,20 +1004,16 @@ def test_subparser_in_nested() -> None:
 
 def test_nested_in_subparser() -> None:
     # https://github.com/brentyi/tyro/issues/9
-    @dataclasses.dataclass(frozen=True)
-    class Subtype:
+    class Subtype(Struct):
         data: int = 1
 
-    @dataclasses.dataclass(frozen=True)
-    class TypeA:
+    class TypeA(Struct):
         subtype: Subtype = Subtype(1)
 
-    @dataclasses.dataclass(frozen=True)
-    class TypeB:
+    class TypeB(Struct):
         subtype: Subtype = Subtype(2)
 
-    @dataclasses.dataclass(frozen=True)
-    class Wrapper:
+    class Wrapper(Struct):
         supertype: TypeA | TypeB = TypeA()
 
     assert tyro.cli(Wrapper, args=[]) == Wrapper()
@@ -1130,13 +1024,11 @@ def test_nested_in_subparser() -> None:
 
 
 def test_nested_in_subparser_override_with_default() -> None:
-    @dataclasses.dataclass(frozen=True)
-    class Mnist:
+    class Mnist(Struct):
         binary: bool = False
         """Set to load binary version of MNIST dataset."""
 
-    @dataclasses.dataclass
-    class ImageNet:
+    class ImageNet(Struct, frozen=False):
         subset: Literal[50, 100, 1000]
         """Choose between ImageNet-50, ImageNet-100, ImageNet-1000, etc."""
 
@@ -1149,18 +1041,15 @@ def test_nested_in_subparser_override_with_default() -> None:
         }
     )
 
-    @dataclasses.dataclass(frozen=True)
-    class DatasetContainer:
+    class DatasetContainer(Struct):
         dataset: Selector = Mnist()  # type: ignore
 
-    @dataclasses.dataclass
-    class Adam:
+    class Adam(Struct, frozen=False):
         learning_rate: float = 1e-3
         betas: Tuple[float, float] = (0.9, 0.999)
         container: DatasetContainer = DatasetContainer()
 
-    @dataclasses.dataclass
-    class Sgd:
+    class Sgd(Struct, frozen=False):
         learning_rate: float = 3e-4
         container: DatasetContainer = DatasetContainer()
 
@@ -1187,25 +1076,20 @@ def test_nested_in_subparser_override_with_default() -> None:
 def test_underscore_prefix() -> None:
     """https://github.com/brentyi/tyro/issues/77"""
 
-    @dataclasses.dataclass
-    class PrivateConfig:
+    class PrivateConfig(Struct, frozen=False):
         pass
 
-    @dataclasses.dataclass
-    class BaseConfig:
-        _private: PrivateConfig = dataclasses.field(default_factory=PrivateConfig)
+    class BaseConfig(Struct, frozen=False):
+        _private: PrivateConfig = PrivateConfig()
 
-    @dataclasses.dataclass
-    class Level1(BaseConfig):
+    class Level1(BaseConfig, frozen=False):
         pass
 
-    @dataclasses.dataclass
-    class Level2(BaseConfig):
-        child: Level1 = dataclasses.field(default_factory=Level1)
+    class Level2(BaseConfig, frozen=False):
+        child: Level1 = Level1()
 
-    @dataclasses.dataclass
-    class Level3(BaseConfig):
-        child: Level2 = dataclasses.field(default_factory=Level2)
+    class Level3(BaseConfig, frozen=False):
+        child: Level2 = Level2()
 
     tyro.cli(Level3, args=[])
 
@@ -1252,12 +1136,10 @@ def test_subcommand_dict_helper() -> None:
 
 
 def test_subcommand_by_type_tree() -> None:
-    @dataclasses.dataclass(frozen=True)
-    class A:
+    class A(Struct, frozen=False):
         a: int | str
 
-    @dataclasses.dataclass
-    class Args:
+    class Args(Struct, frozen=False):
         inner: Annotated[A, tyro.conf.subcommand(name="alt", default=A(5))] | A = A(
             "hello"
         )
@@ -1267,11 +1149,9 @@ def test_subcommand_by_type_tree() -> None:
 
 
 def test_annotated_narrow_0() -> None:
-    @dataclasses.dataclass
-    class A: ...
+    class A(Struct, frozen=False): ...
 
-    @dataclasses.dataclass
-    class B(A):
+    class B(A, frozen=False):
         x: int
 
     def main(x: Annotated[A, tyro.conf.OmitArgPrefixes] = B(x=3)) -> Any:
@@ -1282,11 +1162,9 @@ def test_annotated_narrow_0() -> None:
 
 
 def test_annotated_narrow_1() -> None:
-    @dataclasses.dataclass
-    class A: ...
+    class A(Struct, frozen=False): ...
 
-    @dataclasses.dataclass
-    class B(A):
+    class B(A, frozen=False):
         x: int
 
     from tyro._resolver import narrow_subtypes
@@ -1295,8 +1173,7 @@ def test_annotated_narrow_1() -> None:
 
 
 def test_union_with_dict() -> None:
-    @dataclasses.dataclass(frozen=True)
-    class Config:
+    class Config(Struct, frozen=False):
         name: str
         age: int
 
@@ -1315,8 +1192,7 @@ def test_union_with_dict() -> None:
 
 
 def test_union_with_tuple() -> None:
-    @dataclasses.dataclass(frozen=True)
-    class Config:
+    class Config(Struct, frozen=False):
         name: str
         age: int
 
@@ -1332,8 +1208,7 @@ def test_union_with_tuple() -> None:
 
 
 def test_union_with_tuple_subscripted() -> None:
-    @dataclasses.dataclass(frozen=True)
-    class Config:
+    class Config(Struct, frozen=False):
         name: str
         age: int
 
@@ -1352,8 +1227,7 @@ def test_union_with_tuple_subscripted() -> None:
 
 
 def test_union_with_tuple_autoexpand() -> None:
-    @dataclasses.dataclass(frozen=True)
-    class Config:
+    class Config(Struct, frozen=False):
         name: str
         age: int
 
@@ -1370,8 +1244,7 @@ def test_union_with_tuple_autoexpand() -> None:
 
 
 def test_union_with_tuple_autoexpand_annotated() -> None:
-    @dataclasses.dataclass(frozen=True)
-    class Config:
+    class Config(Struct, frozen=False):
         name: str
         age: int
 
@@ -1395,15 +1268,12 @@ def test_subcommand_default_with_conf_annotation() -> None:
     https://github.com/brentyi/tyro/issues/221#issuecomment-2572850582
     """
 
-    @dataclasses.dataclass(frozen=True)
-    class OptimizerConfig:
+    class OptimizerConfig(Struct):
         lr: float = 1e-1
 
-    @dataclasses.dataclass(frozen=True)
     class AdamConfig(OptimizerConfig):
         adam_foo: float = 1.0
 
-    @dataclasses.dataclass(frozen=True)
     class SGDConfig(OptimizerConfig):
         sgd_foo: float = 1.0
 
@@ -1424,8 +1294,7 @@ def test_subcommand_default_with_conf_annotation() -> None:
         else:
             return getattr(Union, "__getitem__")(tuple(cfgs))  # type: ignore
 
-    @dataclasses.dataclass(frozen=True)
-    class Config1:
+    class Config1(Struct):
         optimizer: Annotated[
             OptimizerConfig, tyro.conf.arg(constructor_factory=_constructor)
         ] = AdamConfig()
@@ -1434,8 +1303,7 @@ def test_subcommand_default_with_conf_annotation() -> None:
 
     assert "(default: optimizer:adam)" in get_helptext_with_checks(Config1)
 
-    @dataclasses.dataclass(frozen=True)
-    class Config2:
+    class Config2(Struct):
         optimizer: Annotated[
             OptimizerConfig, tyro.conf.arg(constructor_factory=_constructor)
         ] = SGDConfig()
@@ -1455,8 +1323,6 @@ def test_subcommand_dict_helper_with_pydantic_basemodel() -> None:
     if tyro._experimental_options["backend"] == "argparse":
         pytest.skip("Running in argparse backend")
 
-    from dataclasses import dataclass
-
     try:
         from pydantic import BaseModel, Field
     except ImportError:
@@ -1467,14 +1333,12 @@ def test_subcommand_dict_helper_with_pydantic_basemodel() -> None:
         """Check out a branch."""
         print(f"{a=}")
 
-    @dataclass
-    class SecondCommand:
+    class SecondCommand(Struct, frozen=False):
         a: int
 
     # Pydantic dataclass
-    @dataclasses.dataclass
-    class ThirdCommand:
-        a: int = Field(3)
+    class ThirdCommand(Struct, frozen=False):
+        a: int = 3
 
     # Pydantic BaseModel - this was the failing case
     class FourthCommand(BaseModel):
@@ -1538,16 +1402,13 @@ def test_nargs_then_subcommand() -> None:
     if tyro._experimental_options["backend"] == "argparse":
         pytest.skip("nargs followed by subcommands not supported in argparse backend")
 
-    @dataclasses.dataclass
-    class SubconfigA:
+    class SubconfigA(Struct, frozen=False):
         pass
 
-    @dataclasses.dataclass
-    class SubconfigB:
+    class SubconfigB(Struct, frozen=False):
         pass
 
-    @dataclasses.dataclass
-    class Config:
+    class Config(Struct, frozen=False):
         x: List[str]
         y: SubconfigA | SubconfigB
 

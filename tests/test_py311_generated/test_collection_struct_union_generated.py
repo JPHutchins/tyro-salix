@@ -15,10 +15,10 @@ Examples:
 - List[Struct] | None = [...]   → OK (explicit list default)
 """
 
-import dataclasses
 from typing import Dict, List, Optional, Set, Tuple
 
 import pytest
+from salix import Struct
 
 import tyro
 
@@ -26,20 +26,16 @@ import tyro
 def test_dict_struct_union_with_none() -> None:
     """Test that dict[str, Struct] | None creates subcommands."""
 
-    @dataclasses.dataclass
-    class Config:
+    class Config(Struct):
         x: int
         y: int
 
-    @dataclasses.dataclass
-    class Args:
+    class Args(Struct, frozen=False):
         # Creates subcommands for dict vs None.
-        configs: Optional[Dict[str, Config]] = dataclasses.field(
-            default_factory=lambda: {
-                "a": Config(x=1, y=2),
-                "b": Config(x=3, y=4),
-            }
-        )
+        configs: Optional[Dict[str, Config]] = {
+            "a": Config(x=1, y=2),
+            "b": Config(x=3, y=4),
+        }
 
     # Test default case (should use the dict variant).
     result = tyro.cli(Args, args=[])
@@ -66,15 +62,13 @@ def test_dict_struct_union_with_none() -> None:
 def test_dict_struct_empty_default_union() -> None:
     """Test that dict[str, Struct] | None with empty default creates subcommands."""
 
-    @dataclasses.dataclass
-    class Config:
+    class Config(Struct):
         x: int
         y: str
 
-    @dataclasses.dataclass
-    class Args:
+    class Args(Struct, frozen=False):
         # Empty default - should still recognize as struct type.
-        configs: Optional[Dict[str, Config]] = dataclasses.field(default_factory=dict)
+        configs: Optional[Dict[str, Config]] = {}
 
     # Test None subcommand.
     result = tyro.cli(Args, args=["configs:none"])
@@ -88,19 +82,14 @@ def test_dict_struct_empty_default_union() -> None:
 def test_dict_struct_union_with_other_type() -> None:
     """Test that dict[str, Struct] in union with other types creates subcommands."""
 
-    @dataclasses.dataclass
-    class Config:
+    class Config(Struct):
         value: int
 
-    @dataclasses.dataclass
-    class AlternativeConfig:
+    class AlternativeConfig(Struct, frozen=False):
         name: str
 
-    @dataclasses.dataclass
-    class Args:
-        data: Dict[str, Config] | AlternativeConfig = dataclasses.field(
-            default_factory=lambda: {"default": Config(value=5)}
-        )
+    class Args(Struct, frozen=False):
+        data: Dict[str, Config] | AlternativeConfig = {"default": Config(value=5)}
 
     # Test default (dict variant).
     result = tyro.cli(Args, args=[])
@@ -118,20 +107,16 @@ def test_dict_struct_union_with_other_type() -> None:
 def test_nested_dict_struct() -> None:
     """Test that regular dict[str, Struct] (without union) still unpacks normally."""
 
-    @dataclasses.dataclass
-    class Config:
+    class Config(Struct):
         x: int
         y: int
 
-    @dataclasses.dataclass
-    class Args:
+    class Args(Struct, frozen=False):
         # Without union, should unpack the dict fields normally.
-        configs: Dict[str, Config] = dataclasses.field(
-            default_factory=lambda: {
-                "a": Config(x=1, y=2),
-                "b": Config(x=3, y=4),
-            }
-        )
+        configs: Dict[str, Config] = {
+            "a": Config(x=1, y=2),
+            "b": Config(x=3, y=4),
+        }
 
     # Test that nested fields are accessible directly.
     result = tyro.cli(
@@ -148,20 +133,18 @@ def test_nested_dict_struct() -> None:
 def test_list_struct_union_with_other_type2() -> None:
     """Test that list[Struct] with non-empty default in union with struct works."""
 
-    @dataclasses.dataclass
-    class Config:
+    class Config(Struct):
         value: int
 
-    @dataclasses.dataclass
-    class AlternativeConfig:
+    class AlternativeConfig(Struct, frozen=False):
         name: str
 
-    @dataclasses.dataclass
-    class Args:
+    class Args(Struct, frozen=False):
         # Non-empty list default in union with another struct type.
-        data: List[Config] | AlternativeConfig = dataclasses.field(
-            default_factory=lambda: [Config(value=5), Config(value=10)]
-        )
+        data: List[Config] | AlternativeConfig = [
+            Config(value=5),
+            Config(value=10),
+        ]
 
     # Test default (list variant).
     result = tyro.cli(Args, args=[])
@@ -179,16 +162,12 @@ def test_list_struct_union_with_other_type2() -> None:
 def test_list_struct_union_with_none_nonempty_default() -> None:
     """Test that list[Struct] | None with non-empty default creates subcommands."""
 
-    @dataclasses.dataclass
-    class Config:
+    class Config(Struct):
         value: int
 
-    @dataclasses.dataclass
-    class Args:
+    class Args(Struct, frozen=False):
         # Non-empty default in union with None.
-        data: Optional[List[Config]] = dataclasses.field(
-            default_factory=lambda: [Config(value=5), Config(value=10)]
-        )
+        data: Optional[List[Config]] = [Config(value=5), Config(value=10)]
 
     # Test default (list variant).
     result = tyro.cli(Args, args=[])
@@ -206,14 +185,12 @@ def test_list_struct_union_with_none_nonempty_default() -> None:
 def test_list_struct_union_with_none_empty_default() -> None:
     """Test that list[Struct] | None with empty default creates subcommands."""
 
-    @dataclasses.dataclass
-    class Config:
+    class Config(Struct):
         value: int
 
-    @dataclasses.dataclass
-    class Args:
+    class Args(Struct, frozen=False):
         # Empty default in union with None.
-        data: Optional[List[Config]] = dataclasses.field(default_factory=list)
+        data: Optional[List[Config]] = []
 
     # Test None subcommand.
     result = tyro.cli(Args, args=["data:none"])
@@ -227,19 +204,17 @@ def test_list_struct_union_with_none_empty_default() -> None:
 def test_tuple_struct_union_with_other_type() -> None:
     """Test that tuple[Struct, ...] with non-empty default in union with struct works."""
 
-    @dataclasses.dataclass
-    class Config:
+    class Config(Struct):
         value: int
 
-    @dataclasses.dataclass
-    class AlternativeConfig:
+    class AlternativeConfig(Struct, frozen=False):
         name: str
 
-    @dataclasses.dataclass
-    class Args:
+    class Args(Struct, frozen=False):
         # Non-empty tuple default in union with another struct type.
-        data: Tuple[Config, ...] | AlternativeConfig = dataclasses.field(
-            default_factory=lambda: (Config(value=5), Config(value=10))
+        data: Tuple[Config, ...] | AlternativeConfig = (
+            Config(value=5),
+            Config(value=10),
         )
 
     # Test default (tuple variant).
@@ -260,16 +235,12 @@ def test_tuple_struct_union_with_other_type() -> None:
 def test_tuple_struct_union_with_none_nonempty_default() -> None:
     """Test that tuple[Struct, ...] | None with non-empty default creates subcommands."""
 
-    @dataclasses.dataclass
-    class Config:
+    class Config(Struct):
         value: int
 
-    @dataclasses.dataclass
-    class Args:
+    class Args(Struct, frozen=False):
         # Non-empty default in union with None.
-        data: Optional[Tuple[Config, ...]] = dataclasses.field(
-            default_factory=lambda: (Config(value=5), Config(value=10))
-        )
+        data: Optional[Tuple[Config, ...]] = (Config(value=5), Config(value=10))
 
     # Test default (tuple variant).
     result = tyro.cli(Args, args=[])
@@ -289,14 +260,12 @@ def test_tuple_struct_union_with_none_nonempty_default() -> None:
 def test_tuple_struct_union_with_none_empty_default() -> None:
     """Test that tuple[Struct, ...] | None with empty default creates subcommands."""
 
-    @dataclasses.dataclass
-    class Config:
+    class Config(Struct):
         value: int
 
-    @dataclasses.dataclass
-    class Args:
+    class Args(Struct, frozen=False):
         # Empty default in union with None.
-        data: Optional[Tuple[Config, ...]] = dataclasses.field(default_factory=tuple)
+        data: Optional[Tuple[Config, ...]] = tuple()
 
     # Test None subcommand.
     result = tyro.cli(Args, args=["data:none"])
@@ -310,19 +279,14 @@ def test_tuple_struct_union_with_none_empty_default() -> None:
 def test_list_struct_union_with_other_type() -> None:
     """Test that list[Struct] in union with other types creates subcommands."""
 
-    @dataclasses.dataclass
-    class Config:
+    class Config(Struct):
         value: int
 
-    @dataclasses.dataclass
-    class AlternativeConfig:
+    class AlternativeConfig(Struct, frozen=False):
         name: str
 
-    @dataclasses.dataclass
-    class Args:
-        data: List[Config] | AlternativeConfig = dataclasses.field(
-            default_factory=lambda: [Config(value=5)]
-        )
+    class Args(Struct, frozen=False):
+        data: List[Config] | AlternativeConfig = [Config(value=5)]
 
     # Test default (list variant).
     result = tyro.cli(Args, args=[])
@@ -344,12 +308,10 @@ def test_list_struct_union_no_default_errors() -> None:
     maintaining consistency with standalone collection types.
     """
 
-    @dataclasses.dataclass
-    class Config:
+    class Config(Struct):
         value: int
 
-    @dataclasses.dataclass
-    class Args:
+    class Args(Struct, frozen=False):
         # No default - should error!
         data: Optional[List[Config]]
 
@@ -361,12 +323,10 @@ def test_list_struct_union_no_default_errors() -> None:
 def test_dict_struct_union_no_default_errors() -> None:
     """Test that Dict[str, Struct] | None without default raises an error."""
 
-    @dataclasses.dataclass
-    class Config:
+    class Config(Struct):
         value: int
 
-    @dataclasses.dataclass
-    class Args:
+    class Args(Struct, frozen=False):
         # No default - should error!
         data: Optional[Dict[str, Config]]
 
@@ -378,12 +338,10 @@ def test_dict_struct_union_no_default_errors() -> None:
 def test_tuple_struct_union_no_default_errors() -> None:
     """Test that Tuple[Struct, ...] | None without default raises an error."""
 
-    @dataclasses.dataclass
-    class Config:
+    class Config(Struct):
         value: int
 
-    @dataclasses.dataclass
-    class Args:
+    class Args(Struct, frozen=False):
         # No default - should error!
         data: Optional[Tuple[Config, ...]]
 
@@ -395,20 +353,18 @@ def test_tuple_struct_union_no_default_errors() -> None:
 def test_set_struct_union_with_other_type() -> None:
     """Test that set[Struct] with non-empty default in union with struct works."""
 
-    @dataclasses.dataclass(frozen=True)  # frozen=True for hashability.
-    class Config:
+    class Config(Struct):
         value: int
 
-    @dataclasses.dataclass
-    class AlternativeConfig:
+    class AlternativeConfig(Struct, frozen=False):
         name: str
 
-    @dataclasses.dataclass
-    class Args:
+    class Args(Struct, frozen=False):
         # Non-empty set default in union with another struct type.
-        data: Set[Config] | AlternativeConfig = dataclasses.field(
-            default_factory=lambda: {Config(value=5), Config(value=10)}
-        )
+        data: Set[Config] | AlternativeConfig = {
+            Config(value=5),
+            Config(value=10),
+        }
 
     # Test default (set variant).
     result = tyro.cli(Args, args=[])
@@ -422,16 +378,12 @@ def test_set_struct_union_with_other_type() -> None:
 def test_set_struct_union_with_none_nonempty_default() -> None:
     """Test that set[Struct] | None with non-empty default creates subcommands."""
 
-    @dataclasses.dataclass(frozen=True)  # frozen=True for hashability.
-    class Config:
+    class Config(Struct):
         value: int
 
-    @dataclasses.dataclass
-    class Args:
+    class Args(Struct, frozen=False):
         # Non-empty default in union with None.
-        data: Optional[Set[Config]] = dataclasses.field(
-            default_factory=lambda: {Config(value=5), Config(value=10)}
-        )
+        data: Optional[Set[Config]] = {Config(value=5), Config(value=10)}
 
     # Test default (set variant).
     result = tyro.cli(Args, args=[])
@@ -449,14 +401,12 @@ def test_set_struct_union_with_none_empty_default() -> None:
     src/tyro/constructors/_struct_spec.py that handles empty set defaults.
     """
 
-    @dataclasses.dataclass(frozen=True)  # frozen=True for hashability.
-    class Config:
+    class Config(Struct):
         value: int
 
-    @dataclasses.dataclass
-    class Args:
+    class Args(Struct, frozen=False):
         # Empty default in union with None.
-        data: Optional[Set[Config]] = dataclasses.field(default_factory=set)
+        data: Optional[Set[Config]] = set()
 
     # Test None subcommand.
     result = tyro.cli(Args, args=["data:none"])
@@ -470,12 +420,10 @@ def test_set_struct_union_with_none_empty_default() -> None:
 def test_set_struct_union_no_default_errors() -> None:
     """Test that set[Struct] | None without default raises an error."""
 
-    @dataclasses.dataclass(frozen=True)  # frozen=True for hashability.
-    class Config:
+    class Config(Struct):
         value: int
 
-    @dataclasses.dataclass
-    class Args:
+    class Args(Struct, frozen=False):
         # No default - should error!
         data: Optional[Set[Config]]
 

@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
-import dataclasses
 from typing import List, Literal, Optional, Tuple
 
 import pytest
+from salix import Struct
 
 import tyro
 from tyro.constructors._primitive_spec import (
@@ -14,13 +14,11 @@ from tyro.constructors._primitive_spec import (
 )
 
 
-@dataclasses.dataclass
-class _TestInner:
+class _TestInner(Struct, frozen=False):
     values: Tuple[float, float] | Tuple[float, float, float]
 
 
-@dataclasses.dataclass
-class _TestOuter:
+class _TestOuter(Struct, frozen=False):
     inner: _TestInner
     extra: Tuple[str] | Tuple[str, str]
 
@@ -61,8 +59,7 @@ def test_union_of_tuples_with_strings():
 def test_nested_tuple_with_union() -> None:
     """Test nested tuple containing a union with different lengths."""
 
-    @dataclasses.dataclass
-    class Config:
+    class Config(Struct, frozen=False):
         x: Tuple[Tuple[int, int] | Tuple[int, int, int]]
 
     # Test with inner tuple of 2 elements.
@@ -77,8 +74,7 @@ def test_nested_tuple_with_union() -> None:
 def test_optional_nested_tuple_with_union() -> None:
     """Test optional nested tuple containing a union."""
 
-    @dataclasses.dataclass
-    class Config:
+    class Config(Struct, frozen=False):
         x: Optional[Tuple[Tuple[int, int] | Tuple[int, int, int]]]
 
     # Test with None.

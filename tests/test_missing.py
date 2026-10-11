@@ -1,11 +1,11 @@
 """Tests for tyro.MISSING."""
 
 import contextlib
-import dataclasses
 import io
 from typing import Tuple, Union
 
 import pytest
+from salix import Struct
 
 import tyro
 
@@ -27,8 +27,7 @@ def test_missing() -> None:
 
 
 def test_missing_dataclass() -> None:
-    @dataclasses.dataclass
-    class Args2:
+    class Args2(Struct, frozen=False):
         a: int = 5
         b: int = tyro.MISSING
         c: int = 3
@@ -39,8 +38,7 @@ def test_missing_dataclass() -> None:
 
 
 def test_missing_default() -> None:
-    @dataclasses.dataclass
-    class Args2:
+    class Args2(Struct, frozen=False):
         a: int
         b: int
         c: int
@@ -59,14 +57,12 @@ def test_missing_default() -> None:
 
 
 def test_missing_nested_default() -> None:
-    @dataclasses.dataclass
-    class Child:
+    class Child(Struct, frozen=False):
         a: int = 5
         b: int = 3
         c: int = 7
 
-    @dataclasses.dataclass
-    class Parent:
+    class Parent(Struct, frozen=False):
         child: Child
 
     with pytest.raises(SystemExit):
@@ -83,14 +79,12 @@ def test_missing_nested_default() -> None:
 
 
 def test_missing_in_dataclass_def() -> None:
-    @dataclasses.dataclass
-    class Child:
+    class Child(Struct, frozen=False):
         a: int = 5
         b: int = 3
         c: int = 7
 
-    @dataclasses.dataclass
-    class Parent:
+    class Parent(Struct, frozen=False):
         child: Child = tyro.MISSING
 
     assert tyro.cli(
@@ -108,14 +102,12 @@ def test_missing_in_dataclass_def() -> None:
 
 
 def test_missing_in_tuple() -> None:
-    @dataclasses.dataclass
-    class Child:
+    class Child(Struct, frozen=False):
         a: int = 5
         b: int = 3
         c: int = 7
 
-    @dataclasses.dataclass
-    class Parent:
+    class Parent(Struct, frozen=False):
         child: Tuple[Child, Child] = tyro.MISSING
 
     with pytest.raises(SystemExit):
@@ -141,14 +133,12 @@ def test_missing_in_tuple() -> None:
 
 
 def test_missing_in_tuple_pair() -> None:
-    @dataclasses.dataclass
-    class Child:
+    class Child(Struct, frozen=False):
         a: int = 5
         b: int = 3
         c: int = 7
 
-    @dataclasses.dataclass
-    class Parent:
+    class Parent(Struct, frozen=False):
         child: Tuple[Child, Child] = (tyro.MISSING, tyro.MISSING)
 
     with pytest.raises(SystemExit):
@@ -174,16 +164,13 @@ def test_missing_in_tuple_pair() -> None:
 
 
 def test_missing_in_tuple_pair_subcommands() -> None:
-    @dataclasses.dataclass
-    class Child1:
+    class Child1(Struct, frozen=False):
         a: int = 5
 
-    @dataclasses.dataclass
-    class Child2:
+    class Child2(Struct, frozen=False):
         b: int = 3
 
-    @dataclasses.dataclass
-    class Parent:
+    class Parent(Struct, frozen=False):
         children: Tuple[Union[Child1, Child2], Union[Child1, Child2]] = (
             tyro.MISSING,
             Child2(2),

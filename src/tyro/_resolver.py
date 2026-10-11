@@ -1,11 +1,11 @@
 """Utilities for resolving types and forward references."""
 
 from __future__ import annotations
+from salix import Struct
 
 import collections.abc
-import copy
-import dataclasses
 import inspect
+import salix
 import sys
 import types
 import warnings
@@ -38,7 +38,7 @@ from typing_extensions import (
     get_type_hints,
 )
 
-from . import _unsafe_cache, conf
+from . import _struct_compat, _unsafe_cache, conf
 from ._singleton import is_missing, is_sentinel
 from ._typing_compat import (
     is_typing_annotated,
@@ -65,8 +65,7 @@ Y` syntax is used for unions."""
 TypeOrCallable = TypeVar("TypeOrCallable", Type[Any], Callable)
 
 
-@dataclasses.dataclass(frozen=True)
-class TyroTypeAliasBreadCrumb:
+class TyroTypeAliasBreadCrumb(Struct, frozen=True):
     """A breadcrumb we can leave behind to track names of type aliases and
     `NewType` types. We can use type alias names to auto-populate
     subcommands."""
@@ -86,49 +85,54 @@ def unwrap_origin_strip_extras(typ: TypeOrCallable) -> TypeOrCallable:
     return typ
 
 
-def is_dataclass(cls: Union[Type, Callable]) -> bool:
-    """Same as `dataclasses.is_dataclass`, but also handles generic aliases."""
-    return dataclasses.is_dataclass(unwrap_origin_strip_extras(cls))  # type: ignore
+def is_salix_struct(cls: Union[Type, Callable]) -> bool:
+    return _struct_compat.is_struct(unwrap_origin_strip_extras(cls))
 
 
-# @_unsafe_cache.unsafe_cache(maxsize=1024)
-def resolved_fields(cls: Type) -> List[dataclasses.Field]:
-    """Similar to dataclasses.fields(), but includes dataclasses.InitVar types and
-    resolves forward references."""
+class ResolvedField(Struct, frozen=True):
+    name: str
+    type: Any
+    default: Any
 
-    assert dataclasses.is_dataclass(cls)
-    fields = []
+
+def _init_var_inner_type(annotation: Any) -> Any:
+    annotation_type = type(annotation)
+    if (
+        annotation_type.__name__ == "InitVar"
+        and annotation_type.__module__ == "dataclasses"
+    ):
+        return annotation.type
+    return None
+
+
+def resolved_fields(cls: Type) -> List[ResolvedField]:
+    """Fields of a Struct with forward references resolved, including InitVar
+    pseudo-fields."""
+
+    assert is_salix_struct(cls)
     annotations = get_type_hints_resolve_type_params(
         cast(Callable, cls), include_extras=True
     )
-    for field in getattr(cls, "__dataclass_fields__").values():
-        # Avoid mutating original field.
-        field = copy.copy(field)
-
-        # Resolve forward references.
-        field.type = annotations[field.name]
-
-        # Skip ClassVars. We check both the origin (for ClassVar[T]) and the
-        # type itself (for bare ClassVar without a type parameter).
-        if is_typing_classvar(get_origin(field.type)) or is_typing_classvar(field.type):
+    struct_fields = {field.name: field for field in salix.fields(cls)}
+    fields = []
+    for name, annotation in annotations.items():
+        if is_typing_classvar(get_origin(annotation)) or is_typing_classvar(annotation):
             continue
-
-        # Unwrap InitVar types.
-        if isinstance(field.type, dataclasses.InitVar):
-            field.type = field.type.type
-
-        fields.append(field)
-
+        if name in struct_fields:
+            fields.append(
+                ResolvedField(name=name, type=annotation, default=struct_fields[name].default)
+            )
+            continue
+        init_var_type = _init_var_inner_type(annotation)
+        if init_var_type is not None:
+            fields.append(
+                ResolvedField(
+                    name=name,
+                    type=init_var_type,
+                    default=getattr(cls, name, salix.MISSING),
+                )
+            )
     return fields
-
-
-def is_namedtuple(cls: Type) -> bool:
-    return (
-        isinstance(cls, type)
-        and issubclass(cls, tuple)
-        and hasattr(cls, "_fields")
-        and hasattr(cls, "_asdict")
-    )
 
 
 TypeOrCallableOrNone = TypeVar("TypeOrCallableOrNone", Callable, Type[Any], None)
@@ -137,8 +141,8 @@ TypeOrCallableOrNone = TypeVar("TypeOrCallableOrNone", Callable, Type[Any], None
 def resolve_newtype_and_aliases(
     typ: TypeOrCallableOrNone,
 ) -> TypeOrCallableOrNone:
-    # Fast path for plain types.
-    if type(typ) is type:
+    # Fast path for plain types (type() identity is safe for typing.Any).
+    if type(typ) is type or _struct_compat.is_struct(typ):
         return typ
 
     # Handle type aliases, eg via the `type` statement in Python 3.12.
@@ -930,6 +934,8 @@ def get_type_hints_resolve_type_params(
     for origin_type in reversed(obj.mro()):
         if origin_type not in context_from_origin_type:
             continue
+        if _struct_compat.is_salix_base(origin_type):
+            continue
 
         raw_hints = _get_type_hints_backported_syntax(
             origin_type, include_extras=include_extras
@@ -1034,8 +1040,8 @@ def _get_type_hints_backported_syntax(
 def is_instance(typ: Any, value: Any) -> bool:
     """Typeguard-based alternative for `isinstance()`."""
 
-    # Fast path: plain types.
-    if type(typ) is type:
+    # Fast path: plain types (type() identity is safe for typing.Any).
+    if type(typ) is type or _struct_compat.is_struct(typ):
         return isinstance_with_fuzzy_numeric_tower(value, typ) is not False
 
     # Fast path: Handle Union types without importing typeguard.
@@ -1056,6 +1062,15 @@ def is_instance(typ: Any, value: Any) -> bool:
     if origin is Literal:
         args = get_args(typ)
         return value in args
+
+    # Fast path: Handle Tuple types with real tuple values.
+    if origin is tuple and isinstance(value, tuple):
+        args = get_args(typ)
+        if len(args) == 2 and args[1] is Ellipsis:
+            return all(is_sentinel(v) or is_instance(args[0], v) for v in value)
+        return len(args) == len(value) and all(
+            is_sentinel(v) or is_instance(arg, v) for arg, v in zip(args, value)
+        )
 
     # Slow path: For complex types, fall back to typeguard.
     # Import is lazy to avoid overhead when not needed.

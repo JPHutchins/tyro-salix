@@ -1,9 +1,8 @@
 # mypy: ignore-errors
 """Tests for ml_collections integration."""
 
-import dataclasses
-
 from helptext_utils import get_helptext_with_checks
+from salix import Struct
 
 import tyro
 
@@ -144,11 +143,10 @@ def test_configdict_in_dataclass() -> None:
         config.value_layer_dims = (256,) * 2
         return config
 
-    @dataclasses.dataclass
-    class TrainingConfig:
+    class TrainingConfig(Struct, frozen=False):
         learning_rate: float = 0.001
         batch_size: int = 64
-        network: ConfigDict = dataclasses.field(default_factory=get_config)
+        network: ConfigDict = get_config()
 
     # Create a test function that uses the dataclass with a configdict
     def train_with_config(config: ConfigDict = get_config()) -> ConfigDict:
@@ -349,11 +347,10 @@ def test_frozenconfigdict_in_dataclass() -> None:
         config_dict["value_layer_dims"] = (256,) * 2
         return FrozenConfigDict(config_dict)
 
-    @dataclasses.dataclass
-    class TrainingConfig:
+    class TrainingConfig(Struct, frozen=False):
         learning_rate: float = 0.001
         batch_size: int = 64
-        network: FrozenConfigDict = dataclasses.field(default_factory=get_config)
+        network: FrozenConfigDict = get_config()
 
     # Create a test function that uses the dataclass with a FrozenConfigDict
     def train_with_config(config: FrozenConfigDict = get_config()) -> FrozenConfigDict:

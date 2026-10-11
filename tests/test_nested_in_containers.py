@@ -1,14 +1,13 @@
-import dataclasses
 import enum
 from typing import Any, Dict, Generic, List, Set, Tuple, TypeVar
 
 import pytest
+from salix import Struct
 
 import tyro
 
 
-@dataclasses.dataclass(frozen=True)
-class Color:
+class Color(Struct):
     r: int
     g: int
     b: int
@@ -231,8 +230,7 @@ def test_dict_nested() -> None:
 def test_generic_in_tuple() -> None:
     ScalarType = TypeVar("ScalarType", int, float)
 
-    @dataclasses.dataclass
-    class GenericColor(Generic[ScalarType]):
+    class GenericColor(Struct, Generic[ScalarType], frozen=False):
         r: ScalarType
         g: ScalarType
         b: ScalarType
@@ -253,8 +251,7 @@ def test_generic_in_tuple() -> None:
 def test_generic_in_tuple_with_default() -> None:
     ScalarType = TypeVar("ScalarType", int, float)
 
-    @dataclasses.dataclass
-    class GenericColor(Generic[ScalarType]):
+    class GenericColor(Struct, Generic[ScalarType], frozen=False):
         r: ScalarType
         g: ScalarType
         b: ScalarType
@@ -280,8 +277,7 @@ def test_generic_in_tuple_with_default() -> None:
 def test_generic_in_variable_tuple_with_default() -> None:
     ScalarType = TypeVar("ScalarType", int, float)
 
-    @dataclasses.dataclass
-    class GenericColor(Generic[ScalarType]):
+    class GenericColor(Struct, Generic[ScalarType], frozen=False):
         r: ScalarType
         g: ScalarType
         b: ScalarType
@@ -307,8 +303,7 @@ def test_generic_in_variable_tuple_with_default() -> None:
 def test_generic_in_dict_with_default() -> None:
     ScalarType = TypeVar("ScalarType", int, float)
 
-    @dataclasses.dataclass
-    class GenericColor(Generic[ScalarType]):
+    class GenericColor(Struct, Generic[ScalarType], frozen=False):
         r: ScalarType
         g: ScalarType
         b: ScalarType
@@ -334,8 +329,7 @@ def test_generic_in_dict_with_default() -> None:
 def test_generic_in_double_nested_dict_with_default() -> None:
     ScalarType = TypeVar("ScalarType", int, float)
 
-    @dataclasses.dataclass
-    class GenericColor(Generic[ScalarType]):
+    class GenericColor(Struct, Generic[ScalarType], frozen=False):
         r: ScalarType
         g: ScalarType
         b: ScalarType

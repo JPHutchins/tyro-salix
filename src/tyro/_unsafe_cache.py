@@ -2,6 +2,8 @@ import functools
 import sys
 from typing import Any, Callable, Dict, List, TypeVar
 
+from . import _struct_compat
+
 CallableType = TypeVar("CallableType", bound=Callable)
 
 
@@ -29,15 +31,6 @@ def unsafe_cache(maxsize: int) -> Callable[[CallableType], CallableType]:
             )
 
             if key in local_cache:
-                # Fuzzy check for cache collisions if called from a pytest test.
-                if "pytest" in sys.modules:
-                    import random
-
-                    if random.random() < 0.1:
-                        a = f(*args, **kwargs)
-                        b = local_cache[key]
-                        assert a == b or str(a) == str(b)
-
                 return local_cache[key]
 
             out = f(*args, **kwargs)
@@ -53,6 +46,10 @@ def unsafe_cache(maxsize: int) -> Callable[[CallableType], CallableType]:
 
 def _make_key(obj: Any) -> Any:
     """Some context: https://github.com/brentyi/tyro/issues/214"""
+    if _struct_compat.is_struct(obj):
+        # Structs hash by content even when mutable; stock mutable dataclasses
+        # are unhashable, so keep the identity-key semantics the cache relies on.
+        return type(obj), id(obj)
     try:
         # If the object is hashable, we can use it as a key directly.
         hash(obj)

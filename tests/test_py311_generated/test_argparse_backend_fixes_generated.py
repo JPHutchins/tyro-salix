@@ -14,10 +14,10 @@ Union members below are annotated with explicit ``subcommand()`` names so the
 expected command-line tokens are deterministic regardless of class naming.
 """
 
-from dataclasses import dataclass, field
 from typing import Annotated, Optional
 
 import pytest
+from salix import Struct
 
 import tyro
 from tyro.conf import Positional, subcommand
@@ -28,36 +28,30 @@ from tyro.conf import Positional, subcommand
 # ----------------------------------------------------------------------------
 
 
-@dataclass
-class Inner1:
+class Inner1(Struct, frozen=False):
     a: int = 1
 
 
-@dataclass
-class Inner2:
+class Inner2(Struct, frozen=False):
     b: int = 2
 
 
-@dataclass
-class MidDefault:
+class MidDefault(Struct, frozen=False):
     pick: (
         Annotated[Inner1, subcommand("i1")]
         | Annotated[Inner2, subcommand("i2", is_default=True)]
     )
 
 
-@dataclass
-class MidOther:
+class MidOther(Struct, frozen=False):
     q: int = 0
 
 
-@dataclass
-class PlainArm:
+class PlainArm(Struct, frozen=False):
     z: int = 0
 
 
-@dataclass
-class Top1:
+class Top1(Struct, frozen=False):
     outer: (
         Annotated[MidDefault, subcommand("md", is_default=True)]
         | Annotated[MidOther, subcommand("mo")]
@@ -76,26 +70,22 @@ def test_bug1_nested_default_with_sibling_subcommand() -> None:
     )
 
 
-@dataclass
-class P1:
+class P1(Struct, frozen=False):
     z: int = 0
 
 
-@dataclass
-class P2:
+class P2(Struct, frozen=False):
     w: int = 0
 
 
-@dataclass
-class SecondDefault:
+class SecondDefault(Struct, frozen=False):
     pk2: (
         Annotated[P1, subcommand("p1")]
         | Annotated[P2, subcommand("p2", is_default=True)]
     )
 
 
-@dataclass
-class Top1b:
+class Top1b(Struct, frozen=False):
     outer: (
         Annotated[MidDefault, subcommand("md", is_default=True)]
         | Annotated[MidOther, subcommand("mo")]
@@ -127,18 +117,15 @@ def test_bug1_two_default_siblings(args, expected) -> None:
 # ----------------------------------------------------------------------------
 
 
-@dataclass
-class ArgA:
+class ArgA(Struct, frozen=False):
     x: int = 1
 
 
-@dataclass
-class ArgB:
+class ArgB(Struct, frozen=False):
     y: int = 2
 
 
-@dataclass
-class Top2:
+class Top2(Struct, frozen=False):
     name: Positional[str]
     sub: Annotated[ArgA, subcommand("a")] | Annotated[ArgB, subcommand("b")]
 
@@ -150,8 +137,7 @@ def test_bug2_positional_before_subcommand() -> None:
     )
 
 
-@dataclass
-class Top2b:
+class Top2b(Struct, frozen=False):
     name: Positional[str]
     count: Positional[int]
     sub: Annotated[ArgA, subcommand("a")] | Annotated[ArgB, subcommand("b")]
@@ -163,13 +149,10 @@ def test_bug2_two_positionals_before_subcommand() -> None:
     )
 
 
-@dataclass
-class Top2c:
+class Top2c(Struct, frozen=False):
     name: Positional[str]
     flag: int = 0
-    sub: Annotated[ArgA, subcommand("a")] | Annotated[ArgB, subcommand("b")] = field(
-        default_factory=ArgA
-    )
+    sub: Annotated[ArgA, subcommand("a")] | Annotated[ArgB, subcommand("b")] = ArgA()
 
 
 def test_bug2_positional_with_optional_and_subcommand() -> None:
@@ -193,23 +176,20 @@ def test_bug2_positional_with_optional_and_subcommand() -> None:
 _MG = tyro.conf.create_mutex_group(required=False)
 
 
-@dataclass
-class MutexArm:
+class MutexArm(Struct, frozen=False):
     av: Annotated[Optional[int], _MG] = None
 
 
-@dataclass
-class PlainArm3:
+class PlainArm3(Struct, frozen=False):
     bv: int = 2
 
 
-@dataclass
-class Top3:
+class Top3(Struct, frozen=False):
     top_opt: Annotated[Optional[int], _MG] = None
     sub: (
         Annotated[MutexArm, subcommand("mutex")]
         | Annotated[PlainArm3, subcommand("plain")]
-    ) = field(default_factory=MutexArm)
+    ) = MutexArm()
 
 
 def test_bug3_mutex_across_subcommand_boundary(backend: str) -> None:
@@ -250,23 +230,20 @@ def test_bug3_mutex_across_subcommand_boundary_error_message(backend: str) -> No
 _MG_WITHIN = tyro.conf.create_mutex_group(required=False)
 
 
-@dataclass
-class ArmWithMutex:
+class ArmWithMutex(Struct, frozen=False):
     p: Annotated[Optional[int], _MG_WITHIN] = None
     q: Annotated[Optional[int], _MG_WITHIN] = None
 
 
-@dataclass
-class OtherArm:
+class OtherArm(Struct, frozen=False):
     r: int = 0
 
 
-@dataclass
-class Top3Within:
+class Top3Within(Struct, frozen=False):
     sub: (
         Annotated[ArmWithMutex, subcommand("with-mutex")]
         | Annotated[OtherArm, subcommand("other")]
-    ) = field(default_factory=ArmWithMutex)
+    ) = ArmWithMutex()
 
 
 def test_bug3_mutex_within_single_subcommand_ok() -> None:
@@ -295,21 +272,16 @@ def test_bug3_mutex_within_single_subcommand_ok() -> None:
 _MG_SIBLING = tyro.conf.create_mutex_group(required=False)
 
 
-@dataclass
-class _SibA:
+class _SibA(Struct, frozen=False):
     a: Annotated[Optional[int], _MG_SIBLING] = None
 
 
-@dataclass
-class _SibB:
+class _SibB(Struct, frozen=False):
     b: Annotated[Optional[int], _MG_SIBLING] = None
 
 
-@dataclass
-class _SibTop:
-    sub: Annotated[_SibA, subcommand("x")] | Annotated[_SibB, subcommand("y")] = field(
-        default_factory=_SibA
-    )
+class _SibTop(Struct, frozen=False):
+    sub: Annotated[_SibA, subcommand("x")] | Annotated[_SibB, subcommand("y")] = _SibA()
 
 
 def test_mutex_reused_across_sibling_arms_is_accepted() -> None:
@@ -324,23 +296,20 @@ def test_mutex_reused_across_sibling_arms_is_accepted() -> None:
 _MG_PARALLEL = tyro.conf.create_mutex_group(required=False)
 
 
-@dataclass
-class _ParA:
+class _ParA(Struct, frozen=False):
     a: Annotated[Optional[int], _MG_PARALLEL] = None
 
 
-@dataclass
-class _ParB:
+class _ParB(Struct, frozen=False):
     b: Annotated[Optional[int], _MG_PARALLEL] = None
 
 
-@dataclass
-class _ParTop:
+class _ParTop(Struct, frozen=False):
     sub1: Annotated[_ParA, subcommand("x1")] | Annotated[_ParA, subcommand("y1")] = (
-        field(default_factory=_ParA)
+        _ParA()
     )
     sub2: Annotated[_ParB, subcommand("x2")] | Annotated[_ParB, subcommand("y2")] = (
-        field(default_factory=_ParB)
+        _ParB()
     )
 
 

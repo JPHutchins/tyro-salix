@@ -1,6 +1,5 @@
 import argparse
 import copy
-import dataclasses
 import datetime
 import enum
 import os
@@ -27,6 +26,7 @@ from typing import (
 
 import pytest
 from helptext_utils import get_helptext_with_checks
+from salix import Struct
 
 import tyro
 
@@ -41,8 +41,7 @@ def test_no_args() -> None:
 
 
 def test_basic() -> None:
-    @dataclasses.dataclass
-    class ManyTypes:
+    class ManyTypes(Struct, frozen=False):
         i: int
         s: str
         f: float
@@ -101,89 +100,8 @@ def test_basic() -> None:
     ).inner == ManyTypes(i=5, s="5", f=5.0, p=pathlib.Path("~"))
 
 
-def test_init_false() -> None:
-    @dataclasses.dataclass
-    class InitFalseDataclass:
-        i: int
-        s: str
-        f: float
-        dir: pathlib.Path
-        ignored: str = dataclasses.field(default="hello", init=False)
-
-    result = tyro.cli(
-        InitFalseDataclass,
-        args=[
-            "--i",
-            "5",
-            "--s",
-            "5",
-            "--f",
-            "5",
-            "--dir",
-            "~",
-        ],
-    )
-    assert result == InitFalseDataclass(i=5, s="5", f=5.0, dir=pathlib.Path("~"))
-    # init=False fields without a default instance are not included in CLI.
-    # The field retains its default value from the dataclass definition.
-    assert result.ignored == "hello"
-
-
-def test_init_false_with_default_instance() -> None:
-    """Test that init=False fields preserve values from default instance (issue #390)."""
-
-    @dataclasses.dataclass
-    class Conv1dConfig:
-        in_channel: int = dataclasses.field(init=False)
-        out_channel: int = 3
-
-    # Create a default instance and set the init=False field.
-    default = Conv1dConfig()
-    default.in_channel = 10
-
-    # The init=False field should preserve its value from the default instance.
-    config = tyro.cli(Conv1dConfig, default=default, args=["--out-channel", "5"])
-    assert config.in_channel == 10
-    assert config.out_channel == 5
-
-    # Test with no args (should use default values).
-    config2 = tyro.cli(Conv1dConfig, default=default, args=[])
-    assert config2.in_channel == 10
-    assert config2.out_channel == 3
-
-    # Test with falsy value (0) to ensure we don't skip None check incorrectly.
-    default_falsy = Conv1dConfig()
-    default_falsy.in_channel = 0
-    config3 = tyro.cli(Conv1dConfig, default=default_falsy, args=["--out-channel", "7"])
-    assert config3.in_channel == 0
-    assert config3.out_channel == 7
-
-
-def test_init_false_with_frozen_dataclass() -> None:
-    """Test that init=False fields work with frozen dataclasses (issue #415)."""
-
-    @dataclasses.dataclass(frozen=True)
-    class FrozenConfig:
-        in_channel: int = dataclasses.field(init=False, default=5)
-        out_channel: int = 3
-
-    @dataclasses.dataclass
-    class Application:
-        config: FrozenConfig
-
-    default_config = FrozenConfig()
-    default_app = Application(config=default_config)
-
-    result = tyro.cli(
-        Application, default=default_app, args=["--config.out-channel", "7"]
-    )
-    assert result.config.in_channel == 5
-    assert result.config.out_channel == 7
-
-
 def test_required() -> None:
-    @dataclasses.dataclass
-    class A:
+    class A(Struct):
         x: int
 
     with pytest.raises(SystemExit):
@@ -193,8 +111,7 @@ def test_required() -> None:
 def test_flag() -> None:
     """When boolean flags have no default value, they must be explicitly specified."""
 
-    @dataclasses.dataclass
-    class A:
+    class A(Struct):
         x: bool
 
     with pytest.raises(SystemExit):
@@ -216,8 +133,7 @@ def test_flag() -> None:
 def test_flag_default_false() -> None:
     """When boolean flags default to False, a --flag-name flag must be passed in to flip it to True."""
 
-    @dataclasses.dataclass
-    class A:
+    class A(Struct):
         x: bool = False
 
     assert tyro.cli(A, args=[]) == A(False)
@@ -227,8 +143,7 @@ def test_flag_default_false() -> None:
 def test_flag_default_true() -> None:
     """When boolean flags default to True, a --no-flag-name flag must be passed in to flip it to False."""
 
-    @dataclasses.dataclass
-    class A:
+    class A(Struct):
         x: bool = True
 
     assert tyro.cli(A, args=[]) == A(True)
@@ -238,12 +153,10 @@ def test_flag_default_true() -> None:
 def test_flag_default_true_nested() -> None:
     """When boolean flags default to True, a --no-flag-name flag must be passed in to flip it to False."""
 
-    @dataclasses.dataclass
-    class NestedDefaultTrue:
+    class NestedDefaultTrue(Struct, frozen=False):
         x: bool = True
 
-    @dataclasses.dataclass
-    class A:
+    class A(Struct):
         x: NestedDefaultTrue
 
     assert tyro.cli(A, args=[]) == A(NestedDefaultTrue(True))
@@ -251,24 +164,21 @@ def test_flag_default_true_nested() -> None:
 
 
 def test_default() -> None:
-    @dataclasses.dataclass
-    class A:
+    class A(Struct):
         x: int = 5
 
     assert tyro.cli(A, args=[]) == A()
 
 
 def test_default_factory() -> None:
-    @dataclasses.dataclass
-    class A:
-        x: int = dataclasses.field(default_factory=lambda: 5)
+    class A(Struct):
+        x: int = 5
 
     assert tyro.cli(A, args=[]) == A()
 
 
 def test_optional() -> None:
-    @dataclasses.dataclass
-    class A:
+    class A(Struct):
         x: Optional[int] = None
 
     assert tyro.cli(A, args=[]) == A(x=None)
@@ -340,12 +250,10 @@ def test_enum() -> None:
         GREEN = enum.auto()
         BLUE = enum.auto()
 
-    @dataclasses.dataclass
-    class EnumClassA:
+    class EnumClassA(Struct, frozen=False):
         color: Color
 
-    @dataclasses.dataclass
-    class EnumClassB:
+    class EnumClassB(Struct, frozen=False):
         color: Color = Color.GREEN
 
     assert tyro.cli(EnumClassA, args=["--color", "RED"]) == EnumClassA(color=Color.RED)
@@ -359,8 +267,7 @@ def test_enum_alias() -> None:
         RED = 1
         ROUGE = 1
 
-    @dataclasses.dataclass
-    class A:
+    class A(Struct):
         color: Color
 
     assert tyro.cli(A, args=["--color", "RED"]) == A(color=Color.RED)
@@ -374,12 +281,10 @@ def test_enum_values() -> None:
         GREEN = "green"
         BLUE = "blue"
 
-    @dataclasses.dataclass
-    class EnumClassA:
+    class EnumClassA(Struct, frozen=False):
         color: Annotated[Color, tyro.conf.EnumChoicesFromValues]
 
-    @dataclasses.dataclass
-    class EnumClassB:
+    class EnumClassB(Struct, frozen=False):
         color: Annotated[Color, tyro.conf.EnumChoicesFromValues] = Color.GREEN
 
     assert tyro.cli(EnumClassA, args=["--color", "red"]) == EnumClassA(color=Color.RED)
@@ -394,12 +299,10 @@ def test_enum_values_ints() -> None:
         GREEN = 1
         BLUE = 2
 
-    @dataclasses.dataclass
-    class EnumClassA:
+    class EnumClassA(Struct, frozen=False):
         color: Annotated[Color, tyro.conf.EnumChoicesFromValues]
 
-    @dataclasses.dataclass
-    class EnumClassB:
+    class EnumClassB(Struct, frozen=False):
         color: Annotated[Color, tyro.conf.EnumChoicesFromValues] = Color.GREEN
 
     assert tyro.cli(EnumClassA, args=["--color", "0"]) == EnumClassA(color=Color.RED)
@@ -411,8 +314,7 @@ def test_enum_values_ints() -> None:
 
 
 def test_literal() -> None:
-    @dataclasses.dataclass
-    class A:
+    class A(Struct):
         x: Literal[0, 1, 2]
 
     assert tyro.cli(A, args=["--x", "1"]) == A(x=1)
@@ -421,8 +323,7 @@ def test_literal() -> None:
 
 
 def test_literal_none() -> None:
-    @dataclasses.dataclass
-    class A:
+    class A(Struct):
         x: Literal[0, 1, None, 2]
 
     assert tyro.cli(A, args=["--x", "1"]) == A(x=1)
@@ -436,8 +337,7 @@ Choices = tyro.extras.literal_type_from_choices([0, 1, 2])  # type: ignore
 
 
 def test_dynamic_literal() -> None:
-    @dataclasses.dataclass
-    class A:
+    class A(Struct):
         x: Choices  # type: ignore
 
     assert tyro.cli(A, args=["--x", "1"]) == A(x=1)
@@ -468,8 +368,7 @@ def test_literal_enum() -> None:
         GREEN = enum.auto()
         BLUE = enum.auto()
 
-    @dataclasses.dataclass
-    class A:
+    class A(Struct):
         x: Literal[Color.RED, Color.GREEN]
 
     assert tyro.cli(A, args=["--x", "RED"]) == A(x=Color.RED)
@@ -486,8 +385,7 @@ def test_literal_enum_values() -> None:
         GREEN = "green"
         BLUE = "blue"
 
-    @dataclasses.dataclass
-    class A:
+    class A(Struct):
         x: Annotated[
             Literal[Color.RED, Color.GREEN],
             tyro.conf.EnumChoicesFromValues,
@@ -502,8 +400,7 @@ def test_literal_enum_values() -> None:
 
 
 def test_optional_literal() -> None:
-    @dataclasses.dataclass
-    class A:
+    class A(Struct):
         x: Optional[Literal[0, 1, 2]] = None
 
     assert tyro.cli(A, args=["--x", "1"]) == A(x=1)
@@ -525,8 +422,7 @@ def test_multitype_literal() -> None:
 def test_annotated() -> None:
     """Annotated[] is a no-op."""
 
-    @dataclasses.dataclass
-    class A:
+    class A(Struct):
         x: Annotated[int, "some label"] = 3
 
     assert tyro.cli(A, args=["--x", "5"]) == A(x=5)
@@ -535,8 +431,7 @@ def test_annotated() -> None:
 def test_annotated_optional() -> None:
     """Annotated[] is a no-op."""
 
-    @dataclasses.dataclass
-    class A:
+    class A(Struct):
         x: Annotated[Optional[int], "some label"] = 3
 
     assert tyro.cli(A, args=[]) == A(x=3)
@@ -546,8 +441,7 @@ def test_annotated_optional() -> None:
 def test_optional_annotated() -> None:
     """Annotated[] is a no-op."""
 
-    @dataclasses.dataclass
-    class A:
+    class A(Struct):
         x: Optional[Annotated[int, "some label"]] = 3
 
     assert tyro.cli(A, args=[]) == A(x=3)
@@ -557,16 +451,14 @@ def test_optional_annotated() -> None:
 def test_final() -> None:
     """Final[] is a no-op."""
 
-    @dataclasses.dataclass
-    class A:
+    class A(Struct):
         x: Final[int] = 3
 
     assert tyro.cli(A, args=["--x", "5"]) == A(x=5)
 
 
 def test_final_optional() -> None:
-    @dataclasses.dataclass
-    class A:
+    class A(Struct):
         x: Final[Optional[int]] = 3
 
     assert tyro.cli(A, args=[]) == A(x=3)
@@ -576,8 +468,7 @@ def test_final_optional() -> None:
 def test_classvar() -> None:
     """ClassVar[] types should be skipped."""
 
-    @dataclasses.dataclass
-    class A:
+    class A(Struct):
         x: ClassVar[int] = 5
 
     with pytest.raises(SystemExit):
@@ -588,8 +479,7 @@ def test_classvar() -> None:
 def test_classvar_bare() -> None:
     """Bare ClassVar without type parameter should also be skipped."""
 
-    @dataclasses.dataclass
-    class A:
+    class A(Struct):
         x: ClassVar = 5
         y: int = 1
 
@@ -602,8 +492,7 @@ def test_classvar_bare() -> None:
 def test_parse_empty_description() -> None:
     """If the file has no dosctring, it should be treated as an empty string."""
 
-    @dataclasses.dataclass
-    class A:
+    class A(Struct):
         x: int = 0
 
     assert tyro.cli(A, description=None, args=[]) == A(x=0)
@@ -673,8 +562,7 @@ def test_fixed_dataclass_type() -> None:
 
 
 def test_callable_ellipsis() -> None:
-    @dataclasses.dataclass
-    class SimpleCallable:
+    class SimpleCallable(Struct, frozen=False):
         x: Callable[..., None] = lambda: None
 
     assert tyro.cli(SimpleCallable, args=[]) == SimpleCallable()
@@ -752,8 +640,7 @@ def test_class_with_new_and_no_init() -> None:
 
 
 def test_return_unknown_args() -> None:
-    @dataclasses.dataclass
-    class A:
+    class A(Struct):
         x: int = 0
 
     a, unknown_args = tyro.cli(
@@ -764,8 +651,7 @@ def test_return_unknown_args() -> None:
 
 
 def test_return_unknown_args_with_equal() -> None:
-    @dataclasses.dataclass
-    class A:
+    class A(Struct):
         x: int = 0
 
     a, unknown_args = tyro.cli(
@@ -778,8 +664,7 @@ def test_return_unknown_args_with_equal() -> None:
 
 
 def test_unknown_args_with_arg_fixing() -> None:
-    @dataclasses.dataclass
-    class A:
+    class A(Struct):
         x: int = 0
 
     a, unknown_args = tyro.cli(
@@ -793,9 +678,8 @@ def test_unknown_args_with_arg_fixing() -> None:
 
 
 def test_allow_ambiguous_args_when_not_returning_unknown_args() -> None:
-    @dataclasses.dataclass
-    class A:
-        a_b: List[int] = dataclasses.field(default_factory=list)
+    class A(Struct):
+        a_b: List[int] = []
 
     a = tyro.cli(
         A,
@@ -805,8 +689,7 @@ def test_allow_ambiguous_args_when_not_returning_unknown_args() -> None:
 
 
 def test_disallow_ambiguous_args_when_returning_unknown_args() -> None:
-    @dataclasses.dataclass
-    class A:
+    class A(Struct):
         x: int = 0
 
     if tyro._experimental_options["backend"] == "tyro":
@@ -826,10 +709,9 @@ def test_disallow_ambiguous_args_when_returning_unknown_args() -> None:
 
 
 def test_unknown_args_with_consistent_duplicates() -> None:
-    @dataclasses.dataclass
-    class A:
-        a_b: List[int] = dataclasses.field(default_factory=list)
-        c_d: List[int] = dataclasses.field(default_factory=list)
+    class A(Struct):
+        a_b: List[int] = []
+        c_d: List[int] = []
 
     # Tests logic for consistent duplicate arguments when performing argument fixing.
     # i.e., we can fix arguments if the separator is consistent (all _'s or all -'s).
@@ -860,12 +742,10 @@ def test_subcommand_delimiter_swapping() -> None:
     if tyro._experimental_options["backend"] != "tyro":
         pytest.skip("Subcommand delimiter swapping only supported in tyro backend")
 
-    @dataclasses.dataclass
-    class TrainConfig:
+    class TrainConfig(Struct, frozen=False):
         learning_rate: float = 0.001
 
-    @dataclasses.dataclass
-    class EvalConfig:
+    class EvalConfig(Struct, frozen=False):
         batch_size: int = 32
 
     # Test using underscore when subcommand name has hyphens.
@@ -898,16 +778,13 @@ def test_nested_subcommand_delimiter_swapping() -> None:
     if tyro._experimental_options["backend"] != "tyro":
         pytest.skip("Subcommand delimiter swapping only supported in tyro backend")
 
-    @dataclasses.dataclass
-    class HttpServer:
+    class HttpServer(Struct, frozen=False):
         port: int = 8080
 
-    @dataclasses.dataclass
-    class SmtpServer:
+    class SmtpServer(Struct, frozen=False):
         host: str = "localhost"
 
-    @dataclasses.dataclass
-    class Config:
+    class Config(Struct, frozen=False):
         server: HttpServer | SmtpServer
 
     # Test using underscores for nested subcommand with hyphens.
@@ -932,13 +809,11 @@ def test_subcommand_delimiter_with_flags() -> None:
     if tyro._experimental_options["backend"] != "tyro":
         pytest.skip("Subcommand delimiter swapping only supported in tyro backend")
 
-    @dataclasses.dataclass
-    class ModelConfig:
+    class ModelConfig(Struct, frozen=False):
         max_epochs: int = 10
         learning_rate: float = 0.001
 
-    @dataclasses.dataclass
-    class DataConfig:
+    class DataConfig(Struct, frozen=False):
         batch_size: int = 32
 
     # Use underscores in subcommand and hyphens in flags.
@@ -964,8 +839,7 @@ def test_short_flag_with_equals() -> None:
     if tyro._experimental_options["backend"] != "tyro":
         pytest.skip("Short flag equals handling only tested in tyro backend")
 
-    @dataclasses.dataclass
-    class Config:
+    class Config(Struct, frozen=False):
         file: Annotated[str, tyro.conf.arg(aliases=["-f"])] = "default.txt"
 
     # Test short flag with equals sign.
@@ -1093,22 +967,18 @@ def test_unpack_positional_with_other_args() -> None:
 
 
 def test_empty_container() -> None:
-    @dataclasses.dataclass
-    class A:
+    class A(Struct):
         x: Tuple[int, ...] = (1, 2, 3)
-        y: int | str | List[bool] = dataclasses.field(
-            default_factory=lambda: [False, False, True]
-        )
+        y: int | str | List[bool] = [False, False, True]
 
     assert tyro.cli(A, args="--x".split(" ")).x == ()
     assert tyro.cli(A, args="--y".split(" ")).y == []
 
 
 def test_unknown_args_with_consistent_duplicates_use_underscores() -> None:
-    @dataclasses.dataclass
-    class A:
-        a_b: List[int] = dataclasses.field(default_factory=list)
-        c_d: List[int] = dataclasses.field(default_factory=list)
+    class A(Struct):
+        a_b: List[int] = []
+        c_d: List[int] = []
 
     # Tests logic for consistent duplicate arguments when performing argument fixing.
     # i.e., we can fix arguments if the separator is consistent (all _'s or all -'s).
@@ -1260,8 +1130,7 @@ def test_timedelta_parsing() -> None:
 
 
 def test_timedelta_parsing_with_dataclass() -> None:
-    @dataclasses.dataclass
-    class Audio:
+    class Audio(Struct, frozen=False):
         a: int = 0
         b: datetime.timedelta = datetime.timedelta(seconds=0)
 
@@ -1300,26 +1169,21 @@ def test_timedelta_parsing_harder_format() -> None:
 def test_timedelta_default_formatting() -> None:
     """Defaults round-trip through `_format_timedelta` when shown in help text."""
 
-    @dataclasses.dataclass
-    class Zero:
+    class Zero(Struct, frozen=False):
         td: datetime.timedelta = datetime.timedelta(0)
 
-    @dataclasses.dataclass
-    class Mixed:
+    class Mixed(Struct, frozen=False):
         td: datetime.timedelta = datetime.timedelta(
             days=1, hours=2, minutes=3, seconds=4
         )
 
-    @dataclasses.dataclass
-    class Subseconds:
+    class Subseconds(Struct, frozen=False):
         td: datetime.timedelta = datetime.timedelta(microseconds=500)
 
-    @dataclasses.dataclass
-    class Negative:
+    class Negative(Struct, frozen=False):
         td: datetime.timedelta = datetime.timedelta(seconds=-30)
 
-    @dataclasses.dataclass
-    class DaysOnly:
+    class DaysOnly(Struct, frozen=False):
         td: datetime.timedelta = datetime.timedelta(days=14)
 
     helptext_zero = get_helptext_with_checks(Zero)
@@ -1336,12 +1200,9 @@ def test_timedelta_default_formatting() -> None:
 
 
 def test_numeric_tower() -> None:
-    @dataclasses.dataclass(frozen=True)
-    class NumericTower:
+    class NumericTower(Struct):
         a: complex | str = 3.0
-        b: bytearray | str = dataclasses.field(
-            default_factory=lambda: bytearray(b"123")
-        )
+        b: bytearray | str = bytearray(b"123")
         c: complex | str = True
         d: int | complex = False
         e: float | str = 3
@@ -1363,16 +1224,13 @@ def test_runtime_checkable_edge_case() -> None:
     class DummyProtocol(Protocol):
         pass
 
-    @dataclasses.dataclass(frozen=True)
-    class SubConfigA:
+    class SubConfigA(Struct):
         pass
 
-    @dataclasses.dataclass(frozen=True)
-    class SubConfigB:
+    class SubConfigB(Struct):
         pass
 
-    @dataclasses.dataclass
-    class Config:
+    class Config(Struct, frozen=False):
         subconfig: DummyProtocol
 
     CONFIGS = {
@@ -1398,15 +1256,12 @@ test_runtime_checkable_edge_case()
 
 
 def test_linear_inheritance() -> None:
-    @dataclasses.dataclass(frozen=True)
-    class A:
+    class A(Struct):
         field: str | int = 5
 
-    @dataclasses.dataclass(frozen=True)
     class B(A):
         field: int = 10
 
-    @dataclasses.dataclass(frozen=True)
     class C(B):
         pass
 
@@ -1417,35 +1272,6 @@ def test_linear_inheritance() -> None:
     assert tyro.cli(C, args=[]) == C(10)
     assert tyro.cli(C, args=["--field", "3"]) == C(3)
     assert tyro.cli(A, args=["--field", "3"]) == A("3")
-
-
-def test_diamond_inheritance() -> None:
-    @dataclasses.dataclass(frozen=True)
-    class A:
-        field: int | str = 5
-
-    @dataclasses.dataclass(frozen=True)
-    class B(A):
-        pass
-
-    @dataclasses.dataclass(frozen=True)
-    class C(A):
-        field: int = 10
-
-    @dataclasses.dataclass(frozen=True)
-    class D(B, C):
-        pass
-
-    helptext = get_helptext_with_checks(D)
-    # Despite C coming earlier in the MRO than A, the field is inherited from
-    # A. This appears to be a Python bug.
-    # https://github.com/python/cpython/issues/108611
-    assert ": 5" in helptext
-    assert ": 10" not in helptext
-
-    # The type, however, currently comes from C. This matches the MRO and the
-    # behavior of pyright and mypy but not of dataclasses.fields().
-    assert "INT|STR" not in helptext
 
 
 def test_partial_annotation() -> None:

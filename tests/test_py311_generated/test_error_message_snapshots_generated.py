@@ -11,13 +11,13 @@ run this module as a script: ``python tests/test_error_message_snapshots.py``.
 """
 
 import contextlib
-import dataclasses
 import io
 import json
 import pathlib
 from typing import Annotated, Literal, Tuple
 
 import pytest
+from salix import Struct
 
 import tyro
 
@@ -33,20 +33,17 @@ if _here.name == "test_py311_generated":
 _SNAPSHOT_PATH = _here / "error_message_snapshots.json"
 
 
-@dataclasses.dataclass
-class _Cfg:
+class _Cfg(Struct, frozen=False):
     token: str
     number: int
     name: str = "default"
 
 
-@dataclasses.dataclass
-class _A:
+class _A(Struct, frozen=False):
     a: int = 0
 
 
-@dataclasses.dataclass
-class _B:
+class _B(Struct, frozen=False):
     b: str
     flag: bool = False
 
@@ -74,8 +71,7 @@ def _ogfn(
 _PMG = tyro.conf.create_mutex_group(required=True)
 
 
-@dataclasses.dataclass
-class _PosMutex:
+class _PosMutex(Struct, frozen=False):
     # A *positional* argument inside a required mutex group: when the group is
     # unsatisfied, the missing-mutex renderer formats positionals by metavar
     # (e.g. 'pos') rather than by flag.
@@ -83,28 +79,23 @@ class _PosMutex:
     option_b: Annotated[str | None, _PMG] = None
 
 
-@dataclasses.dataclass
-class _Pair:
+class _Pair(Struct, frozen=False):
     xy: Tuple[int, int]
 
 
-@dataclasses.dataclass
-class _Ch:
+class _Ch(Struct, frozen=False):
     mode: Literal["a", "b", "c"] = "a"
 
 
-@dataclasses.dataclass
-class SubA:
+class SubA(Struct, frozen=False):
     required_a: int  # required arg living inside subcommand a
 
 
-@dataclasses.dataclass
-class SubB:
+class SubB(Struct, frozen=False):
     required_b: str
 
 
-@dataclasses.dataclass
-class _Nested:
+class _Nested(Struct, frozen=False):
     sub: SubA | SubB
 
 

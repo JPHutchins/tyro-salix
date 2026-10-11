@@ -1,10 +1,10 @@
 """Tests for experimental features."""
 
-import dataclasses
 import sys
 from io import StringIO
 
 import pytest
+from salix import Struct
 
 import tyro
 from tyro import _settings
@@ -13,8 +13,7 @@ from tyro import _settings
 def test_enable_timing() -> None:
     """Test that timing can be enabled and produces output."""
 
-    @dataclasses.dataclass
-    class Args:
+    class Args(Struct, frozen=False):
         x: int = 5
 
     # Enable timing.
@@ -71,8 +70,7 @@ def test_global_markers_helper() -> None:
 def test_global_markers_applied() -> None:
     """Markers from `global_markers` are applied to every `tyro.cli` call."""
 
-    @dataclasses.dataclass
-    class Args:
+    class Args(Struct, frozen=False):
         flag: bool = False
 
     try:

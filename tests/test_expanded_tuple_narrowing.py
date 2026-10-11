@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-import dataclasses
 from typing import Any
 
 from helptext_utils import get_helptext_with_checks
+from salix import Struct
 
 import tyro
 
@@ -102,8 +102,7 @@ def test_mixed_tuple_types() -> None:
 def test_partial_tuple_narrowing() -> None:
     """Test that we can narrow tuple types with partially specified types."""
 
-    @dataclasses.dataclass
-    class Config:
+    class Config(Struct, frozen=False):
         x: tuple[int, int, Any] = (1, 2, "hello")
         y: tuple[int, Any, float] = (1, "world", 3.0)
 

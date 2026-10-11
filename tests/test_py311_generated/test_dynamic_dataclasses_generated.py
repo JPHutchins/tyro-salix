@@ -1,13 +1,12 @@
-from dataclasses import field, make_dataclass
-
 import pytest
+from salix import Struct
 
 import tyro
 
 
 def test_dynamic():
-    B = make_dataclass("B", [("c", int, field())])
-    A = make_dataclass("A", [("b", B, field())])
+    B = type(Struct)("B", (Struct,), {"__annotations__": {"c": int}})
+    A = type(Struct)("A", (Struct,), {"__annotations__": {"b": B}})
 
     with pytest.raises(SystemExit):
         tyro.cli(A, args=[])

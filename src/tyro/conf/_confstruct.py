@@ -1,6 +1,6 @@
 from __future__ import annotations
+from salix import Struct
 
-import dataclasses
 from typing import Any, Callable, TypeVar, overload
 
 from .._singleton import MISSING_NONPROP
@@ -8,8 +8,7 @@ from .._singleton import MISSING_NONPROP
 T = TypeVar("T")
 
 
-@dataclasses.dataclass(frozen=True)
-class _SubcommandConfig:
+class _SubcommandConfig(Struct, frozen=True):
     name: str | None
     default: Any
     description: str | None
@@ -69,20 +68,17 @@ def subcommand(
 
     Example::
 
-        from dataclasses import dataclass
+        from salix import Struct
         from typing import Annotated, Union
         import tyro
 
-        @dataclass
-        class TrainConfig:
+        class TrainConfig(Struct):
             learning_rate: float = 0.01
 
-        @dataclass
-        class EvalConfig:
+        class EvalConfig(Struct):
             checkpoint_path: str
 
-        @dataclass
-        class MainConfig:
+        class MainConfig(Struct):
             # Customized subcommands:
             mode: Union[
                 Annotated[TrainConfig, tyro.conf.subcommand("train")],
@@ -137,8 +133,7 @@ def subcommand(
     )
 
 
-@dataclasses.dataclass(frozen=True)
-class _ArgConfig:
+class _ArgConfig(Struct, frozen=True):
     name: str | None
     metavar: str | None
     help: str | None
@@ -199,12 +194,11 @@ def arg(
 
     Example::
 
-        from dataclasses import dataclass
+        from salix import Struct
         from typing import Annotated
         import tyro
 
-        @dataclass
-        class Config:
+        class Config(Struct):
             # Default argument appearance
             regular_option: int = 1
 

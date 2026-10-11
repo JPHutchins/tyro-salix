@@ -1,8 +1,8 @@
 """Interface for generating `argparse.ArgumentParser()` definitions from callables."""
 
 from __future__ import annotations
-
-import dataclasses
+import salix
+from salix import Struct
 import numbers
 import warnings
 from typing import Any, Callable, Dict, List, Set, Tuple, Type, TypeVar, Union, cast
@@ -35,8 +35,7 @@ from .constructors._primitive_spec import (
 T = TypeVar("T")
 
 
-@dataclasses.dataclass()
-class LazyParserSpecification:
+class LazyParserSpecification(Struct, frozen=False):
     """Lazy wrapper that defers full ParserSpecification creation until needed.
 
     Stores lightweight metadata (description) for fast help text generation,
@@ -48,7 +47,7 @@ class LazyParserSpecification:
 
     # Factory for creating the full parser when needed.
     _factory: Callable[[], ParserSpecification]
-    _cached: ParserSpecification | None = dataclasses.field(default=None, init=False)
+    _cached: ParserSpecification | None = None
 
     def evaluate(self) -> ParserSpecification:
         """Get the full ParserSpecification, creating it if needed."""
@@ -57,8 +56,7 @@ class LazyParserSpecification:
         return self._cached
 
 
-@dataclasses.dataclass()
-class ArgWithContext:
+class ArgWithContext(Struct, frozen=True):
     arg: _arguments.ArgumentDefinition
     source_parser: ParserSpecification
     """ParserSpecification that directly contains this argument."""
@@ -66,8 +64,7 @@ class ArgWithContext:
     """Furthest ancestor of `source_parser` within the same (sub)command."""
 
 
-@dataclasses.dataclass(frozen=True)
-class ParserSpecification:
+class ParserSpecification(Struct, frozen=True):
     """Each parser contains a list of arguments and optionally some subparsers."""
 
     f: Callable
@@ -345,11 +342,11 @@ def handle_field(
     # There's some similar Union-specific logic for this in narrow_union_type(). We
     # may be able to consolidate this.
     if (
-        not _resolver.is_instance(field.type_stripped, field.default)
+        not _singleton.is_sentinel(field.default)
+        and not _resolver.is_instance(field.type_stripped, field.default)
         # If a custom constructor is set, static_type may not be
         # matched to the annotated type.
         and field.argconf.constructor_factory is None
-        and not _singleton.is_sentinel(field.default)
         # The numeric tower in Python is wacky. This logic is non-critical, so
         # we'll just skip it (+the complexity) for numbers.
         and not isinstance(field.default, numbers.Number)
@@ -477,8 +474,7 @@ def _validated_aliases(
     return out
 
 
-@dataclasses.dataclass(frozen=True)
-class SubparsersSpecification:
+class SubparsersSpecification(Struct, frozen=True):
     """Structure for defining subparsers. Each subparser is a parser with a name."""
 
     description: str | Callable[[], str | None] | None
@@ -491,9 +487,11 @@ class SubparsersSpecification:
     default_instance: Any
     options: Tuple[Union[Type[Any], Callable], ...]
     prog_suffix: str
-    aliases_from_name: Dict[str, Tuple[str, ...]] = dataclasses.field(
-        default_factory=dict
-    )
+    aliases_from_name: Dict[str, Tuple[str, ...]] = {}
+    canonical_from_alias: Dict[str, str] = None  # type: ignore[assignment]
+    """Inverted alias map for fast lookup. Includes the identity mapping for
+    each canonical name, so a single dict lookup resolves any user-typed
+    subcommand name (canonical or alias) to its canonical form."""
 
     def display_name(self, canonical: str) -> str:
         """Render a subcommand name with its aliases for help output:
@@ -503,21 +501,19 @@ class SubparsersSpecification:
             return canonical
         return canonical + " (" + ", ".join(aliases) + ")"
 
-    def canonical_from_alias(self) -> Dict[str, str]:
-        """Inverted alias map for fast lookup. Includes the identity mapping
-        for each canonical name, so a single dict lookup resolves any
-        user-typed subcommand name (canonical or alias) to its canonical
-        form. Cached on the spec instance."""
-        cached = self.__dict__.get("_canonical_from_alias")
-        if cached is not None:
-            return cached
-        out = {name: name for name in self.parser_from_name}
-        for canonical, aliases in self.aliases_from_name.items():
-            for alias in aliases:
-                out[alias] = canonical
-        # Frozen dataclass: bypass __setattr__ to memoize.
-        object.__setattr__(self, "_canonical_from_alias", out)
-        return out
+    def __post_init__(self) -> None:
+        salix.set_field(
+            self,
+            "canonical_from_alias",
+            {
+                **{name: name for name in self.parser_from_name},
+                **{
+                    alias: canonical
+                    for canonical, aliases in self.aliases_from_name.items()
+                    for alias in aliases
+                },
+            },
+        )
 
     @staticmethod
     def from_field(
@@ -759,7 +755,7 @@ class SubparsersSpecification:
             if default_name == subcommand_name and not _singleton.is_missing(
                 field.default
             ):
-                subcommand_config = dataclasses.replace(
+                subcommand_config = salix.replace(
                     subcommand_config, default=field.default
                 )
 
@@ -824,7 +820,7 @@ class SubparsersSpecification:
                         else prog_suffix_captured + " " + subcommand_name_captured,
                     )
                 # Apply prefix to helptext in nested classes in subparsers.
-                subparser = dataclasses.replace(
+                subparser = salix.replace(
                     subparser,
                     helptext_from_intern_prefixed_field_name={
                         _strings.make_field_name([intern_prefix_captured, k]): v
