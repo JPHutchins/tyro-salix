@@ -475,9 +475,6 @@ def _validated_aliases(
     return out
 
 
-_canonical_from_alias_cache: dict[int, tuple[Any, dict[str, str]]] = {}
-
-
 class SubparsersSpecification(Struct, frozen=True, weakref=True):
     """Structure for defining subparsers. Each subparser is a parser with a name."""
 
@@ -492,6 +489,10 @@ class SubparsersSpecification(Struct, frozen=True, weakref=True):
     options: Tuple[Union[Type[Any], Callable], ...]
     prog_suffix: str
     aliases_from_name: Dict[str, Tuple[str, ...]] = {}
+    canonical_from_alias: Dict[str, str] = None  # type: ignore[assignment]
+    """Inverted alias map for fast lookup. Includes the identity mapping for
+    each canonical name, so a single dict lookup resolves any user-typed
+    subcommand name (canonical or alias) to its canonical form."""
 
     def display_name(self, canonical: str) -> str:
         """Render a subcommand name with its aliases for help output:
@@ -501,20 +502,19 @@ class SubparsersSpecification(Struct, frozen=True, weakref=True):
             return canonical
         return canonical + " (" + ", ".join(aliases) + ")"
 
-    def canonical_from_alias(self) -> Dict[str, str]:
-        """Inverted alias map for fast lookup. Includes the identity mapping
-        for each canonical name, so a single dict lookup resolves any
-        user-typed subcommand name (canonical or alias) to its canonical
-        form. Cached on the spec instance."""
-        entry = _canonical_from_alias_cache.get(id(self))
-        if entry is not None and entry[0] is self:
-            return entry[1]
-        out = {name: name for name in self.parser_from_name}
-        for canonical, aliases in self.aliases_from_name.items():
-            for alias in aliases:
-                out[alias] = canonical
-        _canonical_from_alias_cache[id(self)] = (self, out)
-        return out
+    def __post_init__(self) -> None:
+        salix.set_field(
+            self,
+            "canonical_from_alias",
+            {
+                **{name: name for name in self.parser_from_name},
+                **{
+                    alias: canonical
+                    for canonical, aliases in self.aliases_from_name.items()
+                    for alias in aliases
+                },
+            },
+        )
 
     @staticmethod
     def from_field(

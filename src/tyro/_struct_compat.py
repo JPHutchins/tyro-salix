@@ -61,22 +61,3 @@ def fields_of(cls_or_instance: Any) -> List[dataclasses.Field]:
     if is_struct(cls):
         return struct_fields(cls)
     return dataclasses.fields(cls_or_instance)
-
-
-class struct_cached_property:
-    def __init__(self, func: Any) -> None:
-        self.func = func
-        self.__doc__ = getattr(func, "__doc__")
-        self.name = getattr(func, "__name__")
-        self._cache: dict[int, tuple[Any, Any]] = {}
-
-    def __get__(self, obj: Any, owner: Any = None) -> Any:
-        if obj is None:
-            return self
-        key = id(obj)
-        entry = self._cache.get(key)
-        if entry is not None and entry[0] is obj:
-            return entry[1]
-        value = self.func(obj)
-        self._cache[key] = (obj, value)
-        return value
